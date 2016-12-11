@@ -13,3 +13,5 @@
 # __init__.py
 # tensorfx.models module declaration.
 
+from _model import Model
+from _graphs import GraphBuilder, TrainingGraph, EvaluationGraph, PredictionGraph
