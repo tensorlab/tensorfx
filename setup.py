@@ -24,7 +24,11 @@ setuptools.setup(
   version=version,
   namespace_packages=['tensorfx'],
   packages=[
-    'tensorfx.models'
+    'tensorfx.models',
+    'tensorfx.data',
+    'tensorfx.training',
+    'tensorfx.serving',
+    'tensorfx.toolbox'
   ],
   install_requires=[
   ],
