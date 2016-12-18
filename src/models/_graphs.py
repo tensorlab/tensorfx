@@ -13,11 +13,11 @@
 # _graphs.py
 # Implements the GraphBuilder base class.
 
-class GraphDefinition(object):
-  """Base class for different types of graph definitions
+class ModelGraph(object):
+  """Base class for different model graphs.
   """
   def __init__(self, graph):
-    """Initializes a GraphDefinition object.
+    """Initializes a ModelGraph object.
 
     Arguments:
       graph: The TensorFlow graph.
@@ -25,8 +25,8 @@ class GraphDefinition(object):
     self.graph = graph
 
 
-class TrainingGraph(GraphDefinition):
-  """A GraphDefinition object for containing a TensorFlow graph used for training.
+class TrainingGraph(ModelGraph):
+  """The graph to use to train a model.
   """
   def __init__(self, graph):
     """Initializes a TrainingGraph object.
@@ -37,8 +37,8 @@ class TrainingGraph(GraphDefinition):
     super(TrainingGraph, self).__init__(graph)
 
 
-class EvaluationGraph(GraphDefinition):
-  """A GraphDefinition object for containing a TensorFlow graph used for evaluation.
+class EvaluationGraph(ModelGraph):
+  """The graph to use to evaluate a model.
   """
   def __init__(self, graph):
     """Initializes an EvaluationGraph object.
@@ -49,8 +49,8 @@ class EvaluationGraph(GraphDefinition):
     super(EvaluationGraph, self).__init__(graph)
 
 
-class PredictionGraph(GraphDefinition):
-  """A GraphDefinition object for containing a TensorFlow graph used for prediction.
+class PredictionGraph(ModelGraph):
+  """The graph to use to predict using a model.
   """
   def __init__(self, graph):
     """Initializes a PredictionGraph object.
@@ -63,6 +63,8 @@ class PredictionGraph(GraphDefinition):
 
 class GraphBuilder(object):
   """Builds TensorFlow graphs for different phases: training, evaluation and prediction.
+
+  This serves as a base class for different model scenarios.
   """
   def build_training_graph(self, args):
     """Builds the graph to use for training a model.

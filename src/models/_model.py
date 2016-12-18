@@ -31,9 +31,10 @@ class Model(object):
     """Loads a model from a checkpoint.
 
     Usually the model is loaded from a checkpoint and previously saved prediction graph.
-    Alternatively, if the graph builder is specified, it will be used instead. Arguments needed
-    to build a graph (that matches the graph used at training time) will be looked up alongside
-    the saved checkpoint.
+    If a graph builder is specified, it will be used instead. In that case, arguments needed
+    to build a graph (to match those used at training time) will be looked from a file
+    alongside the saved checkpoint. The graph builder approach is required for graphs that use 
+    the py_func op.
 
     Arguments:
       - path: The location on disk where the checkpoint exists.
