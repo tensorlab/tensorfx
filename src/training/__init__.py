@@ -14,3 +14,6 @@
 # tensorfx.training module declaration.
 
 from _config import TrainingConfig
+from _task import ClusterTask
+from _task import ClusterTaskType
+from _cluster import Cluster

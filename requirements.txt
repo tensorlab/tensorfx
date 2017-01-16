@@ -1,0 +1,5 @@
+# Required packages
+# pip install -r requirements.txt
+#
+
+enum34>=1.1.6,<1.2

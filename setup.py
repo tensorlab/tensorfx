@@ -19,6 +19,11 @@ import setuptools
 
 version = '0.1.' + datetime.datetime.now().strftime("%y%m%d%H%M")
 
+with open('requirements.txt') as rf:
+  dependencies = rf.readlines()
+  dependencies = map(lambda d: d.strip(), dependencies)
+  dependencies = filter(lambda d: d and not d.startswith('#'), dependencies)
+
 setuptools.setup(
   name='tensorfx',
   version=version,
@@ -30,8 +35,7 @@ setuptools.setup(
     'tensorfx.serving',
     'tensorfx.toolbox'
   ],
-  install_requires=[
-  ],
+  install_requires=dependencies,
   author='Nikhil Kothari',
   author_email='nikhilk@twitter',
   url='https://github.com/TensorLab/tensorfx',

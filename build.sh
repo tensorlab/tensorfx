@@ -8,6 +8,7 @@ rm -rf build
 mkdir -p build
 
 # Copy source files
+cp requirements.txt build
 cp setup.py build
 cp -r src build/tensorfx
 
