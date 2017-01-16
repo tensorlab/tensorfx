@@ -11,5 +11,5 @@
 # the License.
 
 # __init__.py
-# Tests functionality in the tensorfx module
+# Tests functionality in the tensorfx models module
 

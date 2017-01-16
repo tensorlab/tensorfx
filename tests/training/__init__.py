@@ -1,4 +1,4 @@
-# Copyright 2016 TensorLab. All rights reserved.
+# Copyright 2016 TensorLabs. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -11,6 +11,5 @@
 # the License.
 
 # __init__.py
-# tensorfx.training module declaration.
+# Tests functionality in the tensorfx training module
 
-from _config import TrainingConfig
