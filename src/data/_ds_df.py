@@ -10,10 +10,22 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# __init__.py
-# tensorfx.data module declaration.
+# _ds_df.py
+# Implementation of DataFrameDataSource.
 
-from _dataset import DataSet
-from _dataset import DataSource
-from _ds_csv import CsvDataSource
-from _ds_df import DataFrameDataSource
+from ._dataset import DataSource
+
+class DataFrameDataSource(DataSource):
+  """A DataSource representing a Pandas DataFrame.
+
+  This class is useful for working with local/in-memory data.
+  """
+  def __init__(self, name, df):
+    """Initializes an instance of a DataFrameDataSource with the specified Pandas DataFrame.
+
+    Arguments:
+      name: the name of the DataSource.
+      df: the DataFrame instance to use.
+    """
+    super(DataFrameDataSource, self).__init__(name)
+    self._df = df
