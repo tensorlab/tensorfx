@@ -29,7 +29,7 @@ class WorkerTask(ClusterTask):
     """
     super(ParamServerTask, self).__init__(config, type)
 
-  def run(self, server):
+  def run(self, server, **kwargs):
     """Runs the task.
 
     Arguments:

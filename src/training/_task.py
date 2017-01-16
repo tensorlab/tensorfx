@@ -48,11 +48,12 @@ class ClusterTask(object):
     """
     return self._type
 
-  def run(self, server):
+  def run(self, server, **kwargs):
     """Runs the task during training.
 
     Arguments:
       server: The TensorFlow server associated with the current task.
+      kwargs: Additional arguments, specific to the type of the task.
     Returns:
       The result of training, based on the type of the task.
     """

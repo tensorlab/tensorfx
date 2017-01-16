@@ -13,6 +13,7 @@
 # _trainer.py
 # Implements Trainer.
 
+import os
 from ._cluster import Cluster
 from ._config import Configuration
 
@@ -34,19 +35,22 @@ class Trainer(object):
     self._graph_builder = graph_builder
     self._cluster = cluster
 
-  def train(self, dataset, output, args, config=None):
+  def train(self, args, dataset, output=None, config=None):
     """Runs the training process to train a model.
 
     In the case of master nodes (or single node training), the result is the trained model.
 
     Arguments:
-      dataset: the training and evaluation data sources to use during training.
-      output: the output location to produce checkpoints, summaries, and the resulting model.
       args: any arguments, including hyperparameters to parameterize the model to train.
+      dataset: the training and evaluation data sources to use during training.
+      output: an optional output location to produce checkpoints, summaries, and the model.
       config: an optional configuration providing information about the training job and cluster.
     Returns:
       The result of training. The resulting value is only relevant for master nodes.
     """
+    if not output:
+      # If an output location is not specified, default to the current working directory
+      output = os.getcwd()
     if not config:
       # By default, use the configuration specified in the TF_CONFIG environment variable.
       config = Configuration.environment()
@@ -54,10 +58,12 @@ class Trainer(object):
     server = self._create_server(config)
     task = self._cluster.create_task(config)
 
-    # TODO: Correctly implement passing on the graph builder, and other args to worker/master tasks.
+    return task.run(server,
+                    graph_builder=self._graph_builder,
+                    args=args,
+                    dataset=dataset,
+                    output=output)
 
-    return task.run(server)
-    
   def _create_server(self, config):
     """Creates an instance of a TensorFlow server.
     """

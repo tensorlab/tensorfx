@@ -27,11 +27,3 @@ class MasterTask(WorkerTask):
       config: the training configuration.
     """
     super(MasterTask, self).__init__(config, type=ClusterTaskType.Master)
-
-  def run(self, server):
-    """Runs the task.
-
-    Arguments:
-      server: the TensorFlow server.
-    """
-    raise NotImplementedError('Implement this')

@@ -30,7 +30,7 @@ class ParamServerTask(ClusterTask):
     """
     super(ParamServerTask, self).__init__(config, ClusterTaskType.ParamServer)
 
-  def run(self, server):
+  def run(self, server, **kwargs):
     """Runs the task.
 
     A parameter server task runs forever (until killed) using implementation within the
