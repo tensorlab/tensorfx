@@ -24,6 +24,7 @@ class TestCases(unittest.TestCase):
     ds = tfxdata.DataSet.create(source)
 
     self.assertEqual(ds['foo'], source)
+    self.assertEqual(ds.foo, source)
 
   def test_empty_dataset_raises_error(self):
     with self.assertRaises(ValueError):

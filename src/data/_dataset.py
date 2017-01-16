@@ -47,6 +47,21 @@ class DataSet(object):
     datasources = dict(map(lambda ds: (ds.name, ds), args))
     return cls(datasources)
 
+  def __getattr__(self, attr):
+    """Retrieves a named DataSource within the DataSet.
+
+    Arguments:
+      attr: the name of the DataSource to retrieve.
+    Returns:
+      The DataSource if there is one with the specified name.
+    Raises:
+      AttributeError if no such DataSource exists.
+    """
+    datasource = self._datasources.get(attr, None)
+    if datasource is None:
+      raise AttributeError
+    return datasource
+
   def __getitem__(self, index):
     """Retrieves a named DataSource within the DataSet.
 
