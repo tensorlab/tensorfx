@@ -57,7 +57,3 @@ class ClusterTask(object):
       The result of training, based on the type of the task.
     """
     raise NotImplementedError('run must be implemented.')
-
-
-class Cluster(object):
-  pass
