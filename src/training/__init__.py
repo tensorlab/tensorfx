@@ -20,3 +20,4 @@ from _task import ClusterTask
 from _task_ps import ParamServerTask
 from _task_worker import WorkerTask
 from _task_master import MasterTask
+from _trainer import Trainer
