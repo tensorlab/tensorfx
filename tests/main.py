@@ -21,10 +21,12 @@ import unittest
 sys.path.append(os.path.abspath(os.path.join(__file__, '../..')))
 
 # Load the test modules
+import data.dataset_tests
 import models.model_tests
 import training.config_tests
 
 _TEST_MODULES = [
+  data.dataset_tests,
   models.model_tests,
   training.config_tests
 ]
