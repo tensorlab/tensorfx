@@ -13,7 +13,7 @@
 # __init__.py
 # tensorfx.training module declaration.
 
-from _config import TrainingConfig
+from _config import Configuration
 from _cluster import Cluster
 from _task import ClusterTaskType
 from _task import ClusterTask

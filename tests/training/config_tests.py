@@ -22,7 +22,7 @@ import tensorfx.training as tfxtraining
 class TestCases(unittest.TestCase):
 
   def test_local_config(self):
-    config = tfxtraining.TrainingConfig.local()
+    config = tfxtraining.Configuration.local()
 
     self.assertFalse(config.distributed)
     self.assertIsNone(config.cluster)
@@ -30,7 +30,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(config.task.type, tfxtraining.ClusterTaskType.Master.value)
 
   def test_empty_env_config(self):
-    config = tfxtraining.TrainingConfig.environment()
+    config = tfxtraining.Configuration.environment()
 
     self.assertFalse(config.distributed)
     self.assertIsNone(config.cluster)
@@ -49,7 +49,7 @@ class TestCases(unittest.TestCase):
     }
     os.environ['TF_CONFIG'] = json.dumps(config)
 
-    config = tfxtraining.TrainingConfig.environment()
+    config = tfxtraining.Configuration.environment()
 
     self.assertTrue(config.distributed)
     self.assertIsNotNone(config.cluster)

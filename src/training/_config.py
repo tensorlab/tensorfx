@@ -26,7 +26,7 @@ class ConfigObject(object):
     self.__dict__.update(d)
 
 
-class TrainingConfig(object):
+class Configuration(object):
   """Contains configuration information for the training process.
   """
   def __init__(self, task, cluster, job):
@@ -48,7 +48,7 @@ class TrainingConfig(object):
 
   @classmethod
   def environment(cls):
-    """Creates a TrainingConfig object for single node and distributed training.
+    """Creates a Configuration object for single node and distributed training.
 
     This relies on looking up configuration from an environment variable, 'TF_CONFIG' which allows
     a hosting environment to configure the training process.
@@ -56,7 +56,7 @@ class TrainingConfig(object):
     configuration about the current task, cluster and job.
 
     Returns:
-      A TrainingConfig object matching the current environment.
+      A Configuration instance matching the current environment.
     """
     config = json.loads(os.environ.get('TF_CONFIG', '{}'))
 
@@ -69,10 +69,10 @@ class TrainingConfig(object):
   
   @classmethod
   def local(cls):
-    """Creates a TrainingConfig object representing single node training in a process.
+    """Creates a Configuration object representing single node training in a process.
 
     Returns:
-      A default TrainingConfig object with simple configuration.
+      A default Configuration instance with simple configuration.
     """
     return cls(task={'type': 'master', 'index': 0}, cluster=None, job={})
 
