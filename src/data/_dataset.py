@@ -19,19 +19,23 @@ class DataSet(object):
 
   A DataSet contains one or more DataSource instances, each associated with a name.
   """
-  def __init__(self, datasources):
+  def __init__(self, datasources, schema, features=None):
     """Initializes a DataSet with the specified DataSource instances.
 
     Arguments:
       datasources: a set of named DataSource instances.
+      schema: the description of the source data.
+      features: the optional description of the transformed data.
     """
     self._datasources = datasources
 
   @classmethod
-  def create(cls, *args):
+  def create(cls, schema, features=None, *args):
     """Creates a DataSet with the specified DataSource instances.
 
     Arguments:
+      schema: the description of the source data.
+      features: the description of the transformed data.
       args: A list of named DataSource instances.
     Returns:
       A DataSet containing the specified DataSource instances.
@@ -45,7 +49,7 @@ class DataSet(object):
       raise ValueError('All the listed DataSource instances must be of the same type.')
 
     datasources = dict(map(lambda ds: (ds.name, ds), args))
-    return cls(datasources)
+    return cls(datasources, schema, features)
 
   def __getattr__(self, attr):
     """Retrieves a named DataSource within the DataSet.

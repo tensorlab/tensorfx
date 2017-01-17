@@ -13,7 +13,9 @@
 # __init__.py
 # tensorfx.data module declaration.
 
-from _dataset import DataSet
-from _dataset import DataSource
+from _schema import SchemaFieldType, SchemaField, Schema
+from _features import Feature, FeatureSet
+
+from _dataset import DataSet, DataSource
 from _ds_csv import CsvDataSource
 from _ds_df import DataFrameDataSource

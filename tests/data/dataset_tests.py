@@ -21,14 +21,26 @@ class TestCases(unittest.TestCase):
 
   def test_create_dataset(self):
     source = tfxdata.DataSource('foo')
-    ds = tfxdata.DataSet.create(source)
+    schema = tfxdata.Schema.create(tfxdata.SchemaField.integer('x'))
+    ds = tfxdata.DataSet.create(schema, None, source)
 
     self.assertEqual(ds['foo'], source)
     self.assertEqual(ds.foo, source)
 
+  def test_create_multi_source_dataset(self):
+    train = tfxdata.DataSource('train')
+    eval = tfxdata.DataSource('eval')
+    schema = tfxdata.Schema.create(tfxdata.SchemaField.integer('x'),
+                                   tfxdata.SchemaField.real('y'))
+    ds = tfxdata.DataSet.create(schema, None, train, eval)
+
+    self.assertEqual(ds['train'], train)
+    self.assertEqual(ds.eval, eval)
+
   def test_empty_dataset_raises_error(self):
     with self.assertRaises(ValueError):
-      source = tfxdata.DataSet.create()
+      schema = tfxdata.Schema.create(tfxdata.SchemaField.integer('x'))
+      source = tfxdata.DataSet.create(schema)
 
   def test_mixed_datasources_raises_error(self):
     class CustomDataSource(tfxdata.DataSource):
@@ -38,4 +50,5 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(ValueError):
       source1 = tfxdata.DataSource('foo')
       source2 = CustomDataSource('bar')
-      ds = tfxdata.DataSet.create(source1, source2)
+      schema = tfxdata.Schema.create(tfxdata.SchemaField.integer('x'))
+      ds = tfxdata.DataSet.create(schema, None, source1, source2)
