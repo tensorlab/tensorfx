@@ -19,24 +19,28 @@ class DataSet(object):
 
   A DataSet contains one or more DataSource instances, each associated with a name.
   """
-  def __init__(self, datasources, schema, features=None):
+  def __init__(self, datasources, schema, metadata=None, features=None):
     """Initializes a DataSet with the specified DataSource instances.
 
     Arguments:
       datasources: a set of named DataSource instances.
       schema: the description of the source data.
+      metadata: additional per-field information associated with the data.
       features: the optional description of the transformed data.
     """
     self._datasources = datasources
+    self._schema = schema
+    self._metadata = metadata
+    self._features = features
 
   @classmethod
-  def create(cls, schema, features=None, *args):
+  def create(cls, schema, *args, **kwargs):
     """Creates a DataSet with the specified DataSource instances.
 
     Arguments:
       schema: the description of the source data.
-      features: the description of the transformed data.
       args: A list of named DataSource instances.
+      kwargs: optional information, such as metadata and features.
     Returns:
       A DataSet containing the specified DataSource instances.
     Raises:
@@ -49,7 +53,7 @@ class DataSet(object):
       raise ValueError('All the listed DataSource instances must be of the same type.')
 
     datasources = dict(map(lambda ds: (ds.name, ds), args))
-    return cls(datasources, schema, features)
+    return cls(datasources, schema, kwargs.get('metadata', None), kwargs.get('features', None))
 
   def __getattr__(self, attr):
     """Retrieves a named DataSource within the DataSet.
@@ -75,6 +79,24 @@ class DataSet(object):
       The DataSource if there is one with the specified name; None otherwise.
     """
     return self._datasources.get(index, None)
+
+  @property
+  def schema(self):
+    """Retrives the schema associated with the DataSet.
+    """
+    return self._schema
+
+  @property
+  def metadata(self):
+    """Retrives the metadata associated with the DataSet.
+    """
+    return self._metadata
+
+  @property
+  def features(self):
+    """Retrives the features defined with the DataSet.
+    """
+    return self._features
 
 
 class DataSource(object):

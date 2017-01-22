@@ -22,7 +22,7 @@ class TestCases(unittest.TestCase):
   def test_create_dataset(self):
     source = tfxdata.DataSource('foo')
     schema = tfxdata.Schema.create(tfxdata.SchemaField.integer('x'))
-    ds = tfxdata.DataSet.create(schema, None, source)
+    ds = tfxdata.DataSet.create(schema, source)
 
     self.assertEqual(ds['foo'], source)
     self.assertEqual(ds.foo, source)
@@ -32,7 +32,7 @@ class TestCases(unittest.TestCase):
     eval = tfxdata.DataSource('eval')
     schema = tfxdata.Schema.create(tfxdata.SchemaField.integer('x'),
                                    tfxdata.SchemaField.real('y'))
-    ds = tfxdata.DataSet.create(schema, None, train, eval)
+    ds = tfxdata.DataSet.create(schema, train, eval)
 
     self.assertEqual(ds['train'], train)
     self.assertEqual(ds.eval, eval)
@@ -51,4 +51,4 @@ class TestCases(unittest.TestCase):
       source1 = tfxdata.DataSource('foo')
       source2 = CustomDataSource('bar')
       schema = tfxdata.Schema.create(tfxdata.SchemaField.integer('x'))
-      ds = tfxdata.DataSet.create(schema, None, source1, source2)
+      ds = tfxdata.DataSet.create(schema, source1, source2)

@@ -14,6 +14,7 @@
 # tensorfx.data module declaration.
 
 from _schema import SchemaFieldType, SchemaField, Schema
+from _metadata import Metadata
 from _features import Feature, FeatureSet
 
 from _dataset import DataSet, DataSource
