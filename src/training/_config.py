@@ -15,15 +15,7 @@
 
 import json
 import os
-
-class ConfigObject(object):
-  """Creates an object with fields initialized from a dictionary.
-
-    Arguments:
-      d: the dictionary of fields to use to initialize this object.
-  """
-  def __init__(self, d):
-    self.__dict__.update(d)
+import tensorflow as tf
 
 
 class Configuration(object):
@@ -42,9 +34,9 @@ class Configuration(object):
       cluster: containing TensorFlow cluster configuration for distributed training.
       job: environment-specific job configuration.
     """
-    self._task = ConfigObject(task)
-    self._cluster = ConfigObject(cluster) if cluster else None
-    self._job = ConfigObject(job) if job else None
+    self._task = type('TaskSpec', (object,), task)
+    self._cluster = tf.train.ClusterSpec(cluster) if cluster else None
+    self._job = type('JobSpec', (object,), job)
 
   @classmethod
   def environment(cls):

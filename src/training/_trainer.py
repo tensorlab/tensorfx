@@ -14,6 +14,7 @@
 # Implements Trainer.
 
 import os
+import tensorflow as tf
 from ._cluster import Cluster
 from ._config import Configuration
 
@@ -68,7 +69,8 @@ class Trainer(object):
     """Creates an instance of a TensorFlow server.
     """
     if config.distributed:
-      raise NotImplementedError('Implement this')
+      return tf.train.Server(config.cluster, config.task.type, config.task.index,
+                             protocol='grpc')
 
     # For single node training, i.e. local only training, a TensorFlow server is not required.
     raise None
