@@ -15,40 +15,40 @@
 
 import unittest
 
-import tensorfx.data as tfxdata
+import tensorfx as tfx
 
 class TestCases(unittest.TestCase):
 
   def test_create_dataset(self):
-    source = tfxdata.DataSource('foo')
-    schema = tfxdata.Schema.create(tfxdata.SchemaField.integer('x'))
-    ds = tfxdata.DataSet.create(schema, source)
+    source = tfx.data.DataSource('foo')
+    schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
+    ds = tfx.data.DataSet.create(schema, source)
 
     self.assertEqual(ds['foo'], source)
     self.assertEqual(ds.foo, source)
 
   def test_create_multi_source_dataset(self):
-    train = tfxdata.DataSource('train')
-    eval = tfxdata.DataSource('eval')
-    schema = tfxdata.Schema.create(tfxdata.SchemaField.integer('x'),
-                                   tfxdata.SchemaField.real('y'))
-    ds = tfxdata.DataSet.create(schema, train, eval)
+    train = tfx.data.DataSource('train')
+    eval = tfx.data.DataSource('eval')
+    schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'),
+                                    tfx.data.SchemaField.real('y'))
+    ds = tfx.data.DataSet.create(schema, train, eval)
 
     self.assertEqual(ds['train'], train)
     self.assertEqual(ds.eval, eval)
 
   def test_empty_dataset_raises_error(self):
     with self.assertRaises(ValueError):
-      schema = tfxdata.Schema.create(tfxdata.SchemaField.integer('x'))
-      source = tfxdata.DataSet.create(schema)
+      schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
+      source = tfx.data.DataSet.create(schema)
 
   def test_mixed_datasources_raises_error(self):
-    class CustomDataSource(tfxdata.DataSource):
+    class CustomDataSource(tfx.data.DataSource):
       def __init__(self, name):
         super(CustomDataSource, self).__init__(name)
     
     with self.assertRaises(ValueError):
-      source1 = tfxdata.DataSource('foo')
+      source1 = tfx.data.DataSource('foo')
       source2 = CustomDataSource('bar')
-      schema = tfxdata.Schema.create(tfxdata.SchemaField.integer('x'))
-      ds = tfxdata.DataSet.create(schema, source1, source2)
+      schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
+      ds = tfx.data.DataSet.create(schema, source1, source2)

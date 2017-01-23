@@ -11,7 +11,7 @@
 # the License.
 
 # _builder.py
-# Implements the ModelBuilder base class.
+# Implements the GraphBuilder base class.
 
 import tensorflow as tf
 
@@ -25,17 +25,17 @@ def _create_interface(phase, graph, references):
   return type(phase + 'Interface', (object,), interface)
 
 
-class ModelBuilder(object):
-  """Builds model interfaces for different phases: training, evaluation and prediction.
+class GraphBuilder(object):
+  """Builds model graphs for different phases: training, evaluation and prediction.
 
-  A model interface encapsulates a TensorFlow graph, and references to various tensors and
-  graph ops within the graph.
+  A model graph is an interface that encapsulates a TensorFlow graph, and references to tensors and
+  ops within that graph.
 
-  A ModelBuilder serves as a base class for various models. Each specific model adds its specific
+  A GraphBuilder serves as a base class for various models. Each specific model adds its specific
   logic to build the required TensorFlow graph.
   """
   def training(self, args, dataset):
-    """Builds the training interface to use for training a model.
+    """Builds the training graph to use for training a model.
 
     Arguments:
       args: An args object containing all training job arguments including hyperparameters.
@@ -48,7 +48,7 @@ class ModelBuilder(object):
       return _create_interface('Training', graph, references)
 
   def evaluation(self, args, dataset):
-    """Builds the evaluation interface to use for evaluating a model.
+    """Builds the evaluation graph to use for evaluating a model.
 
     Arguments:
       args: An args object containing all training job arguments including hyperparameters.
@@ -61,12 +61,12 @@ class ModelBuilder(object):
       return _create_interface('Evaluation', graph, references)
 
   def prediction(self, args):
-    """Builds the prediction interface to use for predicting with a model.
+    """Builds the prediction graph to use for predicting with a model.
 
     Arguments:
       args: An args object containing all training job arguments including hyperparameters.
     Returns:
-      An evaluation interface consisting of a TensorFlow graph and associated tensors and ops.
+      A prediction interface consisting of a TensorFlow graph and associated tensors and ops.
     """
     with tf.Graph().as_default() as graph:
       references = self.build_prediction_graph(args)
@@ -74,6 +74,8 @@ class ModelBuilder(object):
 
   def build_training_graph(self, args, dataset):
     """Builds the graph to use for training a model.
+
+    This operates on the current default graph.
 
     Arguments:
       args: An args object containing all training job arguments including hyperparameters.

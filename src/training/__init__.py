@@ -14,10 +14,6 @@
 # tensorfx.training module declaration.
 
 from _config import Configuration
-from _cluster import Cluster
-from _task import ClusterTaskType
-from _task import ClusterTask
-from _task_ps import ParamServerTask
-from _task_worker import WorkerTask
-from _task_master import MasterTask
+from _builder import GraphBuilder
+from _runner import GraphRunner
 from _trainer import Trainer

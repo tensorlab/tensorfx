@@ -27,13 +27,10 @@ with open('requirements.txt') as rf:
 setuptools.setup(
   name='tensorfx',
   version=version,
-  namespace_packages=['tensorfx'],
   packages=[
-    'tensorfx.models',
     'tensorfx.data',
     'tensorfx.training',
-    'tensorfx.serving',
-    'tensorfx.toolbox'
+    'tensorfx.prediction'
   ],
   install_requires=dependencies,
   author='Nikhil Kothari',

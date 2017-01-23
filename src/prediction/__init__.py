@@ -10,20 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# _task_master.py
-# Implements MasterTask.
+# __init__.py
+# tensorfx.prediction module declaration.
 
-from ._task import ClusterTaskType
-from ._task_worker import WorkerTask
-
-
-class MasterTask(WorkerTask):
-  """Implements the worker task, which runs the training loop, checkpointing, logging and exporting.
-  """
-  def __init__(self, config):
-    """Initializes an instance of a MasterTask.
-
-    Arguments:
-      config: the training configuration.
-    """
-    super(MasterTask, self).__init__(config, type=ClusterTaskType.Master)
+from _model import Model

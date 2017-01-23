@@ -17,25 +17,25 @@ import json
 import os
 import unittest
 
-import tensorfx.training as tfxtraining
+import tensorfx as tfx
 
 class TestCases(unittest.TestCase):
 
   def test_local_config(self):
-    config = tfxtraining.Configuration.local()
+    config = tfx.training.Configuration.local()
 
     self.assertFalse(config.distributed)
     self.assertIsNone(config.cluster)
     self.assertIsNotNone(config.task)
-    self.assertEqual(config.task.type, tfxtraining.ClusterTaskType.Master.value)
+    self.assertEqual(config.task.type, 'master')
 
   def test_empty_env_config(self):
-    config = tfxtraining.Configuration.environment()
+    config = tfx.training.Configuration.environment()
 
     self.assertFalse(config.distributed)
     self.assertIsNone(config.cluster)
     self.assertIsNotNone(config.task)
-    self.assertEqual(config.task.type, tfxtraining.ClusterTaskType.Master.value)
+    self.assertEqual(config.task.type, 'master')
 
   def test_env_config(self):
     config = {
@@ -49,10 +49,10 @@ class TestCases(unittest.TestCase):
     }
     os.environ['TF_CONFIG'] = json.dumps(config)
 
-    config = tfxtraining.Configuration.environment()
+    config = tfx.training.Configuration.environment()
 
     self.assertTrue(config.distributed)
     self.assertIsNotNone(config.cluster)
     self.assertIsNotNone(config.task)
-    self.assertEqual(config.task.type, tfxtraining.ClusterTaskType.Master.value)
+    self.assertEqual(config.task.type, 'master')
 

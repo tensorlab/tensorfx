@@ -1,4 +1,4 @@
-# Copyright 2016 TensorLabs. All rights reserved.
+# Copyright 2016 TensorLab. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -10,6 +10,16 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# __init__.py
-# Tests functionality in the tensorfx models module
+# _runner.py
+# Implements the GraphRunner base class.
 
+import tensorflow as tf
+
+
+class GraphRunner(object):
+  """Implements the functionality to run graphs within a TensorFlow session.
+  """
+  def create_session(self, config):
+    """Creates the TensorFlow session to run a graph.
+    """
+    pass

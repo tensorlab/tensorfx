@@ -11,7 +11,9 @@
 # the License.
 
 # __init__.py
-# tensorfx namespace package declaration.
+# tensorfx module declaration.
 
-__import__('pkg_resources').declare_namespace(__name__)
+import tensorfx.data as data
+import tensorfx.training as training
+import tensorfx.prediction as prediction
 

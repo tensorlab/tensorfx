@@ -15,28 +15,37 @@
 
 import os
 import tensorflow as tf
-from ._cluster import Cluster
 from ._config import Configuration
+from ._runner import GraphRunner
+
+_TASK_PARAM_SERVER = 'ps'
+_TASK_WORKER = 'worker'
+_TASK_MASTER = 'master'
 
 
 class Trainer(object):
   """Provides the functionality to train a model during a training job.
   """
-  def __init__(self, model_builder, cluster=None):
+  def __init__(self, graph_builder, graph_runner=None, config=None):
     """Initializes an instance of a Trainer.
 
     Arguments:
-      model_builder: The ModelBuilder object that creates graphs representing the model.
-      cluster: An optional cluster providing the implementation of training tasks.
+      graph_builder: The GraphBuilder object that creates graphs representing the model.
+      graph_runner: The GraphRunner object that creates a session to run the graph.
+      config: an optional configuration providing information about the training job and cluster.
     """
-    if not cluster:
-      # Use default implementation of the Cluster and associated tasks.
-      cluster = Cluster()
+    if not graph_runner:
+      # Use default implementation of the GraphRunner.
+      graph_runner = GraphRunner()
+    if not config:
+      # By default, use the configuration specified in the TF_CONFIG environment variable.
+      config = Configuration.environment()
     
-    self._builder = model_builder
-    self._cluster = cluster
+    self._graph_builder = graph_builder
+    self._graph_runner = graph_runner
+    self._config = config
 
-  def train(self, args, dataset, output=None, config=None):
+  def train(self, args, dataset, output=None):
     """Runs the training process to train a model.
 
     In the case of master nodes (or single node training), the result is the trained model.
@@ -45,24 +54,63 @@ class Trainer(object):
       args: any arguments, including hyperparameters to parameterize the model to train.
       dataset: the training and evaluation data sources to use during training.
       output: an optional output location to produce checkpoints, summaries, and the model.
-      config: an optional configuration providing information about the training job and cluster.
     Returns:
       The result of training. The resulting value is only relevant for master nodes.
     """
     if not output:
       # If an output location is not specified, default to the current working directory
       output = os.getcwd()
-    if not config:
-      # By default, use the configuration specified in the TF_CONFIG environment variable.
-      config = Configuration.environment()
 
-    # TODO: Initialize logging levels, and logging handlers
+    self._init_tensorflow()
 
-    # Create the TensorFlow server. This is only needed for distributed training.
-    server = None
-    if config.distributed:
-      server = tf.train.Server(config.cluster, config.task.type, config.task.index,
-                               protocol='grpc')
+    server = self._create_server()
+    if server and self._config.task.type == _TASK_PARAM_SERVER:
+      return self._run_ps(server)
 
-    task = self._cluster.create_task(config)
-    return task.run(server, builder=self._builder, args=args, dataset=dataset, output=output)
+    return self._run_training(server, args, dataset, output)
+
+  def _create_server(self):
+    """Creates the TensorFlow server, which is required for distributed training.
+    """
+    if self._config.distributed:
+      return tf.train.Server(self._config.cluster, self._config.task.type, self._config.task.index,
+                             protocol='grpc')
+    else:
+      # A TensorFlow server is not required for non-distributed single process training
+      return None
+
+  def _init_tensorflow(self):
+    """Initializes the TensorFlow runtime.
+
+    This initializes global settings, such as logging.
+    """
+    pass
+
+  def _run_ps(self, server):
+    """Runs the parameter server task.
+
+    A ps task runs forever (until killed) using implementation within TensorFlow runtime.
+
+    Arguments:
+      server: the TensorFlow server.
+    """
+    try:
+      server.join()
+    except AbortError:
+      pass
+
+  def _run_training(self, server, args, dataset, output):
+    """Runs the worker and master tasks.
+
+    Worker and master tasks create a TensorFlow session, and run the session loop. The session
+    loop is customized via session hooks. A worker simply runs the training logic, while a master
+    is also responsible for producing and evaluating checkpoints, as well producing summary event
+    logs, and finally exporting the trained model.
+
+    Arguments:
+      server: the TensorFlow server.
+      args: any arguments, including hyperparameters to parameterize the model to train.
+      dataset: the training and evaluation data sources to use during training.
+      output: an optional output location to produce checkpoints, summaries, and the model.
+    """
+    pass
