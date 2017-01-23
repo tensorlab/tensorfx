@@ -14,5 +14,4 @@
 # tensorfx.models module declaration.
 
 from _model import Model
-from _graphs import ModelGraph, TrainingGraph, EvaluationGraph, PredictionGraph
-from _graphs import GraphBuilder
+from _builder import ModelBuilder

@@ -27,12 +27,29 @@ class WorkerTask(ClusterTask):
       config: the training configuration.
       type: the type of the task.
     """
-    super(ParamServerTask, self).__init__(config, type)
+    super(WorkerTask, self).__init__(config, type)
+    self.args = None
+    self.model_builder = None
+    self.dataset = None
+    self.output = None
 
   def run(self, server, **kwargs):
     """Runs the task.
 
     Arguments:
       server: the TensorFlow server.
+    """
+    self.args = kwargs.get('args')
+    self.dataset = kwargs.get('dataset')
+    self.output = kwargs.get('output')
+    self.builder = kwargs.get('builder')
+
+    self.training = self.builder.training(self.args, self.dataset)
+    with self.training.graph.as_default():
+      with self.create_session(server) as session:
+        pass
+
+  def create_session(self, server):
+    """Creates the TensorFlow session within the training task.
     """
     raise NotImplementedError('Implement this')

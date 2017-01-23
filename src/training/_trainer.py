@@ -22,18 +22,18 @@ from ._config import Configuration
 class Trainer(object):
   """Provides the functionality to train a model during a training job.
   """
-  def __init__(self, graph_builder, cluster=None):
+  def __init__(self, model_builder, cluster=None):
     """Initializes an instance of a Trainer.
 
     Arguments:
-      graph_builder: The GraphBuilder object that creates TensorFlow graphs representing the model.
+      model_builder: The ModelBuilder object that creates graphs representing the model.
       cluster: An optional cluster providing the implementation of training tasks.
     """
     if not cluster:
       # Use default implementation of the Cluster and associated tasks.
       cluster = Cluster()
     
-    self._graph_builder = graph_builder
+    self._builder = model_builder
     self._cluster = cluster
 
   def train(self, args, dataset, output=None, config=None):
@@ -56,21 +56,13 @@ class Trainer(object):
       # By default, use the configuration specified in the TF_CONFIG environment variable.
       config = Configuration.environment()
 
-    server = self._create_server(config)
-    task = self._cluster.create_task(config)
+    # TODO: Initialize logging levels, and logging handlers
 
-    return task.run(server,
-                    graph_builder=self._graph_builder,
-                    args=args,
-                    dataset=dataset,
-                    output=output)
-
-  def _create_server(self, config):
-    """Creates an instance of a TensorFlow server.
-    """
+    # Create the TensorFlow server. This is only needed for distributed training.
+    server = None
     if config.distributed:
-      return tf.train.Server(config.cluster, config.task.type, config.task.index,
-                             protocol='grpc')
+      server = tf.train.Server(config.cluster, config.task.type, config.task.index,
+                               protocol='grpc')
 
-    # For single node training, i.e. local only training, a TensorFlow server is not required.
-    raise None
+    task = self._cluster.create_task(config)
+    return task.run(server, builder=self._builder, args=args, dataset=dataset, output=output)
