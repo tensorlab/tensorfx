@@ -14,6 +14,5 @@
 # tensorfx.training module declaration.
 
 from _config import Configuration
-from _builder import GraphBuilder
-from _runner import GraphRunner
+from _model import ModelBuilder, ModelBuilderArguments
 from _trainer import Trainer
