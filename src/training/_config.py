@@ -17,6 +17,10 @@ import json
 import os
 import tensorflow as tf
 
+_TASK_PARAM_SERVER = 'ps'
+_TASK_WORKER = 'worker'
+_TASK_MASTER = 'master'
+
 
 class Configuration(object):
   """Contains configuration information for the training process.
@@ -98,3 +102,21 @@ class Configuration(object):
     If no job information is provided, this is None.
     """
     return self._task
+
+  @property
+  def master(self):
+    """Retrieves whether the current task is a master task.
+    """
+    return self._task.type == _TASK_MASTER
+
+  @property
+  def param_server(self):
+    """Retrieves whether the current task is a parameter server task.
+    """
+    return self._task.type == _TASK_PARAM_SERVER
+
+  @property
+  def worker(self):
+    """Retrieves whether the current task is a worker task.
+    """
+    return self._task.type == _TASK_WORKER

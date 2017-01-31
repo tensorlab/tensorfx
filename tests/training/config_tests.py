@@ -28,6 +28,7 @@ class TestCases(unittest.TestCase):
     self.assertIsNone(config.cluster)
     self.assertIsNotNone(config.task)
     self.assertEqual(config.task.type, 'master')
+    self.assertTrue(config.master)
 
   def test_empty_env_config(self):
     config = tfx.training.Configuration.environment()
@@ -36,6 +37,7 @@ class TestCases(unittest.TestCase):
     self.assertIsNone(config.cluster)
     self.assertIsNotNone(config.task)
     self.assertEqual(config.task.type, 'master')
+    self.assertTrue(config.master)
 
   def test_env_config(self):
     config = {
@@ -55,4 +57,5 @@ class TestCases(unittest.TestCase):
     self.assertIsNotNone(config.cluster)
     self.assertIsNotNone(config.task)
     self.assertEqual(config.task.type, 'master')
+    self.assertTrue(config.master)
 
