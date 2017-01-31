@@ -16,10 +16,10 @@
 import tensorflow as tf
 
 
-def _create_interface(phase, graph, references):
+def _create_interface(phase, graph, references, scaffold=None, hooks=None):
   """Creates an interface instance using a dynamic type with graph and references as attributes.
   """
-  interface = {'graph': graph}
+  interface = {'graph': graph, 'scaffold': scaffold, 'hooks': hooks}
   interface.update(references)
 
   return type(phase + 'Interface', (object,), interface)
@@ -101,8 +101,12 @@ class ModelBuilder(object):
       A training interface consisting of a TensorFlow graph and associated tensors and ops.
     """
     with tf.Graph().as_default() as graph:
-      references = self.build_training_graph()
-      return _create_interface('Training', graph, references)
+      hooks = []
+      references = self.build_training_graph(hooks)
+      # TODO: Initialize the scaffold object
+      scaffold = tf.train.Scaffold()
+
+      return _create_interface('Training', graph, references, scaffold, hooks)
 
   def evaluation(self):
     """Builds the evaluation graph to use for evaluating a model.
@@ -111,8 +115,12 @@ class ModelBuilder(object):
       An evaluation interface consisting of a TensorFlow graph and associated tensors and ops.
     """
     with tf.Graph().as_default() as graph:
-      references = self.build_evaluation_graph()
-      return _create_interface('Evaluation', graph, references)
+      hooks = []
+      references = self.build_evaluation_graph(hooks)
+      # TODO: Initialize the scaffold object
+      scaffold = tf.train.Scaffold()
+
+      return _create_interface('Evaluation', graph, references, scaffold, hooks)
 
   def prediction(self):
     """Builds the prediction graph to use for predicting with a model.
@@ -124,18 +132,24 @@ class ModelBuilder(object):
       references = self.build_prediction_graph()
       return _create_interface('Prediction', graph, references)
 
-  def build_training_graph(self):
+  def build_training_graph(self, hooks):
     """Builds the graph to use for training a model.
 
     This operates on the current default graph.
+
+    Arguments:
+      hooks: the list of session hooks to execute when training.
 
     Returns:
       The set of tensors and ops references required for training.
     """
     raise NotImplementedError()
 
-  def build_evaluation_graph(self):
+  def build_evaluation_graph(self, hooks):
     """Builds the graph to use for evaluating a model during training.
+
+    Arguments:
+      hooks: the list of session hooks to execute when evaluating.
 
     Returns:
       The set of tensors and ops references required for evaluation.

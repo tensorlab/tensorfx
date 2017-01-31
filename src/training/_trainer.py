@@ -20,10 +20,6 @@ import sys
 import tensorflow as tf
 from ._config import Configuration
 
-_TASK_PARAM_SERVER = 'ps'
-_TASK_WORKER = 'worker'
-_TASK_MASTER = 'master'
-
 
 class Trainer(object):
   """Provides the functionality to train a model during a training job.
@@ -50,7 +46,7 @@ class Trainer(object):
     self._server = None
     if config.distributed:
       self._server = self._create_tensorflow_server(config)
-      if config.task.type == _TASK_PARAM_SERVER:
+      if config.param_server:
         return self._run_ps()
 
     self._model_builder = self._create_model_builder(model_builder_type, args, config)
@@ -81,7 +77,7 @@ class Trainer(object):
       master = self._server.target if self._server else ''
       scaffold = training.scaffold
 
-      if self._model_builder.config.task.type == _TASK_MASTER:
+      if self._model_builder.config.master:
         checkpoints = os.path.join(self._model_builder.output, 'checkpoints')
         session_creator = tf.train.ChiefSessionCreator(scaffold, master, config, checkpoints)
       else:
@@ -94,25 +90,8 @@ class Trainer(object):
   def _create_model_builder(self, model_builder_type, args, config):
     """Creates the ModelBuilder that is used for training.
     """
-    # Parse arguments. Arguments include standard args (inputs and output) which are parsed out first.
-    # The remaining arguments are handled as custom args.
-    argparser = argparse.ArgumentParser(add_help=False)
-    argparser.add_argument('--train', dest='train', type=str, required=True)
-    argparser.add_argument('--eval', dest='eval', type=str, required=True)
-    argparser.add_argument('--job_dir', dest='output', type=str, default='')
-    std_args, custom_args = argparser.parse_known_args(args)
-
-    # TODO: Create the dataset object for input data.
-    dataset = None
-
-    # Use 'output' subdirectory of working directory, if the output location has not been specified.
-    output = std_args.output if std_args.output else os.path.join(os.getcwd(), 'output')
-
-    # By convention, custom or model specific args are used to initialize an Arguments object that
-    # is defined alongside the ModelBuilder in the same module.
-    model_builder_module = sys.modules[model_builder_type.__module__]
-    model_args_type = model_builder_module.__dict__[model_builder_type.__name__ + 'Arguments']
-    model_args = autocli.parse_object(model_args_type, custom_args)
+    dataset, output, model_args_list = self._parse_args(args)
+    model_args = self._parse_model_args(model_builder_type, model_args_list)
 
     return _model_builder.create(model_args, dataset, output, config)
 
@@ -134,3 +113,30 @@ class Trainer(object):
     """
     # TODO: Implement this
     pass
+
+  def _parse_args(self, args):
+    """Parses training arguments to produce standard and model-specific arguments.
+    """
+    # Arguments include standard args (inputs and output) which are parsed out first.
+    # The remaining arguments are handled as model-specific args.
+    argparser = argparse.ArgumentParser(add_help=False)
+    argparser.add_argument('--train', dest='train', type=str, required=True)
+    argparser.add_argument('--eval', dest='eval', type=str, required=True)
+    argparser.add_argument('--job_dir', dest='output', type=str,
+                           default=os.path.join(os.getcwd(), 'output'))
+    io_args, model_args = argparser.parse_known_args(args)
+
+    # TODO: Create the dataset object for input data.
+    dataset = None
+
+    return dataset, io_args.output, model_args
+
+  def _parse_model_args(self, model_builder_type, args):
+    """Parses model-specific arguments into an Arguments object.
+    """
+    # By convention, the model specific args list is used to initialize an Arguments object that
+    # is defined alongside the ModelBuilder in the same module.
+    model_builder_module = sys.modules[model_builder_type.__module__]
+    model_args_type = model_builder_module.__dict__[model_builder_type.__name__ + 'Arguments']
+
+    return autocli.parse_object(model_args_type, model_args_list)
