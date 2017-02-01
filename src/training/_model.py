@@ -101,10 +101,11 @@ class ModelBuilder(object):
       A training interface consisting of a TensorFlow graph and associated tensors and ops.
     """
     with tf.Graph().as_default() as graph:
-      hooks = []
-      references = self.build_training_graph(hooks)
-      # TODO: Initialize the scaffold object
+      references = self.build_training_graph()
+
+      # TODO: Initialize the scaffold object and hooks collection
       scaffold = tf.train.Scaffold()
+      hooks = []
 
       return _create_interface('Training', graph, references, scaffold, hooks)
 
@@ -115,12 +116,8 @@ class ModelBuilder(object):
       An evaluation interface consisting of a TensorFlow graph and associated tensors and ops.
     """
     with tf.Graph().as_default() as graph:
-      hooks = []
-      references = self.build_evaluation_graph(hooks)
-      # TODO: Initialize the scaffold object
-      scaffold = tf.train.Scaffold()
-
-      return _create_interface('Evaluation', graph, references, scaffold, hooks)
+      references = self.build_evaluation_graph()
+      return _create_interface('Evaluation', graph, references)
 
   def prediction(self):
     """Builds the prediction graph to use for predicting with a model.
@@ -132,29 +129,83 @@ class ModelBuilder(object):
       references = self.build_prediction_graph()
       return _create_interface('Prediction', graph, references)
 
-  def build_training_graph(self, hooks):
+  def build_training_graph(self):
     """Builds the graph to use for training a model.
 
     This operates on the current default graph.
 
-    Arguments:
-      hooks: the list of session hooks to execute when training.
-
     Returns:
       The set of tensors and ops references required for training.
     """
-    raise NotImplementedError()
+    with tf.name_scope('input'):
+      # For training, ensure the data is shuffled.
+      # The datasource to use is the one named as 'eval' within the dataset.
+      features, targets = self.build_input(self._dataset.train, shuffle=True)
+    
+    with tf.name_scope('inference'):
+      inferences = self.build_inference(features)
+    
+    with tf.name_scope('train'):
+      global_steps = tf.Variable(0, name='global_steps', trainable=False,
+                                 collections=[tf.GraphKeys.GLOBAL_VARIABLES,
+                                              tf.GraphKeys.GLOBAL_STEP])
+      loss, train_op = self.build_training(inferences, targets, global_steps)
 
-  def build_evaluation_graph(self, hooks):
+    # Create the summary op that will merge all summaries across all sub-graphs
+    summary_op = tf.merge_all_summaries()
+
+    # Create the saver that will be used to save all trained variables
+    saver = tf.train.Saver(tf.trainable_variables())
+
+    with tf.name_scope('initializations'):
+      init_op = self.build_init()
+
+    return {
+      'global_steps': global_steps,
+      'loss': loss,
+      'init_op': init_op,
+      'train_op': train_op,
+      'summary_op': summary_op,
+      'saver': saver
+    }
+
+  def build_evaluation_graph(self):
     """Builds the graph to use for evaluating a model during training.
-
-    Arguments:
-      hooks: the list of session hooks to execute when evaluating.
 
     Returns:
       The set of tensors and ops references required for evaluation.
     """
-    raise NotImplementedError()
+    with tf.name_scope('input'):
+      # For evaluation, compute the eval metric over a single pass over the evaluation data,
+      # and avoid any overhead from shuffling.
+      # The datasource to use is the one named as 'eval' within the dataset.
+      features, targets = self.build_input(self._dataset.eval, shuffle=False, epochs=1)
+
+    with tf.name_scope('inference'):
+      inferences = self.build_inference(features, training=False)
+
+    with tf.name_scope('output'):
+      predictions = self.build_output(inferences)
+
+    with tf.name_scope('evaluation'):
+      metric, eval_op = self.build_evaluation(predictions, targets)
+
+    # Create the summary op that will merge all summaries across all sub-graphs
+    summary_op = tf.merge_all_summaries()
+
+    # Create the saver that will be used to restore all trained variables
+    saver = tf.train.Saver(tf.trainable_variables())
+
+    with tf.name_scope('initialization'):
+      init_op = self.build_init()
+
+    return {
+      'metric': metric,
+      'init_op': init_op,
+      'eval_op': eval_op,
+      'summary_op': summary_op,
+      'saver': saver
+    }
 
   def build_prediction_graph(self):
     """Builds the graph to use for predictions with the trained model.
@@ -162,4 +213,96 @@ class ModelBuilder(object):
     Returns:
       The set of tensors and ops references required for prediction.
     """
-    raise NotImplementedError()
+    with tf.name_scope('input'):
+      features = self.build_input()
+
+    with tf.name_scope('inference'):
+      inferences = self.build_inference(features, training=False)
+
+    with tf.name_scope('output'):
+      predictions = self.build_output(inferences)
+
+    # Create the saver that will be used to restore all trained variables
+    saver = tf.train.Saver(tf.trainable_variables())
+
+    with tf.name_scope('initialization'):
+      init_op = self.build_init()
+
+    return {
+      'init_op': init_op,
+      'saver': saver
+    }
+
+  def build_init(self):
+    """Builds the initialization sub-graph
+
+    The default implementation creates an initialization op that initializes all variables,
+    locals, and tables.
+
+    Returns:
+      The init op to use to initialize the graph.
+    """
+    init_variables = tf.initialize_all_variables()
+    init_locals = tf.initialize_local_variables()
+    init_tables = tf.initialize_all_tables()
+
+    return tf.group(init_variables, init_locals, init_tables)
+
+  def build_input(self, datasource=None, shuffle=False, epochs=None):
+    """Builds the input sub-graph.
+
+    Arguments:
+      datasource: the data source to use for input (for training and evaluation).
+      shuffle: whether to shuffle the data.
+      epochs: the number of passes over the data.
+      prediction: whether the input sub-graph is being built for the prediction graph.
+    Returns:
+      A tuple consisting of features dictionary, and the targets (in case of training/evaluation)
+    """
+    # TODO: Delegate to datasource for input
+    raise NotImplementedError('Implement this')
+
+  def build_inference(self, features, training=True):
+    """Builds the inference sub-graph.
+
+    Arguments:
+      features: the dictionary of tensors corresponding to the input.
+      training: whether the inference sub-graph is being built for the training graph.
+    Returns:
+      The inference values.
+    """
+    raise NotImplementedError('build_inference must be implemented in a derived class.')
+
+  def build_training(self, inferences, targets, global_steps):
+    """Builds the training sub-graph.
+
+    Arguments:
+      inferences: the inference values.
+      targets: the target values to compare inferences to.
+      global_steps: the global steps variable to use.
+    Returns:
+      The loss tensor, and the training op.
+    """
+    raise NotImplementedError('build_training must be implemented in a derived class.')
+
+  def build_output(self, inferences):
+    """Builds the output sub-graph
+
+    Arguments:
+      inferences: the inference values.
+    Returns:
+      A dictionary consisting of the output prediction tensors.
+    """
+    raise NotImplementedError('build_output must be implemented in a derived class.')
+
+  def build_evaluation(self, predictions, targets):
+    """Builds the evaluation graph.abs
+
+    Arguments:
+      predictions: the dictionary containing output tensors.
+      targets: the expected target values.
+    Returns:
+      The eval metric tensor and the eval op.
+    """
+    raise NotImplementedError('build_evaluation must be implemented in a derived class.')
+  
