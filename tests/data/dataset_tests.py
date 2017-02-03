@@ -25,7 +25,6 @@ class TestCases(unittest.TestCase):
     ds = tfx.data.DataSet.create(schema, source)
 
     self.assertEqual(ds['foo'], source)
-    self.assertEqual(ds.foo, source)
 
   def test_create_multi_source_dataset(self):
     train = tfx.data.DataSource('train')
@@ -35,7 +34,7 @@ class TestCases(unittest.TestCase):
     ds = tfx.data.DataSet.create(schema, train, eval)
 
     self.assertEqual(ds['train'], train)
-    self.assertEqual(ds.eval, eval)
+    self.assertEqual(ds['eval'], eval)
 
   def test_empty_dataset_raises_error(self):
     with self.assertRaises(ValueError):
@@ -52,3 +51,46 @@ class TestCases(unittest.TestCase):
       source2 = CustomDataSource('bar')
       schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
       ds = tfx.data.DataSet.create(schema, source1, source2)
+
+  def test_parse_local_spec(self):
+    spec = {
+      'train': 'csv:/path/to/train.csv',
+      'eval': 'csv:/path/to/eval.csv'
+    }
+    schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
+
+    ds = tfx.data.DataSet.parse(schema, spec)
+    self.assertEqual(len(ds.sources), 2)
+    self.assertEqual(ds['train'].path, '/path/to/train.csv')
+    self.assertEqual(ds['eval'].path, '/path/to/eval.csv')
+
+  def test_parse_remote_spec(self):
+    spec = {
+      'train': 'csv:https://path/to/train.csv',
+      'eval': 'csv:https://path/to/eval.csv'
+    }
+    schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
+
+    ds = tfx.data.DataSet.parse(schema, spec)
+    self.assertEqual(len(ds), 2)
+    self.assertEqual(ds['train'].path, 'https://path/to/train.csv')
+    self.assertEqual(ds['eval'].path, 'https://path/to/eval.csv')
+
+  def test_parse_mixed_spec_raises_error(self):
+    class CustomDataSource(tfx.data.DataSource):
+      def __init__(self, name):
+        super(CustomDataSource, self).__init__(name)
+      @classmethod
+      def create(cls, name, scheme, path):
+        return cls(name)
+
+    tfx.data.DataSourceRegistry.register('custom', CustomDataSource)
+
+    spec = {
+      'train': 'csv:https://path/to/train.csv',
+      'eval': 'custom:foobar'
+    }
+    schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
+
+    with self.assertRaises(ValueError):
+      ds = tfx.data.DataSet.parse(schema, spec)

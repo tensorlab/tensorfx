@@ -13,6 +13,8 @@
 # _dataset.py
 # Implementation of DataSet and DataSource classes.
 
+import urlparse
+
 
 class DataSet(object):
   """A class representing data to be used within a job.
@@ -55,30 +57,28 @@ class DataSet(object):
     datasources = dict(map(lambda ds: (ds.name, ds), args))
     return cls(datasources, schema, kwargs.get('metadata', None), kwargs.get('features', None))
 
-  def __getattr__(self, attr):
-    """Retrieves a named DataSource within the DataSet.
+  @classmethod
+  def parse(cls, schema, sources, **kwargs):
+    """Creates a DataSet with the specified set of DataSource urls.
 
     Arguments:
-      attr: the name of the DataSource to retrieve.
+      schema: the description of the source data.
+      sources: A dictionary of urls keyed by strings representing the DataSource instances.
+      kwargs: optional information, such as metadata and features.
     Returns:
-      The DataSource if there is one with the specified name.
+      A DataSet containing the specified DataSource instances.
     Raises:
-      AttributeError if no such DataSource exists.
+      ValueError if the list of DataSources is empty, not-parseable or heterogenous.
     """
-    datasource = self._datasources.get(attr, None)
-    if datasource is None:
-      raise AttributeError
-    return datasource
+    source_list = []
+    for name, url in sources.iteritems():
+      datasource_type, scheme, path = DataSourceRegistry.lookup(url)
+      if not datasource_type:
+        raise ValueError('Unable to create a DataSource from "%s"' % url)
 
-  def __getitem__(self, index):
-    """Retrieves a named DataSource within the DataSet.
+      source_list.append(datasource_type.create(name, scheme, path))
 
-    Arguments:
-      index: the name of the DataSource to retrieve.
-    Returns:
-      The DataSource if there is one with the specified name; None otherwise.
-    """
-    return self._datasources.get(index, None)
+    return cls.create(schema, *source_list, **kwargs)
 
   @property
   def schema(self):
@@ -98,6 +98,27 @@ class DataSet(object):
     """
     return self._features
 
+  @property
+  def sources(self):
+    """Retrieves the names of the contained DataSource instances.
+    """
+    return self._datasources.keys()
+
+  def __getitem__(self, index):
+    """Retrieves a named DataSource within the DataSet.
+
+    Arguments:
+      index: the name of the DataSource to retrieve.
+    Returns:
+      The DataSource if there is one with the specified name; None otherwise.
+    """
+    return self._datasources.get(index, None)
+
+  def __len__(self):
+    """Retrieves the number of contained DataSource instances.
+    """
+    return len(self._datasources)
+
 
 class DataSource(object):
   """A base class representing data that can be read for use in a job.
@@ -116,3 +137,38 @@ class DataSource(object):
     """
     return self._name
 
+
+class DataSourceRegistry(object):
+  """Implements a registry of data source protocols to data source types.
+  """
+  _mapping = dict()
+
+  @staticmethod
+  def lookup(url):
+    """Looks up a data source type given a data source uri and the specified protocol.
+
+    Arguments:
+      url: the absolute uri defining the data source.
+    Returns:
+      The type of data source identified by the url, and the data source spec.
+    """
+    spec = urlparse.urlparse(url)
+    datasource_type = DataSourceRegistry._mapping.get(spec.scheme, None)
+
+    if datasource_type:
+      return datasource_type, spec.scheme, spec.path
+    else:
+      return None, None, None
+
+  @staticmethod
+  def register(scheme, type):
+    """Registers a data source type.
+
+    The data source must implement a classmethod named create that takes in
+    a string scheme and a string path identifying the data.
+
+    Arguments:
+      scheme: the protocol scheme in data source urls to associate this data source type with.
+      type: the data source type.
+    """
+    DataSourceRegistry._mapping[scheme] = type

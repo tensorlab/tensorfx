@@ -13,22 +13,48 @@
 # _ds_csv.py
 # Implementation of CsvDataSource.
 
-from ._dataset import DataSource
+from ._dataset import DataSource, DataSourceRegistry
+
 
 class CsvDataSource(DataSource):
   """A DataSource representing one or more csv files.
   """
-  def __init__(self, name, file, delimiter=',', header=False):
+  def __init__(self, name, path, delimiter=',', header=False):
     """Initializes an instance of a CsvDataSource with the specified csv file(s).
 
     Arguments:
       name: the name of the DataSource.
-      file: the csv file containing the data. This can be a pattern to represent a set of files.
+      path: the csv file containing the data. This can be a pattern to represent a set of files.
       delimiter: the delimiter character used.
       header: whether the file contains a header line that should be skipped.
     """
     super(CsvDataSource, self).__init__(name)
-    self._file = file
+    self._path = path
     self._delimiter = delimiter
     self._header = header
 
+  @classmethod
+  def create(cls, name, scheme, path):
+    """Creates an instance of the DataSource from its spec.
+
+    Arguments:
+      name: the name of the DataSource.
+      scheme: the scheme of the data parsed from a data source spec.
+      path: the path of the data parsed from a data source spec.
+    """
+    if scheme == 'csv':
+      return cls(name, path)
+    elif schem == 'tsv':
+      return cls(name, path, delimiter='\t')
+    else:
+      raise ValueError('Unknown scheme "%s"' % schema)
+
+  @property
+  def path(self):
+    """Retrives the path represented by the DataSource.
+    """
+    return self._path
+
+
+DataSourceRegistry.register('csv', CsvDataSource)
+DataSourceRegistry.register('tsv', CsvDataSource)
