@@ -11,11 +11,11 @@
 # the License.
 
 # dataset_tests.py
-# Tests dataset related functionality in tensorfx.
+# Tests Dataset related functionality in tensorfx.data.
 
 import unittest
-
 import tensorfx as tfx
+
 
 class TestCases(unittest.TestCase):
 

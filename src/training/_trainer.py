@@ -21,6 +21,8 @@ import tensorflow as tf
 import tensorfx as tfx
 from ._config import Configuration
 
+from tensorflow.python.lib.io import file_io as tfio
+
 
 class Trainer(object):
   """Provides the functionality to train a model during a training job.
@@ -121,11 +123,11 @@ class Trainer(object):
     # Arguments include standard args (inputs and output) which are parsed out first.
     # The remaining arguments are handled as model-specific args.
     argparser = argparse.ArgumentParser(add_help=False)
-    argparser.add_argument('--train', type=str, required=True)
-    argparser.add_argument('--eval', type=str, required=True)
+    argparser.add_argument('--train_data', dest='train', type=str, required=True)
+    argparser.add_argument('--eval_data', dest='eval', type=str, required=True)
     argparser.add_argument('--schema', type=str, required=True)
-    argparser.add_argument('--metadata', type=str, required=False)
-    argparser.add_argument('--features', type=str, required=False)
+    argparser.add_argument('--metadata', type=str, required=False, default=None)
+    argparser.add_argument('--features', type=str, required=False, default=None)
     argparser.add_argument('--job_dir', dest='output', type=str,
                            default=os.path.join(os.getcwd(), 'output'))
     io_args, model_args = argparser.parse_known_args(args)
@@ -134,9 +136,13 @@ class Trainer(object):
       'train': io_args.train,
       'eval': io_args.eval
     }
-    dataset = tfx.Data.DataSet.parse(args.schema, datasources,
-                                     metadata=args.metadata,
-                                     features=args.features)
+    schema_spec = tfio.read_file_to_string(io_args.schema)
+    metadata = tfio.read_file_to_string(io_args.metadata) if io_args.metadata else None
+    features = tfio.read_file_to_string(io_args.features) if io_args.features else None
+
+    dataset = tfx.Data.DataSet.parse(schema_spec, datasources,
+                                     metadata=metadata,
+                                     features=features)
 
     return dataset, io_args.output, model_args
 

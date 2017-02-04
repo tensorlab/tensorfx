@@ -14,6 +14,8 @@
 # Implementation of Schema and related classes.
 
 import enum
+import yaml
+
 
 class SchemaFieldType(enum.Enum):
   """Defines the types of SchemaField instances.
@@ -107,6 +109,9 @@ class Schema(object):
     Arguments:
       fields: a list of fields representing an ordered set of columns.
     """
+    if not len(fields):
+      raise ValueError('One or more fields must be specified')
+
     self._fields = fields
     self._field_set = dict(map(lambda f: (f.name, f), fields))
 
@@ -116,6 +121,8 @@ class Schema(object):
 
     Arguments:
       args: a list or sequence of ordered fields defining the schema.
+    Returns:
+      A Schema instance.
     """
     if not len(args):
       raise ValueError('One or more fields must be specified.')
@@ -125,20 +132,27 @@ class Schema(object):
     else:
       return cls(list(args))
 
-  def __getattr__(self, attr):
-    """Retrieves the specified SchemaField by name.
+  @classmethod
+  def parse(cls, spec):
+    """Parses a Schema from a YAML specification.
 
     Arguments:
-      attr: the name of the SchemaField to retrieve.
+      spec: The schema specification to parse.
     Returns:
-      The SchemaField with the specified name.
-    Raises:
-      AttributeError if the specified name is not found.
+      A Schema instance.
     """
-    field = self._field_set.get(attr, None)
-    if field is None:
-      raise AttributeError
-    return field
+    if isinstance(spec, Schema):
+      return spec
+
+    spec = yaml.safe_load(spec)
+    fields = map(lambda f: SchemaField(f['name'], SchemaFieldType[f['type']]), spec['fields'])
+    return cls(fields)
+
+  @property
+  def fields(self):
+    """Retrieve the names of the fields in the schema.
+    """
+    return map(lambda f: f.name, self._fields)
 
   def __getitem__(self, index):
     """Retrives the specified SchemaField by name or position.

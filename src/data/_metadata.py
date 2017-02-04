@@ -13,6 +13,9 @@
 # _metadata.py
 # Implementation of Metadata.
 
+import ujson
+
+
 class Metadata(object):
   """This class encapsulates metadata for individual fields within a dataset.
 
@@ -27,15 +30,17 @@ class Metadata(object):
     """
     self._md = md
 
-  def __getattr__(self, attr):
-    """Retrieves the metadata of the specified field by name.
+  @classmethod
+  def parse(cls, metadata):
+    """Parses a Metadata instance from a JSON specification.
 
     Arguments:
-      attr: the name of the field whose metadata is to be retrieved.
+      metadata: The metadata to parse.
     Returns:
-      The metadata dictionary for the specified field, or an empty dictionary.
+      A Metadata instance.
     """
-    return self._md.get(attr, {})
+    md = ujson.loads(metadata)
+    return cls(md)
 
   def __getitem__(self, index):
     """Retrieves the metadata of the specified field by name.

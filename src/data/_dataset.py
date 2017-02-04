@@ -14,6 +14,9 @@
 # Implementation of DataSet and DataSource classes.
 
 import urlparse
+from ._schema import Schema
+from ._metadata import Metadata
+from ._features import FeatureSet
 
 
 class DataSet(object):
@@ -70,6 +73,8 @@ class DataSet(object):
     Raises:
       ValueError if the list of DataSources is empty, not-parseable or heterogenous.
     """
+    schema = Schema.parse(schema)
+
     source_list = []
     for name, url in sources.iteritems():
       datasource_type, scheme, path = DataSourceRegistry.lookup(url)
@@ -78,7 +83,13 @@ class DataSet(object):
 
       source_list.append(datasource_type.create(name, scheme, path))
 
-    return cls.create(schema, *source_list, **kwargs)
+    metadata = kwargs.get('metadata', None)
+    metadata = Metadata.parse(metadata) if metadata else None
+
+    features = kwargs.get('features', None)
+    features = FeatureSet.parse(features) if features else None
+
+    return cls.create(schema, *source_list, metadata=metadata, features=features)
 
   @property
   def schema(self):

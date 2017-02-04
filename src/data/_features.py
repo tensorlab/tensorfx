@@ -13,6 +13,8 @@
 # _features.py
 # Implementation of FeatureSet and related class.
 
+import yaml
+
 
 class Feature(object):
   """Defines a named feature within a FeatureSet.
@@ -55,20 +57,17 @@ class FeatureSet(object):
     self._features = features
     self._feature_map = dict(map(lambda f: (f.name, f), features))
 
-  def __getattr__(self, attr):
-    """Retrieves the specified Feature by name.
+  @classmethod
+  def parse(cls, spec):
+    """Parses a FeatureSet from a YAML specification.
 
     Arguments:
-      attr: the name of the Feature to retrieve.
+      spec: The feature specification to parse.
     Returns:
-      The Feature with the specified name.
-    Raises:
-      AttributeError if the specified name is not found.
+      A FeatureSet instance.
     """
-    feature = self._feature_map.get(attr, None)
-    if feature is None:
-      raise AttributeError
-    return feature
+    # TODO: Implement this
+    return None
 
   def __getitem__(self, index):
     """Retrives the specified SchemaField by name or position.
