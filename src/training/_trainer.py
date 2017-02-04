@@ -18,6 +18,7 @@ import autocli
 import os
 import sys
 import tensorflow as tf
+import tensorfx as tfx
 from ._config import Configuration
 
 
@@ -120,14 +121,22 @@ class Trainer(object):
     # Arguments include standard args (inputs and output) which are parsed out first.
     # The remaining arguments are handled as model-specific args.
     argparser = argparse.ArgumentParser(add_help=False)
-    argparser.add_argument('--train', dest='train', type=str, required=True)
-    argparser.add_argument('--eval', dest='eval', type=str, required=True)
+    argparser.add_argument('--train', type=str, required=True)
+    argparser.add_argument('--eval', type=str, required=True)
+    argparser.add_argument('--schema', type=str, required=True)
+    argparser.add_argument('--metadata', type=str, required=False)
+    argparser.add_argument('--features', type=str, required=False)
     argparser.add_argument('--job_dir', dest='output', type=str,
                            default=os.path.join(os.getcwd(), 'output'))
     io_args, model_args = argparser.parse_known_args(args)
 
-    # TODO: Create the dataset object for input data.
-    dataset = None
+    datasources = {
+      'train': io_args.train,
+      'eval': io_args.eval
+    }
+    dataset = tfx.Data.DataSet.parse(args.schema, datasources,
+                                     metadata=args.metadata,
+                                     features=args.features)
 
     return dataset, io_args.output, model_args
 
