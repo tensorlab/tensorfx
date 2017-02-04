@@ -2,5 +2,6 @@
 # pip install -r requirements.txt
 #
 
-enum34>=1.1.6,<1.2
+argparse==1.1
 autocli==0.6
+enum34>=1.1.6,<1.2
