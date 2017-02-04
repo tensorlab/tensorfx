@@ -126,8 +126,8 @@ class Trainer(object):
     argparser.add_argument('--train_data', dest='train', type=str, required=True)
     argparser.add_argument('--eval_data', dest='eval', type=str, required=True)
     argparser.add_argument('--schema', type=str, required=True)
+    argparser.add_argument('--features', type=str, required=True)
     argparser.add_argument('--metadata', type=str, required=False, default=None)
-    argparser.add_argument('--features', type=str, required=False, default=None)
     argparser.add_argument('--job_dir', dest='output', type=str,
                            default=os.path.join(os.getcwd(), 'output'))
     io_args, model_args = argparser.parse_known_args(args)
@@ -137,8 +137,8 @@ class Trainer(object):
       'eval': io_args.eval
     }
     schema_spec = tfio.read_file_to_string(io_args.schema)
+    features = tfio.read_file_to_string(io_args.features)
     metadata = tfio.read_file_to_string(io_args.metadata) if io_args.metadata else None
-    features = tfio.read_file_to_string(io_args.features) if io_args.features else None
 
     dataset = tfx.Data.DataSet.parse(schema_spec, datasources,
                                      metadata=metadata,

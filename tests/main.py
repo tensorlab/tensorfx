@@ -23,11 +23,13 @@ sys.path.append(os.path.abspath(os.path.join(__file__, '../..')))
 # Load the test modules
 import data.dataset_tests
 import data.schema_tests
+import data.features_tests
 import training.config_tests
 
 _TEST_MODULES = [
   data.dataset_tests,
   data.schema_tests,
+  data.features_tests,
   training.config_tests
 ]
 
