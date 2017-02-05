@@ -14,7 +14,6 @@
 # Implementation of DataSet and DataSource classes.
 
 import tensorflow as tf
-import urlparse
 from ._schema import Schema
 from ._metadata import Metadata
 from ._features import FeatureSet
@@ -115,20 +114,19 @@ class DataSet(object):
     """
     schema = Schema.parse(schema)
 
-    data_format = spec['format']
-    dataset_type = DataSetRegistry.lookup(data_format)
-
-    sources = []
-    for name, path in spec['sources'].iteritems():
-      sources.append(dataset_type.create_datasource(data_format, name, path))
-
     metadata = kwargs.get('metadata', None)
     metadata = Metadata.parse(metadata) if metadata else None
 
     features = kwargs.get('features', None)
     features = FeatureSet.parse(features) if features else None
 
-    return dataset_type.create(schema, *sources, metadata=metadata, features=features)
+    data_format = spec['format']
+    dataset_type = DataSetRegistry.lookup(data_format)
+    data_sources = []
+    for name, path in spec['sources'].iteritems():
+      data_sources.append(dataset_type.create_datasource(data_format, name, path))
+
+    return dataset_type.create(schema, *data_sources, metadata=metadata, features=features)
 
   def parse_instances(self, instances):
     """Parses input instances according to the associated schema, metadata and features.
@@ -138,8 +136,6 @@ class DataSet(object):
     Returns:
       A dictionary of tensors key'ed by feature names.
     """
-    with tf.name_scope('parse'):
-      pass
     raise NotImplementedError()
 
 
@@ -172,24 +168,23 @@ class DataSource(object):
     Returns:
       A tensor containing a list of instances read.
     """
-    with tf.name_scope('read'):
-      instances = self.read_instances(epochs)
+    instances = self.read_instances(epochs)
 
-      queue_capacity = (threads + 3) * batch
-      if shuffle:
-        queue_capacity = queue_capacity + shuffle_buffer
-        return tf.train.shuffle_batch([instances],
-                                      batch_size=batch, allow_smaller_final_batch=True,
-                                      enqueue_many=True,
-                                      capacity=queue_capacity,
-                                      min_after_dequeue=min_after_dequeue,
-                                      num_threads=threads,
-                                      name='shuffle_batch')
-      else:
-        return tf.train.batch([instances], batch_size=batch, allow_smaller_final_batch=True,
-                              enqueue_many=True, capacity=queue_capacity,
-                              num_threads=threads,
-                              name='batch')
+    queue_capacity = (threads + 3) * batch
+    if shuffle:
+      queue_capacity = queue_capacity + shuffle_buffer
+      return tf.train.shuffle_batch([instances],
+                                    batch_size=batch, allow_smaller_final_batch=True,
+                                    enqueue_many=True,
+                                    capacity=queue_capacity,
+                                    min_after_dequeue=min_after_dequeue,
+                                    num_threads=threads,
+                                    name='shuffle_batch')
+    else:
+      return tf.train.batch([instances], batch_size=batch, allow_smaller_final_batch=True,
+                            enqueue_many=True, capacity=queue_capacity,
+                            num_threads=threads,
+                            name='batch')
 
   def read_instances(self, epochs=0):
     """Reads the data represented by this DataSource using a TensorFlow reader.

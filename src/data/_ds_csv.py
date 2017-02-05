@@ -49,6 +49,17 @@ class CsvDataSet(DataSet):
     else:
       raise ValueError('Unexpected format "%s"' % format)
 
+  def parse_instances(self, instances):
+    """Parses input instances according to the associated schema, metadata and features.
+
+    Arguments:
+      instances: The tensor containing input strings.
+    Returns:
+      A dictionary of tensors key'ed by feature names.
+    """
+    raise NotImplementedError()
+
+
 DataSetRegistry.register('csv', CsvDataSet)
 DataSetRegistry.register('tsv', CsvDataSet)
 

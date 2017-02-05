@@ -120,8 +120,8 @@ class FeatureSet(object):
     self._features = features
     self._feature_map = dict(map(lambda f: (f.name, f), features))
 
-  @classmethod
-  def create(cls, *args):
+  @staticmethod
+  def create(*args):
     """Creates a FeatureSet from a set of features.
 
     Arguments:
@@ -133,12 +133,12 @@ class FeatureSet(object):
       raise ValueError('One or more features must be specified.')
 
     if type(args[0]) == list:
-      return cls(args[0])
+      return FeatureSet(args[0])
     else:
-      return cls(list(args))
+      return FeatureSet(list(args))
 
-  @classmethod
-  def parse(cls, spec):
+  @staticmethod
+  def parse(spec):
     """Parses a FeatureSet from a YAML specification.
 
     Arguments:
@@ -163,7 +163,7 @@ class FeatureSet(object):
       feature = Feature(f['name'], FeatureType[f['type']], fields,f.get('transform', None))
       features.append(feature)
 
-    return cls(features)
+    return FeatureSet(features)
 
   def __getitem__(self, index):
     """Retrives the specified SchemaField by name or position.

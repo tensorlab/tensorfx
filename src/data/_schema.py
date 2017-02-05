@@ -115,8 +115,8 @@ class Schema(object):
     self._fields = fields
     self._field_set = dict(map(lambda f: (f.name, f), fields))
 
-  @classmethod
-  def create(cls, *args):
+  @staticmethod
+  def create(*args):
     """Creates a Schema from a set of fields.
 
     Arguments:
@@ -128,12 +128,12 @@ class Schema(object):
       raise ValueError('One or more fields must be specified.')
 
     if type(args[0]) == list:
-      return cls(args[0])
+      return Schema(args[0])
     else:
-      return cls(list(args))
+      return Schema(list(args))
 
-  @classmethod
-  def parse(cls, spec):
+  @staticmethod
+  def parse(spec):
     """Parses a Schema from a YAML specification.
 
     Arguments:
@@ -146,7 +146,7 @@ class Schema(object):
 
     spec = yaml.safe_load(spec)
     fields = map(lambda f: SchemaField(f['name'], SchemaFieldType[f['type']]), spec['fields'])
-    return cls(fields)
+    return Schema(fields)
 
   @property
   def fields(self):

@@ -30,8 +30,8 @@ class Metadata(object):
     """
     self._md = md
 
-  @classmethod
-  def parse(cls, metadata):
+  @staticmethod
+  def parse(metadata):
     """Parses a Metadata instance from a JSON specification.
 
     Arguments:
@@ -40,7 +40,7 @@ class Metadata(object):
       A Metadata instance.
     """
     md = ujson.loads(metadata)
-    return cls(md)
+    return Metadata(md)
 
   def __getitem__(self, index):
     """Retrieves the metadata of the specified field by name.
