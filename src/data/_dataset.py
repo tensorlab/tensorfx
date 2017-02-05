@@ -128,11 +128,12 @@ class DataSet(object):
 
     return dataset_type.create(schema, *data_sources, metadata=metadata, features=features)
 
-  def parse_instances(self, instances):
+  def parse_instances(self, instances, prediction=False):
     """Parses input instances according to the associated schema, metadata and features.
 
     Arguments:
       instances: The tensor containing input strings.
+      prediction: Whether the instances are being parsed for producing predictions or not.
     Returns:
       A dictionary of tensors key'ed by feature names.
     """

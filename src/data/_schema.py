@@ -167,6 +167,12 @@ class Schema(object):
     else:
       return self._field_set.get(index, None)
 
+  def __iter__(self):
+    """Creates an iterator to iterate over the fields.
+    """
+    for field in self._fields:
+      yield field
+
   def __len__(self):
     """Retrieves the number of SchemaFields defined.
     """

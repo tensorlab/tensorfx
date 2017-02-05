@@ -15,6 +15,7 @@
 
 import tensorflow as tf
 from ._dataset import DataSet, DataSource, DataSetRegistry
+from ._schema import SchemaFieldType
 
 
 class CsvDataSet(DataSet):
@@ -49,15 +50,51 @@ class CsvDataSet(DataSet):
     else:
       raise ValueError('Unexpected format "%s"' % format)
 
-  def parse_instances(self, instances):
+  def parse_instances(self, instances, prediction=False):
     """Parses input instances according to the associated schema, metadata and features.
 
     Arguments:
       instances: The tensor containing input strings.
+      prediction: Whether the instances are being parsed for producing predictions or not.
     Returns:
       A dictionary of tensors key'ed by feature names.
     """
-    raise NotImplementedError()
+    if prediction:
+      # For training and evaluation data, the expectation is the target column is always present.
+      # For prediction however, the target may or may not be present.
+      # - In true prediction use-cases, the target is unknown and never present.
+      # - In prediction for model evaluation use-cases, the target is present.
+      # To use a single prediction graph, the missing target needs to be detected by comparing
+      # number of columns in instances with number of columns defined in the schema. If there are
+      # fewer columns, then prepend a ',' (with assumption that target is always the first column).
+      #
+      # To get the number of columns in instances, split on the ',' on the first instance, and use
+      # the first dimension of the shape of the resulting substring values.
+      columns = tf.shape(tf.string_split([instances[0]], delimiter=',').values)[0]
+      instances = tf.cond(tf.less(columns, len(self.schema)),
+                          lambda: tf.string_join([tf.constant(','), instances]),
+                          lambda: instances)
+
+    # Convert the schema into a set of tensor defaults, to be used for parsing csv data.
+    defaults = []
+    for field in self.schema:
+      if field.type == SchemaFieldType.integer:
+        field_default = tf.constant(0, dtype=tf.int64)
+      elif field.type == SchemaFieldType.real:
+        field_default = tf.constant(0.0, dtype=tf.float32)
+      else:
+        # discrete, text, binary
+        field_default = tf.constant('', dtype=tf.string)
+      defaults.append(field_default)
+
+    values = tf.decode_csv(instances, defaults)
+
+    # TODO: Factor in features and metadata
+    features = {}
+    for field, value in zip(self.schema, values):
+      features[field.name] = value
+
+    return features
 
 
 DataSetRegistry.register('csv', CsvDataSet)
