@@ -54,8 +54,11 @@ class TestCases(unittest.TestCase):
 
   def test_parse_local_spec(self):
     spec = {
-      'train': 'csv:/path/to/train.csv',
-      'eval': 'csv:/path/to/eval.csv'
+      'format': 'csv',
+      'sources': {
+        'train': '/path/to/train.csv',
+        'eval': '/path/to/eval.csv'
+      }
     }
     schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
 
@@ -66,8 +69,11 @@ class TestCases(unittest.TestCase):
 
   def test_parse_remote_spec(self):
     spec = {
-      'train': 'csv:https://path/to/train.csv',
-      'eval': 'csv:https://path/to/eval.csv'
+      'format': 'csv',
+      'sources': {
+        'train': 'https://path/to/train.csv',
+        'eval': 'https://path/to/eval.csv'
+      }
     }
     schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
 
@@ -75,22 +81,3 @@ class TestCases(unittest.TestCase):
     self.assertEqual(len(ds), 2)
     self.assertEqual(ds['train'].path, 'https://path/to/train.csv')
     self.assertEqual(ds['eval'].path, 'https://path/to/eval.csv')
-
-  def test_parse_mixed_spec_raises_error(self):
-    class CustomDataSource(tfx.data.DataSource):
-      def __init__(self, name):
-        super(CustomDataSource, self).__init__(name)
-      @classmethod
-      def create(cls, name, scheme, path):
-        return cls(name)
-
-    tfx.data.DataSourceRegistry.register('custom', CustomDataSource)
-
-    spec = {
-      'train': 'csv:https://path/to/train.csv',
-      'eval': 'custom:foobar'
-    }
-    schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
-
-    with self.assertRaises(ValueError):
-      ds = tfx.data.DataSet.parse(schema, spec)

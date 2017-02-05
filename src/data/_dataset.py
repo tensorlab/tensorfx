@@ -61,37 +61,6 @@ class DataSet(object):
     datasources = dict(map(lambda ds: (ds.name, ds), args))
     return cls(datasources, schema, kwargs.get('metadata', None), kwargs.get('features', None))
 
-  @classmethod
-  def parse(cls, schema, sources, **kwargs):
-    """Creates a DataSet with the specified set of DataSource urls.
-
-    Arguments:
-      schema: the description of the source data.
-      sources: A dictionary of urls keyed by strings representing the DataSource instances.
-      kwargs: optional information, such as metadata and features.
-    Returns:
-      A DataSet containing the specified DataSource instances.
-    Raises:
-      ValueError if the list of DataSources is empty, not-parseable or heterogenous.
-    """
-    schema = Schema.parse(schema)
-
-    source_list = []
-    for name, url in sources.iteritems():
-      datasource_type, scheme, path = DataSourceRegistry.lookup(url)
-      if not datasource_type:
-        raise ValueError('Unable to create a DataSource from "%s"' % url)
-
-      source_list.append(datasource_type.create(name, scheme, path))
-
-    metadata = kwargs.get('metadata', None)
-    metadata = Metadata.parse(metadata) if metadata else None
-
-    features = kwargs.get('features', None)
-    features = FeatureSet.parse(features) if features else None
-
-    return cls.create(schema, *source_list, metadata=metadata, features=features)
-
   @property
   def schema(self):
     """Retrives the schema associated with the DataSet.
@@ -131,7 +100,37 @@ class DataSet(object):
     """
     return len(self._datasources)
 
-  def parse(self, instances):
+  @staticmethod
+  def parse(schema, spec, **kwargs):
+    """Creates a DataSet with the specified set of DataSource urls.
+
+    Arguments:
+      schema: the description of the source data.
+      spec: A specification of the DataSet.
+      kwargs: optional information, such as metadata and features.
+    Returns:
+      A DataSet containing the specified DataSource instances.
+    Raises:
+      ValueError if the list of DataSources is empty, not-parseable or heterogenous.
+    """
+    schema = Schema.parse(schema)
+
+    data_format = spec['format']
+    dataset_type = DataSetRegistry.lookup(data_format)
+
+    sources = []
+    for name, path in spec['sources'].iteritems():
+      sources.append(dataset_type.create_datasource(data_format, name, path))
+
+    metadata = kwargs.get('metadata', None)
+    metadata = Metadata.parse(metadata) if metadata else None
+
+    features = kwargs.get('features', None)
+    features = FeatureSet.parse(features) if features else None
+
+    return dataset_type.create(schema, *sources, metadata=metadata, features=features)
+
+  def parse_instances(self, instances):
     """Parses input instances according to the associated schema, metadata and features.
 
     Arguments:
@@ -203,37 +202,31 @@ class DataSource(object):
     raise NotImplementedError('read_instances must be implemented in a derived class.')
 
 
-class DataSourceRegistry(object):
-  """Implements a registry of data source protocols to data source types.
+class DataSetRegistry(object):
+  """Implements a registry of dataset formats to dataset types.
   """
   _mapping = dict()
 
   @staticmethod
-  def lookup(url):
-    """Looks up a data source type given a data source uri and the specified protocol.
+  def lookup(format):
+    """Looks up a dataset by a registered format name.
 
     Arguments:
-      url: the absolute uri defining the data source.
+      type: the type of dataset to lookup.
     Returns:
-      The type of data source identified by the url, and the data source spec.
+      The type of DataSet identified by the format, or None if not found.
     """
-    spec = urlparse.urlparse(url)
-    datasource_type = DataSourceRegistry._mapping.get(spec.scheme, None)
-
-    if datasource_type:
-      return datasource_type, spec.scheme, spec.path
-    else:
-      return None, None, None
+    return DataSetRegistry._mapping.get(format, None)
 
   @staticmethod
-  def register(scheme, type):
-    """Registers a data source type.
+  def register(format, type):
+    """Registers a DataSet type.
 
-    The data source must implement a classmethod named create that takes in
-    a string scheme and a string path identifying the data.
+    The DataSet type must have a static create_datasource method that accepts a format, name, and
+    path and returns a DataSource instance.
 
     Arguments:
-      scheme: the protocol scheme in data source urls to associate this data source type with.
+      format: the data format to associate this DataSet type with.
       type: the data source type.
     """
-    DataSourceRegistry._mapping[scheme] = type
+    DataSetRegistry._mapping[format] = type
