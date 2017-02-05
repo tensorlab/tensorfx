@@ -13,6 +13,7 @@
 # _dataset.py
 # Implementation of DataSet and DataSource classes.
 
+import tensorflow as tf
 import urlparse
 from ._schema import Schema
 from ._metadata import Metadata
@@ -130,6 +131,18 @@ class DataSet(object):
     """
     return len(self._datasources)
 
+  def parse(self, instances):
+    """Parses input instances according to the associated schema, metadata and features.
+
+    Arguments:
+      instances: The tensor containing input strings.
+    Returns:
+      A dictionary of tensors key'ed by feature names.
+    """
+    with tf.name_scope('parse'):
+      pass
+    raise NotImplementedError()
+
 
 class DataSource(object):
   """A base class representing data that can be read for use in a job.
@@ -147,6 +160,47 @@ class DataSource(object):
     """Retrieves the name of the DataSource.
     """
     return self._name
+
+  def read(self, batch=128, shuffle=False, shuffle_buffer=1000, epochs=0, threads=1):
+    """Reads the data represented by this DataSource using a TensorFlow reader.
+
+    Arguments:
+      batch: The number of records to read at a time.
+      shuffle: Whether to shuffle the list of files.
+      shuffle_buffer: When shuffling, the number of extra items to keep in the queue for randomness.
+      epochs: The number of epochs or passes over the data to perform.
+      threads: the number of threads to use to read from the queue.
+    Returns:
+      A tensor containing a list of instances read.
+    """
+    with tf.name_scope('read'):
+      instances = self.read_instances(epochs)
+
+      queue_capacity = (threads + 3) * batch
+      if shuffle:
+        queue_capacity = queue_capacity + shuffle_buffer
+        return tf.train.shuffle_batch([instances],
+                                      batch_size=batch, allow_smaller_final_batch=True,
+                                      enqueue_many=True,
+                                      capacity=queue_capacity,
+                                      min_after_dequeue=min_after_dequeue,
+                                      num_threads=threads,
+                                      name='shuffle_batch')
+      else:
+        return tf.train.batch([instances], batch_size=batch, allow_smaller_final_batch=True,
+                              enqueue_many=True, capacity=queue_capacity,
+                              num_threads=threads,
+                              name='batch')
+
+  def read_instances(self, epochs=0):
+    """Reads the data represented by this DataSource using a TensorFlow reader.
+
+    Arguments:
+      epochs: The number of epochs or passes over the data to perform.
+    Returns:
+      A tensor containing instances that are read.
+    """
+    raise NotImplementedError('read_instances must be implemented in a derived class.')
 
 
 class DataSourceRegistry(object):

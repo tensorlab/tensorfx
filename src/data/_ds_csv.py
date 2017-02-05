@@ -13,7 +13,8 @@
 # _ds_csv.py
 # Implementation of CsvDataSource.
 
-from ._dataset import DataSource, DataSourceRegistry
+import tensorflow as tf
+from ._dataset import DataSet, DataSource, DataSourceRegistry
 
 
 class CsvDataSource(DataSource):
@@ -54,6 +55,25 @@ class CsvDataSource(DataSource):
     """Retrives the path represented by the DataSource.
     """
     return self._path
+
+  def read_instances(self, epochs=0):
+    """Reads the data represented by this DataSource using a TensorFlow reader.
+
+    Arguments:
+      epochs: The number of epochs or passes over the data to perform.
+    Returns:
+      A tensor containing instances that are read.
+    """
+    # None implies unlimited; switch the value to None when epoch is 0.
+    epochs = epochs or None
+
+    files = tf.train.match_filenames_once(self._path, name='files')
+    queue = tf.train.string_input_producer(files, num_epochs=epochs, shuffle=shuffle,
+                                           name='queue')
+    reader = tf.TextLineReader(skip_header_lines=int(self._header), name='reader')
+    _, instances = reader.read(queue, name='read')
+
+    return instances
 
 
 DataSourceRegistry.register('csv', CsvDataSource)
