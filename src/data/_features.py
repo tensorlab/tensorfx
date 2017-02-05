@@ -21,7 +21,6 @@ class FeatureType(enum.Enum):
   """
   identity = 'identity'
   target = 'target'
-  key = 'key'
 
 
 class Feature(object):
@@ -54,20 +53,6 @@ class Feature(object):
       An instance of a Feature.
     """
     return cls(name, FeatureType.identity, [field])
-
-  @classmethod
-  def key(cls, name, field):
-    """Creates a feature representing an un-transformed schema field with key semantics.
-
-    Key features are usually passthrough with respect to the model. They can be used to join
-    input datasets and output predictions.
-
-    Arguments:
-      name: the name of the feature.
-    Returns:
-      An instance of a Feature.
-    """
-    return cls(name, FeatureType.key, [field])
 
   @classmethod
   def target(cls, name, field):
@@ -115,10 +100,9 @@ class FeatureSet(object):
     """Initializes a FeatureSet from its specified set of features.
 
     Arguments:
-      features: the set of features within a FeatureSet.
+      features: the list of features within a FeatureSet.
     """
-    self._features = features
-    self._feature_map = dict(map(lambda f: (f.name, f), features))
+    self._features = dict(map(lambda f: (f.name, f), features))
 
   @staticmethod
   def create(*args):
@@ -151,10 +135,7 @@ class FeatureSet(object):
 
     spec = yaml.safe_load(spec)
 
-    features = [
-      Feature.target('@target', spec['target']),
-      Feature.key('@key', spec['key'])
-    ]
+    features = []
     for f in spec['features']:
       fields = f['fields']
       if type(fields) is str:
@@ -166,19 +147,22 @@ class FeatureSet(object):
     return FeatureSet(features)
 
   def __getitem__(self, index):
-    """Retrives the specified SchemaField by name or position.
+    """Retrives the specified Feature by name.
 
     Arguments:
-      index: the name or index of the field.
+      index: the name of the feature.
     Returns:
       The SchemaField if it exists; None otherwise.
     """
-    if type(index) is int:
-      return self._features[index] if len(self._features) > index else None
-    else:
-      return self._feature_map.get(index, None)
+    return self._features.get(index, None)
 
   def __len__(self):
     """Retrieves the number of Features defined.
     """
     return len(self._features)
+
+  def __iter__(self):
+    """Creates an iterator over the features in the FeatureSet.
+    """
+    for name, field in self._features:
+      yield field

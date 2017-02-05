@@ -26,24 +26,21 @@ class TestCases(unittest.TestCase):
 
     self.assertEqual(len(features), 2)
     self.assertEqual(features['t'], t)
-    self.assertEqual(features[1], x)
 
   def test_parse_featureset(self):
     spec = """
-    target: c1
-    key: c2
     features:
+    - name: target
+      type: target
+      fields: c1
     - name: f1
       type: identity
       fields: c3
     """
     features = tfx.data.FeatureSet.parse(spec)
 
-    self.assertEqual(len(features), 3)
-    self.assertEqual(features['@target'].fields[0], 'c1')
-    self.assertEqual(features['@target'].type, tfx.data.FeatureType.target)
-    self.assertEqual(features['@key'].fields[0], 'c2')
-    self.assertEqual(features['@key'].type, tfx.data.FeatureType.key)
+    self.assertEqual(len(features), 2)
+    self.assertEqual(features['target'].fields[0], 'c1')
+    self.assertEqual(features['target'].type, tfx.data.FeatureType.target)
     self.assertEqual(features['f1'].type, tfx.data.FeatureType.identity)
     self.assertEqual(features['f1'].fields, ['c3'])
-  
