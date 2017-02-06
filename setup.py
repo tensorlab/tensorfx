@@ -30,7 +30,8 @@ setuptools.setup(
   packages=[
     'tensorfx.data',
     'tensorfx.training',
-    'tensorfx.prediction'
+    'tensorfx.prediction',
+    'tensorfx.tools'
   ],
   install_requires=dependencies,
   author='Nikhil Kothari',
