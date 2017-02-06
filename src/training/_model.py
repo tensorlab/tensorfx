@@ -140,10 +140,10 @@ class ModelBuilder(object):
     with tf.name_scope('input'):
       # For training, ensure the data is shuffled.
       # The datasource to use is the one named as 'eval' within the dataset.
-      features, targets = self.build_input(self._dataset.train, shuffle=True)
+      targets, features = self.build_input(self._dataset['train'], shuffle=True)
     
     with tf.name_scope('inference'):
-      inferences = self.build_inference(features)
+      inferences = self.build_inference(features, training=True)
     
     with tf.name_scope('train'):
       global_steps = tf.Variable(0, name='global_steps', trainable=False,
@@ -157,7 +157,7 @@ class ModelBuilder(object):
     # Create the saver that will be used to save all trained variables
     saver = tf.train.Saver(tf.trainable_variables())
 
-    with tf.name_scope('initializations'):
+    with tf.name_scope('initialization'):
       init_op = self.build_init()
 
     return {
@@ -179,10 +179,10 @@ class ModelBuilder(object):
       # For evaluation, compute the eval metric over a single pass over the evaluation data,
       # and avoid any overhead from shuffling.
       # The datasource to use is the one named as 'eval' within the dataset.
-      features, targets = self.build_input(self._dataset.eval, shuffle=False, epochs=1)
+      targets, features = self.build_input(self._dataset['eval'], shuffle=False, epochs=1)
 
     with tf.name_scope('inference'):
-      inferences = self.build_inference(features, training=False)
+      inferences = self.build_inference(features)
 
     with tf.name_scope('output'):
       predictions = self.build_output(inferences)
@@ -214,10 +214,10 @@ class ModelBuilder(object):
       The set of tensors and ops references required for prediction.
     """
     with tf.name_scope('input'):
-      features = self.build_input()
+      _, features = self.build_input()
 
     with tf.name_scope('inference'):
-      inferences = self.build_inference(features, training=False)
+      inferences = self.build_inference(features)
 
     with tf.name_scope('output'):
       predictions = self.build_output(inferences)
@@ -248,21 +248,26 @@ class ModelBuilder(object):
 
     return tf.group(init_variables, init_locals, init_tables)
 
-  def build_input(self, datasource=None, shuffle=False, epochs=None):
+  def build_input(self, datasource=None, batch=128, shuffle=False, epochs=0):
     """Builds the input sub-graph.
 
     Arguments:
       datasource: the data source to use for input (for training and evaluation).
+      batch: the number of instances to read per batch.
       shuffle: whether to shuffle the data.
       epochs: the number of passes over the data.
       prediction: whether the input sub-graph is being built for the prediction graph.
     Returns:
-      A tuple consisting of features dictionary, and the targets (in case of training/evaluation)
+      A tuple of targets and a dictionary of tensors key'd by feature names.
     """
-    # TODO: Delegate to datasource for input
-    raise NotImplementedError('Implement this')
+    if datasource:
+      instances = datasource.read(batch=batch, shuffle=shuffle, epochs=epochs)
+      return self._dataset.parse_instances(instances)
+    else:
+      instances = tf.placeholder(dtype=tf.string, shape=(None,), name='instances')
+      return self._dataset.parse_instances(instances, prediction=True)
 
-  def build_inference(self, features, training=True):
+  def build_inference(self, features, training=False):
     """Builds the inference sub-graph.
 
     Arguments:

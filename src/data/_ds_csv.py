@@ -57,7 +57,7 @@ class CsvDataSet(DataSet):
       instances: The tensor containing input strings.
       prediction: Whether the instances are being parsed for producing predictions or not.
     Returns:
-      A dictionary of tensors key'ed by feature names.
+      A tuple consisting of targets and a dictionary of tensors key'ed by feature names.
     """
     if prediction:
       # For training and evaluation data, the expectation is the target column is always present.
@@ -90,11 +90,15 @@ class CsvDataSet(DataSet):
     values = tf.decode_csv(instances, defaults)
 
     # TODO: Factor in features and metadata
+    targets = None
     features = {}
     for field, value in zip(self.schema, values):
-      features[field.name] = value
+      if targets is None:
+        targets = value
+      else:
+        features[field.name] = value
 
-    return features
+    return targets, features
 
 
 DataSetRegistry.register('csv', CsvDataSet)
