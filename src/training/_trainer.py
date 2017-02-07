@@ -39,7 +39,7 @@ class Trainer(object):
     """
     if not args:
       # By default, just use the process arguments.
-      args = sys.argv
+      args = sys.argv[1:]
     if not config:
       # By default, use the configuration specified in the TF_CONFIG environment variable.
       config = Configuration.environment()

@@ -25,3 +25,25 @@ popd > /dev/null
 
 echo 'Build completed successfully!'
 
+
+# Copy over samples and turn them into a module
+cp -r samples build/samples
+touch build/samples/__init__.py
+
+echo 'Samples copied successfully!'
+
+
+# Copy over tests
+cp -r tests build/tests
+
+echo 'Tests copied successfully!'
+
+
+# Optionally run tests
+if [ "$1" == "test" ]; then
+  pushd build/tests > /dev/null
+  python main.py
+  popd > /dev/null
+
+  echo 'Tests completed'
+fi
