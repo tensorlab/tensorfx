@@ -16,16 +16,16 @@
 import tensorflow as tf
 
 
-def _create_interface(phase, graph, references, scaffold=None, hooks=None):
+def _create_interface(phase, graph, references):
   """Creates an interface instance using a dynamic type with graph and references as attributes.
   """
-  interface = {'graph': graph, 'scaffold': scaffold, 'hooks': hooks}
+  interface = {'graph': graph}
   interface.update(references)
 
   return type(phase + 'Interface', (object,), interface)
 
 
-class ModelBuilderArguments(object):
+class ModelArguments(object):
   """An object that defines various arguments used to build and train models.
   """
   pass
@@ -39,36 +39,14 @@ class ModelBuilder(object):
 
   A ModelBuilder serves as a base class for various models. Each specific model adds its specific
   logic to build the required TensorFlow graph.
-
-  Every ModelBuilder implementation should have an associated arguments class that exists within
-  the same module, and is named the same name as the ModelBuilder with an "Arguments" suffix.
   """
-  def __init__(self, args, dataset, output, config):
+  def __init__(self, args):
     """Initializes an instance of a ModelBuilder.
 
     Arguments:
       args: the arguments specified for training.
-      dataset: the input data to use during training.
-      output: the output location to use during training.
-      config: the training configuration.
     """
     self._args = args
-    self._dataset = dataset
-    self._output = output
-    self._config = config
-
-  @classmethod
-  def create(cls, args, dataset, output, config):
-    """Creates an instance of a ModelBuilder.
-
-    Arguments:
-      cls: the class of ModelBuilder to create.
-      args: the arguments specified for training.
-      dataset: the input data to use during training.
-      output: the output location to use during training.
-      config: the training configuration.
-    """
-    return cls(args, dataset, output, config)
 
   @property
   def args(self):
@@ -76,71 +54,56 @@ class ModelBuilder(object):
     """
     return self._args
 
-  @property
-  def config(self):
-    """Retrieves the training configuration.
-    """
-    return self._config
-
-  @property
-  def dataset(self):
-    """Retrieves the input used during training.
-    """
-    return self._dataset
-
-  @property
-  def output(self):
-    """Retrieves the output location to use during training.
-    """
-    return self._output
-
-  def training(self):
+  def training(self, dataset):
     """Builds the training graph to use for training a model.
 
+    Arguments:
+      dataset: The DataSet providing a reference to training data.
     Returns:
       A training interface consisting of a TensorFlow graph and associated tensors and ops.
     """
     with tf.Graph().as_default() as graph:
-      references = self.build_training_graph()
+      references = self.build_training_graph(dataset)
+      return _create_interface('Training', graph, references)
 
-      # TODO: Initialize the scaffold object and hooks collection
-      scaffold = tf.train.Scaffold()
-      hooks = []
-
-      return _create_interface('Training', graph, references, scaffold, hooks)
-
-  def evaluation(self):
+  def evaluation(self, dataset):
     """Builds the evaluation graph to use for evaluating a model.
 
+    Arguments:
+      dataset: The DataSet providing a reference to evaluation data.
     Returns:
       An evaluation interface consisting of a TensorFlow graph and associated tensors and ops.
     """
     with tf.Graph().as_default() as graph:
-      references = self.build_evaluation_graph()
+      references = self.build_evaluation_graph(dataset)
       return _create_interface('Evaluation', graph, references)
 
-  def prediction(self):
+  def prediction(self, dataset):
     """Builds the prediction graph to use for predicting with a model.
 
+    Arguments:
+      dataset: The DataSet providing schema and feature information.
     Returns:
       A prediction interface consisting of a TensorFlow graph and associated tensors and ops.
     """
     with tf.Graph().as_default() as graph:
-      references = self.build_prediction_graph()
+      references = self.build_prediction_graph(dataset)
       return _create_interface('Prediction', graph, references)
 
-  def build_training_graph(self):
+  def build_training_graph(self, dataset):
     """Builds the graph to use for training a model.
 
     This operates on the current default graph.
 
+    Arguments:
+      dataset: The DataSet providing a reference to training data.
     Returns:
       The set of tensors and ops references required for training.
     """
     with tf.name_scope('input'):
       # For training, ensure the data is shuffled.
       # The datasource to use is the one named as 'eval' within the dataset.
-      targets, features = self.build_input(self._dataset['train'], shuffle=True)
+      targets, features = self.build_input(dataset, 'train', shuffle=True)
     
     with tf.name_scope('inference'):
       inferences = self.build_inference(features, training=True)
@@ -169,9 +132,11 @@ class ModelBuilder(object):
       'saver': saver
     }
 
-  def build_evaluation_graph(self):
+  def build_evaluation_graph(self, dataset):
     """Builds the graph to use for evaluating a model during training.
 
+    Arguments:
+      dataset: The DataSet providing a reference to evaluation data.
     Returns:
       The set of tensors and ops references required for evaluation.
     """
@@ -179,7 +144,7 @@ class ModelBuilder(object):
       # For evaluation, compute the eval metric over a single pass over the evaluation data,
       # and avoid any overhead from shuffling.
       # The datasource to use is the one named as 'eval' within the dataset.
-      targets, features = self.build_input(self._dataset['eval'], shuffle=False, epochs=1)
+      targets, features = self.build_input(dataset, 'eval', shuffle=False, epochs=1)
 
     with tf.name_scope('inference'):
       inferences = self.build_inference(features)
@@ -207,14 +172,14 @@ class ModelBuilder(object):
       'saver': saver
     }
 
-  def build_prediction_graph(self):
+  def build_prediction_graph(self, dataset):
     """Builds the graph to use for predictions with the trained model.
 
     Returns:
       The set of tensors and ops references required for prediction.
     """
     with tf.name_scope('input'):
-      _, features = self.build_input()
+      _, features = self.build_input(dataset)
 
     with tf.name_scope('inference'):
       inferences = self.build_inference(features)
@@ -248,11 +213,12 @@ class ModelBuilder(object):
 
     return tf.group(init_variables, init_locals, init_tables)
 
-  def build_input(self, datasource=None, batch=128, shuffle=False, epochs=0):
+  def build_input(self, dataset, source=None, batch=128, shuffle=False, epochs=0):
     """Builds the input sub-graph.
 
     Arguments:
-      datasource: the data source to use for input (for training and evaluation).
+      dataset: The DataSet providing containing the specified datasource.
+      source: the name of data source to use for input (for training and evaluation).
       batch: the number of instances to read per batch.
       shuffle: whether to shuffle the data.
       epochs: the number of passes over the data.
@@ -260,12 +226,12 @@ class ModelBuilder(object):
     Returns:
       A tuple of targets and a dictionary of tensors key'd by feature names.
     """
-    if datasource:
-      instances = datasource.read(batch=batch, shuffle=shuffle, epochs=epochs)
-      return self._dataset.parse_instances(instances)
+    if source:
+      instances = dataset[source].read(batch=batch, shuffle=shuffle, epochs=epochs)
+      return dataset.parse_instances(instances)
     else:
       instances = tf.placeholder(dtype=tf.string, shape=(None,), name='instances')
-      return self._dataset.parse_instances(instances, prediction=True)
+      return dataset.parse_instances(instances, prediction=True)
 
   def build_inference(self, features, training=False):
     """Builds the inference sub-graph.

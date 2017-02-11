@@ -24,48 +24,113 @@ from ._config import Configuration
 from tensorflow.python.lib.io import file_io as tfio
 
 
-class Trainer(object):
+class ModelTrainer(object):
   """Provides the functionality to train a model during a training job.
   """
-  def train(self, model_builder_type, args=None, config=None):
-    """Runs the training process to train a model.
+  def __init__(self, config=None):
+    """Initializes a ModelTrainer instance.
 
     Arguments:
-      model_builder_type: The type of ModelBuilder to use to create graphs representing the model.
-      args: an optional list of arguments to customize training.
       config: an optional configuration providing information about the training job and cluster.
-    Returns:
-      The result of training. The resulting value is only relevant for master nodes.
     """
-    if not args:
-      # By default, just use the process arguments.
-      args = sys.argv[1:]
     if not config:
       # By default, use the configuration specified in the TF_CONFIG environment variable.
       config = Configuration.environment()
 
+    self._config = config
+
+  @property
+  def config(self):
+    """Retrieves the training configuration.
+    """
+    return self._config
+
+  def parse_args(self, model_args_type, args=None, parse_io_flags=True):
+    """Parses arguments into model arguments and optionally input/output arguments.
+
+    The arguments type is inspected for its fields to build a model arguments parser. The result is
+    an instance of that type. The autocli library is used for parsing the arguments.
+
+    When parse_io_flags is True, the following standard arguments are parsed into a DataSet and
+    output location:
+    - train: the training data
+    - eval: the eval data
+    - schema: the schema of the data
+    - metadata: metadata about the fields in the schema inferred from analyzing the training data.
+    - features: the features to produce from transforming the data.
+    - job_dir: the output location associated with the job.
+
+    Arguments:
+      model_args_type: the type of the Arguments object to parse.
+      args: the list of arguments to parse (by default this uses the process arguments).
+      parse_io_flags: whether to parse input dataset and output location arguments.
+    Returns:
+      A dataset, output and model args tuple if parse_io_flags is True or just the latter if False.
+    """
+    if args is None:
+      args = sys.argv[1:]
+
+    if parse_io_flags:
+      # Arguments include standard args (inputs and output) which are parsed out first.
+      # The remaining arguments are handled as model-specific args.
+      argparser = argparse.ArgumentParser(add_help=False)
+      argparser.add_argument('--train', type=str, required=True)
+      argparser.add_argument('--eval', type=str, required=True)
+      argparser.add_argument('--schema', type=str, required=True)
+      argparser.add_argument('--features', type=str, required=False, default=None)
+      argparser.add_argument('--metadata', type=str, required=False, default=None)
+      argparser.add_argument('--job_dir', dest='output', type=str, required=False,
+                            default=os.path.join(os.getcwd(), 'output'))
+      io_args, model_args_list = argparser.parse_known_args(args)
+
+      datasources = {
+        'train': io_args.train,
+        'eval': io_args.eval
+      }
+      schema_spec = tfio.read_file_to_string(io_args.schema)
+      features = tfio.read_file_to_string(io_args.features) if io_args.features else None
+      metadata = tfio.read_file_to_string(io_args.metadata) if io_args.metadata else None
+
+      dataset = tfx.Data.DataSet.parse(schema_spec, datasources,
+                                      metadata=metadata,
+                                      features=features)
+
+      model_args = autocli.parse_object(model_args_type, model_args_list)
+      return dataset, io_args.output, model_args
+    else:
+      return autocli.parse_object(model_args_type, args)
+
+  def train(self, model_builder, dataset, output):
+    """Runs the training process to train a model.
+
+    Arguments:
+      model_builder: the ModelBuilder to use to build graphs during training.
+      dataset: the DataSet to use for training and evaluation.
+      output: the location of the output produced during training.
+    Returns:
+      The trained Model. The resulting value is only relevant for master nodes.
+    """
     self._init_tensorflow()
 
-    self._server = None
-    if config.distributed:
-      self._server = self._create_tensorflow_server(config)
+    server = None
+    if self._config.distributed:
+      server = self._create_tensorflow_server()
       if config.param_server:
-        return self._run_ps()
+        return self._run_ps(server)
 
-    self._model_builder = self._create_model_builder(model_builder_type, args, config)
-    return self._run_training()
+    return self._run_training(server, model_builder, dataset, output)
 
-  def _run_ps(self):
+  def _run_ps(self, server):
     """Runs the parameter server task.
 
     A ps task runs forever (until killed) using implementation within TensorFlow runtime.
     """
     try:
-      self._server.join()
+      server.join()
     except AbortError:
       pass
 
-  def _run_training(self):
+  def _run_training(self, server, model_builder, dataset, output):
     """Runs the worker and master tasks.
 
     Worker and master tasks create a TensorFlow session, and run the session loop. The session
@@ -73,41 +138,53 @@ class Trainer(object):
     is also responsible for producing and evaluating checkpoints, as well producing summary event
     logs, and finally exporting the trained model.
     """
-    training = self._model_builder.training()
+    training = model_builder.training()
 
     with training.graph.as_default() as graph:
-      config = self._create_tensorflow_config()
-      master = self._server.target if self._server else ''
-      scaffold = training.scaffold
+      master = server.target if server else ''
+      config = self._create_tensorflow_session_config()
+      scaffold = self._create_tensorflow_session_scaffold(training)
+      hooks = self._create_tensorflow_session_hooks(training)
 
-      if self._model_builder.config.master:
-        checkpoints = os.path.join(self._model_builder.output, 'checkpoints')
+      if self._config.master:
+        checkpoints = os.path.join(output, 'checkpoints')
         session_creator = tf.train.ChiefSessionCreator(scaffold, master, config, checkpoints)
       else:
         session_creator = tf.train.WorkerSessionCreator(scaffold, master, config)
 
-      with tf.train.MonitoredSession(session_creator, session_hooks) as session:
+      with tf.train.MonitoredSession(session_creator, hooks) as session:
         while not session.should_stop():
-          session.run()
+          session.run(training.train_op)
 
-  def _create_model_builder(self, model_builder_type, args, config):
-    """Creates the ModelBuilder that is used for training.
-    """
-    dataset, output, model_args_list = self._parse_args(args)
-    model_args = self._parse_model_args(model_builder_type, model_args_list)
+      if self._config.master:
+        # TODO: Build a Model and return it
+        pass
 
-    return _model_builder.create(model_args, dataset, output, config)
+      return None
 
-  def _create_tensorflow_config(self):
-    """Creates the TensorFlow session config object.
-    """
-    return tf.ConfigProto(log_device_placement=True)
-
-  def _create_tensorflow_server(self, config):
+  def _create_tensorflow_server(self):
     """Creates the TensorFlow server, which is required for distributed training.
     """
-    return tf.train.Server(config.cluster, config.task.type, config.task.index,
+    return tf.train.Server(self._config.cluster, self._config.task.type, self._config.task.index,
                             protocol='grpc')
+
+  def _create_tensorflow_session_config(self):
+    """Creates the TensorFlow session config object.
+    """
+    # TODO: Setup device filters, parallelization, and run timeouts
+    return tf.ConfigProto(log_device_placement=True)
+
+  def _create_tensorflow_session_hooks(self, training):
+    """Creates the TensorFlow session hooks that customize the session loop.
+    """
+    # TODO: Implement this
+    return []
+
+  def _create_tensorflow_session_scaffold(self, training):
+    """Creates a TensorFlow Scaffold that will be associated with the Session.
+    """
+    # TODO: Implement this
+    return tf.train.Scaffold()
 
   def _init_tensorflow(self):
     """Initializes the TensorFlow runtime.
@@ -116,42 +193,3 @@ class Trainer(object):
     """
     # TODO: Implement this
     pass
-
-  def _parse_args(self, args):
-    """Parses training arguments to produce standard and model-specific arguments.
-    """
-    # Arguments include standard args (inputs and output) which are parsed out first.
-    # The remaining arguments are handled as model-specific args.
-    argparser = argparse.ArgumentParser(add_help=False)
-    argparser.add_argument('--train', type=str, required=True)
-    argparser.add_argument('--eval', type=str, required=True)
-    argparser.add_argument('--schema', type=str, required=True)
-    argparser.add_argument('--features', type=str, required=False, default=None)
-    argparser.add_argument('--metadata', type=str, required=False, default=None)
-    argparser.add_argument('--job_dir', dest='output', type=str, required=False,
-                           default=os.path.join(os.getcwd(), 'output'))
-    io_args, model_args = argparser.parse_known_args(args)
-
-    datasources = {
-      'train': io_args.train,
-      'eval': io_args.eval
-    }
-    schema_spec = tfio.read_file_to_string(io_args.schema)
-    features = tfio.read_file_to_string(io_args.features) if io_args.features else None
-    metadata = tfio.read_file_to_string(io_args.metadata) if io_args.metadata else None
-
-    dataset = tfx.Data.DataSet.parse(schema_spec, datasources,
-                                     metadata=metadata,
-                                     features=features)
-
-    return dataset, io_args.output, model_args
-
-  def _parse_model_args(self, model_builder_type, args):
-    """Parses model-specific arguments into an Arguments object.
-    """
-    # By convention, the model specific args list is used to initialize an Arguments object that
-    # is defined alongside the ModelBuilder in the same module.
-    model_builder_module = sys.modules[model_builder_type.__module__]
-    model_args_type = model_builder_module.__dict__[model_builder_type.__name__ + 'Arguments']
-
-    return autocli.parse_object(model_args_type, model_args_list)
