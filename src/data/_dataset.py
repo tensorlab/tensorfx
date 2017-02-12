@@ -169,7 +169,7 @@ class DataSource(object):
     Returns:
       A tensor containing a list of instances read.
     """
-    instances = self.read_instances(epochs)
+    instances = self.read_instances(batch, shuffle, epochs)
 
     queue_capacity = (threads + 3) * batch
     if shuffle:
@@ -187,10 +187,12 @@ class DataSource(object):
                             num_threads=threads,
                             name='batch')
 
-  def read_instances(self, epochs=0):
+  def read_instances(self, count, shuffle, epochs):
     """Reads the data represented by this DataSource using a TensorFlow reader.
 
     Arguments:
+      count: The number of instances to read in at most.
+      shuffle: Whether to shuffle the input queue of files.
       epochs: The number of epochs or passes over the data to perform.
     Returns:
       A tensor containing instances that are read.

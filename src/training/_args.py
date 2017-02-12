@@ -10,10 +10,31 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# __init__.py
-# tensorfx.training module declaration.
+# _args.py
+# Defines ModelArguments and related classes.
 
-from _config import Configuration
-from _args import ModelArguments
-from _model import ModelBuilder
-from _trainer import ModelTrainer
+import enum
+
+class JobLogging(enum.Enum):
+  """Defines the logging level options for the job.
+  """
+  FATAL = 50
+  ERROR = 40
+  WARN = 30
+  INFO = 20
+  DEBUG = 10
+
+
+class ModelArguments(object):
+  """An object that defines various arguments used to build and train models.
+  """
+  # Arguments related to training data and reading
+  batch_size = 128
+  epochs = 0
+
+  # Arguments related to training session loop
+  max_steps = 1000
+
+  # Arguments related to diagnostics
+  log_level = JobLogging.WARN
+  log_device_placement = False

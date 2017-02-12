@@ -85,7 +85,7 @@ class CsvDataSet(DataSet):
       else:
         # discrete, text, binary
         field_default = tf.constant('', dtype=tf.string)
-      defaults.append(field_default)
+      defaults.append([field_default])
 
     values = tf.decode_csv(instances, defaults)
 
@@ -126,7 +126,7 @@ class CsvDataSource(DataSource):
     """
     return self._path
 
-  def read_instances(self, epochs=0):
+  def read_instances(self, count, shuffle, epochs):
     """Reads the data represented by this DataSource using a TensorFlow reader.
 
     Arguments:
@@ -141,7 +141,7 @@ class CsvDataSource(DataSource):
     queue = tf.train.string_input_producer(files, num_epochs=epochs, shuffle=shuffle,
                                            name='queue')
     reader = tf.TextLineReader(name='reader')
-    _, instances = reader.read(queue, name='read')
+    _, instances = reader.read_up_to(queue, count, name='read')
 
     return instances
 

@@ -14,6 +14,7 @@
 # Implements the ModelBuilder base class.
 
 import tensorflow as tf
+from ._args import ModelArguments
 
 
 def _create_interface(phase, graph, references):
@@ -23,12 +24,6 @@ def _create_interface(phase, graph, references):
   interface.update(references)
 
   return type(phase + 'Interface', (object,), interface)
-
-
-class ModelArguments(object):
-  """An object that defines various arguments used to build and train models.
-  """
-  pass
 
 
 class ModelBuilder(object):
@@ -46,6 +41,9 @@ class ModelBuilder(object):
     Arguments:
       args: the arguments specified for training.
     """
+    if args is None or not instance(args, ModelArguments):
+      raise ValueError('args must be an instance of ModelArguments')
+
     self._args = args
 
   @property
@@ -101,9 +99,12 @@ class ModelBuilder(object):
       The set of tensors and ops references required for training.
     """
     with tf.name_scope('input'):
-      # For training, ensure the data is shuffled.
-      # The datasource to use is the one named as 'eval' within the dataset.
-      targets, features = self.build_input(dataset, 'train', shuffle=True)
+      # For training, ensure the data is shuffled, and don't limit to any fixed number of epochs.
+      # The datasource to use is the one named as 'train' within the dataset.
+      targets, features = self.build_input(dataset, 'train',
+                                           batch=self.args.batch_size,
+                                           epochs=self.args.epochs,
+                                           shuffle=True)
     
     with tf.name_scope('inference'):
       inferences = self.build_inference(features, training=True)
@@ -144,16 +145,16 @@ class ModelBuilder(object):
       # For evaluation, compute the eval metric over a single pass over the evaluation data,
       # and avoid any overhead from shuffling.
       # The datasource to use is the one named as 'eval' within the dataset.
-      targets, features = self.build_input(dataset, 'eval', shuffle=False, epochs=1)
+      targets, features = self.build_input(dataset, 'eval', batch=1, epochs=1, shuffle=False)
 
     with tf.name_scope('inference'):
-      inferences = self.build_inference(features)
+      inferences = self.build_inference(features, training=False)
 
     with tf.name_scope('output'):
-      predictions = self.build_output(inferences)
+      outputs = self.build_output(inferences)
 
     with tf.name_scope('evaluation'):
-      metric, eval_op = self.build_evaluation(predictions, targets)
+      metric, eval_op = self.build_evaluation(outputs, targets)
 
     # Create the summary op that will merge all summaries across all sub-graphs
     summary_op = tf.merge_all_summaries()
@@ -179,13 +180,13 @@ class ModelBuilder(object):
       The set of tensors and ops references required for prediction.
     """
     with tf.name_scope('input'):
-      _, features = self.build_input(dataset)
+      _, features = self.build_input(dataset, source=None, batch=0, epochs=0, shuffle=False)
 
     with tf.name_scope('inference'):
-      inferences = self.build_inference(features)
+      inferences = self.build_inference(features, training=False)
 
     with tf.name_scope('output'):
-      predictions = self.build_output(inferences)
+      outputs = self.build_output(inferences)
 
     # Create the saver that will be used to restore all trained variables
     saver = tf.train.Saver(tf.trainable_variables())
@@ -213,16 +214,15 @@ class ModelBuilder(object):
 
     return tf.group(init_variables, init_locals, init_tables)
 
-  def build_input(self, dataset, source=None, batch=128, shuffle=False, epochs=0):
+  def build_input(self, dataset, source, batch, epochs, shuffle):
     """Builds the input sub-graph.
 
     Arguments:
       dataset: The DataSet providing containing the specified datasource.
       source: the name of data source to use for input (for training and evaluation).
       batch: the number of instances to read per batch.
-      shuffle: whether to shuffle the data.
       epochs: the number of passes over the data.
-      prediction: whether the input sub-graph is being built for the prediction graph.
+      shuffle: whether to shuffle the data.
     Returns:
       A tuple of targets and a dictionary of tensors key'd by feature names.
     """
@@ -233,7 +233,7 @@ class ModelBuilder(object):
       instances = tf.placeholder(dtype=tf.string, shape=(None,), name='instances')
       return dataset.parse_instances(instances, prediction=True)
 
-  def build_inference(self, features, training=False):
+  def build_inference(self, features, training):
     """Builds the inference sub-graph.
 
     Arguments:
@@ -266,7 +266,7 @@ class ModelBuilder(object):
     """
     raise NotImplementedError('build_output must be implemented in a derived class.')
 
-  def build_evaluation(self, predictions, targets):
+  def build_evaluation(self, outputs, targets):
     """Builds the evaluation graph.abs
 
     Arguments:

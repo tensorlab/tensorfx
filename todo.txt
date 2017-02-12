@@ -1,0 +1,5 @@
+# Implementation and TODO notes
+
+## TensorFlow logging levels via TF_CPP_MIN_LOG_LEVEL env var
+https://github.com/tensorflow/tensorflow/issues/1258
+
