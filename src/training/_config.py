@@ -25,7 +25,7 @@ _TASK_MASTER = 'master'
 class Configuration(object):
   """Contains configuration information for the training process.
   """
-  def __init__(self, task, cluster, job):
+  def __init__(self, task, cluster, job, env):
     """Initializes a TrainingConfig instance from the individual configuration objects.
 
     Task configuration represents the current training task (for both single node and distributed
@@ -37,10 +37,12 @@ class Configuration(object):
       task: current TensorFlow task configuration.
       cluster: containing TensorFlow cluster configuration for distributed training.
       job: environment-specific job configuration.
+      env: the environment-provided configuration information.
     """
     self._task = type('TaskSpec', (object,), task)
     self._cluster = tf.train.ClusterSpec(cluster) if cluster else None
     self._job = type('JobSpec', (object,), job)
+    self._env = env
 
   @classmethod
   def environment(cls):
@@ -54,14 +56,15 @@ class Configuration(object):
     Returns:
       A Configuration instance matching the current environment.
     """
-    config = json.loads(os.environ.get('TF_CONFIG', '{}'))
+    env = json.loads(os.environ.get('TF_CONFIG', '{}'))
 
     # Note that the lookup for 'task' must handle the case where it is missing, as well as when it
     # is specified, but is empty, to support both single node and distributed training.
 
-    return cls(config.get('task', None) or {'type': 'master', 'index': 0},
-               config.get('cluster', None),
-               config.get('job', {}))
+    return cls(env.get('task', None) or {'type': 'master', 'index': 0},
+               env.get('cluster', None),
+               env.get('job', {}),
+               env)
   
   @classmethod
   def local(cls):
@@ -70,7 +73,7 @@ class Configuration(object):
     Returns:
       A default Configuration instance with simple configuration.
     """
-    return cls(task={'type': 'master', 'index': 0}, cluster=None, job={})
+    return cls(task={'type': 'master', 'index': 0}, cluster=None, job={}, env={})
 
   @property
   def distributed(self):

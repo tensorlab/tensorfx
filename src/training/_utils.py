@@ -13,4 +13,20 @@
 # _utils.py
 # Implements various training helpers.
 
+import os
 import tensorflow as tf
+import yaml
+
+from tensorflow.python.lib.io import file_io as tfio
+
+def save_job_spec(output, config, dataset, args):
+  job = {
+    'config': config._env,
+    'data': dataset._refs,
+    'args': args._args
+  }
+  job_definition = yaml.safe_dump(job, default_flow_style=False)
+  job_file = os.path.join(output, 'job.yaml')
+
+  tfio.recursive_create_dir(output)
+  tfio.write_string_to_file(job_file, job_definition)

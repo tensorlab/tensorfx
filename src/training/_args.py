@@ -38,3 +38,6 @@ class ModelArguments(object):
   # Arguments related to diagnostics
   log_level = JobLogging.WARN
   log_device_placement = False
+
+  # Internal
+  _args = None

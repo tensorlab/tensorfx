@@ -41,7 +41,7 @@ class ModelBuilder(object):
     Arguments:
       args: the arguments specified for training.
     """
-    if args is None or not instance(args, ModelArguments):
+    if args is None or not isinstance(args, ModelArguments):
       raise ValueError('args must be an instance of ModelArguments')
 
     self._args = args

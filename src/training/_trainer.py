@@ -19,8 +19,9 @@ import os
 import sys
 import tensorflow as tf
 import tensorfx as tfx
-from ._config import Configuration
-from ._hooks import StopTrainingHook
+import _utils as utils
+from _config import Configuration
+from _hooks import StopTrainingHook
 
 from tensorflow.python.lib.io import file_io as tfio
 
@@ -82,9 +83,10 @@ class ModelTrainer(object):
       argparser.add_argument('--schema', type=str, required=True)
       argparser.add_argument('--features', type=str, required=False, default=None)
       argparser.add_argument('--metadata', type=str, required=False, default=None)
-      argparser.add_argument('--job_dir', dest='output', type=str, required=False,
-                            default=os.path.join(os.getcwd(), 'output'))
+      argparser.add_argument('--job_dir', dest='output', type=str, required=False, default='output')
       job_args, model_args = argparser.parse_known_args(args)
+
+      output = os.path.join(os.getcwd(), job_args.output)
 
       schema_spec = tfio.read_file_to_string(job_args.schema)
       features = tfio.read_file_to_string(job_args.features) if job_args.features else None
@@ -97,12 +99,17 @@ class ModelTrainer(object):
           'eval': job_args.eval
         }
       }
+
+      references = vars(job_args)
+      references.pop('output')
+
       dataset = tfx.data.DataSet.parse(schema_spec, dataset_spec,
                                        metadata=metadata,
-                                       features=features)
+                                       features=features,
+                                       refs=references)
 
       model_args = autocli.parse_object(model_args_type, model_args)
-      return dataset, job_args.output, model_args
+      return dataset, output, model_args
     else:
       return autocli.parse_object(model_args_type, args)
 
@@ -144,9 +151,10 @@ class ModelTrainer(object):
     is also responsible for producing and evaluating checkpoints, as well producing summary event
     logs, and finally exporting the trained model.
     """
-    training = model_builder.training(dataset)
     args = model_builder.args
+    utils.save_job_spec(output, self._config, dataset, args)
 
+    training = model_builder.training(dataset)
     with training.graph.as_default() as graph:
       master = server.target if server else ''
       config = self._create_session_config(training, args)

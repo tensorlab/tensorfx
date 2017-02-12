@@ -24,7 +24,7 @@ class DataSet(object):
 
   A DataSet contains one or more DataSource instances, each associated with a name.
   """
-  def __init__(self, datasources, schema, metadata=None, features=None):
+  def __init__(self, datasources, schema, metadata=None, features=None, refs=None):
     """Initializes a DataSet with the specified DataSource instances.
 
     Arguments:
@@ -32,11 +32,13 @@ class DataSet(object):
       schema: the description of the source data.
       metadata: additional per-field information associated with the data.
       features: the optional description of the transformed data.
+      refs: a dictionary containing data references that can be used for logging.
     """
     self._datasources = datasources
     self._schema = schema
     self._metadata = metadata
     self._features = features
+    self._refs = refs or {}
 
   @classmethod
   def create(cls, schema, *args, **kwargs):
@@ -58,7 +60,10 @@ class DataSet(object):
       raise ValueError('All the listed DataSource instances must be of the same type.')
 
     datasources = dict(map(lambda ds: (ds.name, ds), args))
-    return cls(datasources, schema, kwargs.get('metadata', None), kwargs.get('features', None))
+    return cls(datasources, schema,
+               kwargs.get('metadata', None),
+               kwargs.get('features', None),
+               kwargs.get('refs', None))
 
   @property
   def schema(self):
@@ -126,7 +131,8 @@ class DataSet(object):
     for name, path in spec['sources'].iteritems():
       data_sources.append(dataset_type.create_datasource(data_format, name, path))
 
-    return dataset_type.create(schema, *data_sources, metadata=metadata, features=features)
+    return dataset_type.create(schema, *data_sources, metadata=metadata, features=features,
+                               refs=kwargs.get('refs', None))
 
   def parse_instances(self, instances, prediction=False):
     """Parses input instances according to the associated schema, metadata and features.

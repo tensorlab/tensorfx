@@ -21,7 +21,7 @@ from ._schema import SchemaFieldType
 class CsvDataSet(DataSet):
   """A DataSet representing data in csv format.
   """
-  def __init__(self, datasources, schema, metadata=None, features=None):
+  def __init__(self, datasources, schema, metadata=None, features=None, refs=None):
     """Initializes a DataSet with the specified DataSource instances.
 
     Arguments:
@@ -30,7 +30,7 @@ class CsvDataSet(DataSet):
       metadata: additional per-field information associated with the data.
       features: the optional description of the transformed data.
     """
-    super(CsvDataSet, self).__init__(datasources, schema, metadata, features)
+    super(CsvDataSet, self).__init__(datasources, schema, metadata, features, refs)
 
   @staticmethod
   def create_datasource(format, name, path):
