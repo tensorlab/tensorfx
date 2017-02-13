@@ -13,7 +13,9 @@
 # _hooks.py
 # Implements various session hooks needed for training.
 
+import logging
 import tensorflow as tf
+import time
 
 
 class StopTrainingHook(tf.train.SessionRunHook):
@@ -33,16 +35,65 @@ class StopTrainingHook(tf.train.SessionRunHook):
     return tf.train.SessionRunArgs(self._global_steps)
 
   def after_run(self, context, values):
-    steps = values.results
-    if steps >= self._max_steps:
+    global_steps_completed = values.results
+    if global_steps_completed >= self._max_steps:
       context.request_stop()
 
 
-class LogTrainingHook(tf.train.SessionRunHook):
-  """Logs specific tensors at regular interval into the info log.
+class LogSessionLoopHook(tf.train.SessionRunHook):
+  """Logs the session loop by outputting steps, and throughput into logs.
   """
-  # TODO: Implement this
-  pass
+  _MESSAGE_FORMAT = 'Run: %.2f sec; Steps: %d; Duration: %d sec; Throughput: %.1f instances/sec'
+  def __init__(self, log_steps_interval, batch_size):
+    self._log_steps_interval = log_steps_interval
+    self._batch_size = batch_size
+
+    self._start_time = time.time()
+    self._steps_completed = 0
+    self._step_start_time = 0
+
+  def before_run(self, context):
+    self._step_start_time = time.time()
+
+  def after_run(self, context, values):
+    self._steps_completed += 1
+
+    if self._steps_completed == 1 or \
+       self._steps_completed % self._log_steps_interval == 0:
+      end_time = time.time()
+      run_time = end_time - self._step_start_time
+      duration = end_time - self._start_time
+      throughput = self._steps_completed * float(self._batch_size) / float(duration)
+
+      logging.info(LogSessionLoopHook._MESSAGE_FORMAT,
+                   run_time, self._steps_completed, duration, throughput)
+
+
+class LogTrainingJobHook(tf.train.SessionRunHook):
+  """Logs the training job by outputting progress and convergence.
+  """
+  _MESSAGE_FORMAT = 'Global steps: %d; Duration: %d sec; Throughput: %.1f instances/sec; Loss: %.3f'
+  def __init__(self, global_steps, loss, log_steps_interval, batch_size):
+    self._global_steps = global_steps
+    self._loss = loss
+    self._log_steps_interval = log_steps_interval
+    self._batch_size = batch_size
+
+    self._start_time = time.time()
+
+  def before_run(self, context):
+    return tf.train.SessionRunArgs([self._global_steps, self._loss])
+
+  def after_run(self, context, values):
+    global_steps_completed, loss_value = values.results
+
+    if global_steps_completed % self._log_steps_interval == 0:
+      end_time = time.time()
+      duration = end_time - self._start_time
+      throughput = global_steps_completed * float(self._batch_size) / float(duration)
+
+      logging.info(LogTrainingJobHook._MESSAGE_FORMAT,
+                   global_steps_completed, duration, throughput, loss_value)
 
 
 class SaveSummaryHook(tf.train.SessionRunHook):

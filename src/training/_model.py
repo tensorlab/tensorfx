@@ -210,9 +210,8 @@ class ModelBuilder(object):
     """
     init_variables = tf.initialize_all_variables()
     init_locals = tf.initialize_local_variables()
-    init_tables = tf.initialize_all_tables()
 
-    return tf.group(init_variables, init_locals, init_tables)
+    return tf.group(init_variables, init_locals)
 
   def build_input(self, dataset, source, batch, epochs, shuffle):
     """Builds the input sub-graph.

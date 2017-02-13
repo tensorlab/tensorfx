@@ -15,13 +15,14 @@
 
 import argparse
 import autocli
+import logging
 import os
 import sys
 import tensorflow as tf
 import tensorfx as tfx
 import _utils as utils
 from _config import Configuration
-from _hooks import StopTrainingHook
+from _hooks import StopTrainingHook, LogSessionLoopHook, LogTrainingJobHook
 
 from tensorflow.python.lib.io import file_io as tfio
 
@@ -123,7 +124,7 @@ class ModelTrainer(object):
     Returns:
       The trained Model. The resulting value is only relevant for master nodes.
     """
-    tf.logging.set_verbosity(model_builder.args.log_level.value)
+    self._setup_logging(model_builder)
 
     server = None
     if self._config.distributed:
@@ -194,6 +195,10 @@ class ModelTrainer(object):
     """
     hooks = []
 
+    hooks.append(LogSessionLoopHook(args.log_steps_interval, args.batch_size))
+    if self._config.master:
+      hooks.append(LogTrainingJobHook(training.global_steps, training.loss,
+                                      args.log_steps_interval, args.batch_size))
     if args.max_steps:
       hooks.append(StopTrainingHook(training.global_steps, args.max_steps))
 
@@ -202,5 +207,28 @@ class ModelTrainer(object):
   def _create_session_scaffold(self, training, args):
     """Creates a TensorFlow Scaffold that will be associated with the Session.
     """
-    # TODO: Implement this
-    return tf.train.Scaffold()
+    scaffold = tf.train.Scaffold(init_op=training.init_op,
+                                 summary_op=training.summary_op,
+                                 saver=training.saver)
+    scaffold.finalize()
+
+    return scaffold
+
+  def _setup_logging(self, model_builder):
+    tf.logging.set_verbosity(model_builder.args.log_level.value)
+
+    if hasattr(self._config.job, 'local'):
+      # Additional setup to output logs to console for local runs. On cloud, this should
+      # be handled by the environment.
+      if self._config.distributed:
+        format = '%%(levelname)s %s:%d: %%(message)s'
+        format = format % (self._config.task.type, self._config.task.index)
+      else:
+        format = '%(levelname)s: %(message)s'
+      
+      handler = logging.StreamHandler(stream=sys.stderr)
+      handler.setFormatter(logging.Formatter(fmt=format))
+
+      logger = logging.getLogger()
+      logger.addHandler(handler)
+      logger.setLevel(logging.INFO)
