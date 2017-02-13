@@ -134,7 +134,7 @@ class CsvDataSource(DataSource):
     Returns:
       A tensor containing instances that are read.
     """
-    # None implies unlimited; switch the value to None when epoch is 0.
+    # None implies unlimited; switch the value to None when epochs is 0.
     epochs = epochs or None
 
     files = tf.train.match_filenames_once(self._path, name='files')

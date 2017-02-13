@@ -184,7 +184,7 @@ class DataSource(object):
                                     batch_size=batch, allow_smaller_final_batch=True,
                                     enqueue_many=True,
                                     capacity=queue_capacity,
-                                    min_after_dequeue=min_after_dequeue,
+                                    min_after_dequeue=shuffle_buffer,
                                     num_threads=threads,
                                     name='shuffle_batch')
     else:
