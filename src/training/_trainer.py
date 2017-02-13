@@ -163,8 +163,10 @@ class ModelTrainer(object):
       hooks = self._create_session_hooks(training, args, output)
 
       if self._config.master:
-        checkpoints = os.path.join(output, 'checkpoints')
-        session_creator = tf.train.ChiefSessionCreator(scaffold, master, config, checkpoints)
+        checkpoint_path = os.path.join(output, 'checkpoints')
+        tfio.recursive_create_dir(checkpoint_path)
+
+        session_creator = tf.train.ChiefSessionCreator(scaffold, master, config, checkpoint_path)
       else:
         session_creator = tf.train.WorkerSessionCreator(scaffold, master, config)
 
@@ -195,13 +197,11 @@ class ModelTrainer(object):
     """
     hooks = []
 
-    hooks.append(LogSessionHook(args.log_steps_interval, args.batch_size))
+    hooks.append(LogSessionHook(args))
     if self._config.master:
-      hooks.append(LogTrainingHook(training.global_steps, training.loss, training.summary_op,
-                                   args.log_steps_interval, args.batch_size,
-                                   output))
-    if args.max_steps:
-      hooks.append(StopTrainingHook(training.global_steps, args.max_steps))
+      hooks.append(LogTrainingHook(training, args, output))
+      hooks.append(SaveCheckpointHook(training, args, output))
+    hooks.append(StopTrainingHook(training.global_steps, args.max_steps))
 
     return hooks
 

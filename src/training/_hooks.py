@@ -48,9 +48,9 @@ class LogSessionHook(tf.train.SessionRunHook):
   """Logs the session loop by outputting steps, and throughput into logs.
   """
   _MESSAGE_FORMAT = 'Run: %.2f sec; Steps: %d; Duration: %d sec; Throughput: %.1f instances/sec'
-  def __init__(self, log_steps_interval, batch_size):
-    self._log_steps_interval = log_steps_interval
-    self._batch_size = batch_size
+  def __init__(self, args):
+    self._log_interval_steps = args.log_interval_steps
+    self._batch_size = args.batch_size
 
     self._start_time = time.time()
     self._steps_completed = 0
@@ -63,7 +63,7 @@ class LogSessionHook(tf.train.SessionRunHook):
     self._steps_completed += 1
 
     if self._steps_completed == 1 or \
-       self._steps_completed % self._log_steps_interval == 0:
+       self._steps_completed % self._log_interval_steps == 0:
       end_time = time.time()
       run_time = end_time - self._step_start_time
       duration = end_time - self._start_time
@@ -77,16 +77,16 @@ class LogTrainingHook(tf.train.SessionRunHook):
   """Logs the training job by logging progress as well as producing summary events.
   """
   _MESSAGE_FORMAT = 'Global steps: %d; Duration: %d sec; Throughput: %.1f instances/sec; Loss: %.3f'
-  def __init__(self, global_steps, loss, summary_op, log_steps_interval, batch_size, output):
-    self._global_steps = global_steps
-    self._loss = loss
-    self._summary_op = summary_op
+  def __init__(self, training, args, output):
+    self._global_steps = training.global_steps
+    self._loss = training.loss
+    self._summary_op = training.summary_op
 
-    self._log_steps_interval = log_steps_interval
-    self._batch_size = batch_size
+    self._log_interval_steps = args.log_interval_steps
+    self._max_steps = args.max_steps
+    self._batch_size = args.batch_size
 
-    summary_path = os.path.join(output, 'summaries', 'train')
-    self._summary_writer = tf.train.SummaryWriter(summary_path)
+    self._summary_writer = tf.train.SummaryWriter(os.path.join(output, 'summaries', 'train'))
     self._summary_writer.add_graph(tf.get_default_graph())
 
     self._start_time = time.time()
@@ -94,7 +94,8 @@ class LogTrainingHook(tf.train.SessionRunHook):
 
   def before_run(self, context):
     current_step = self._global_steps_completed + 1
-    if current_step % self._log_steps_interval == 0:
+    if (current_step % self._log_interval_steps == 0) or \
+       (current_step + 1 >= self._max_steps):
       return tf.train.SessionRunArgs([self._global_steps, self._loss, self._summary_op])
     else:
       return tf.train.SessionRunArgs([self._global_steps])
@@ -122,8 +123,34 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
 
   This should only be used in master tasks.
   """
-  # TODO: Implement this
-  pass
+  def __init__(self, training, args, output):
+    self._global_steps = training.global_steps
+    self._saver = training.saver
+
+    self._checkpoint_interval_secs = args.checkpoint_interval_secs
+
+    self._checkpoint_path = os.path.join(output, 'checkpoints')
+    self._checkpoint_name = os.path.join(self._checkpoint_path, 'model.ckpt')
+
+    self._last_save_time = time.time()
+    self._last_save_steps = 0
+
+  def before_run(self, context):
+    if time.time() - self._last_save_time >= self._checkpoint_interval_secs:
+      return tf.train.SessionRunArgs([self._global_steps])
+
+  def after_run(self, context, values):
+    if values.results:
+      global_steps_completed, = values.results
+      self._saver.save(context.session, self._checkpoint_name, global_steps_completed)
+
+      self._last_save_steps = global_steps_completed
+      self._last_save_time = time.time()
+
+  def end(self, session):
+    global_steps_completed = session.run(self._global_steps)
+    if global_steps_completed != self._last_save_steps:
+      self._saver.save(session, self._checkpoint_name, global_steps_completed)
 
 
 class CheckNaNLossHook(tf.train.SessionRunHook):

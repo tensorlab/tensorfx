@@ -34,11 +34,12 @@ class ModelArguments(object):
 
   # Arguments related to training session loop
   max_steps = 1000
+  checkpoint_interval_secs = 60 * 5
 
   # Arguments related to diagnostics
   log_level = JobLogging.WARN
   log_device_placement = False
-  log_steps_interval = 100
+  log_interval_steps = 100
 
   # Internal
   _args = None

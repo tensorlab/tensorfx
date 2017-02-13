@@ -110,7 +110,7 @@ class ModelBuilder(object):
       inferences = self.build_inference(features, training=True)
     
     with tf.name_scope('train'):
-      global_steps = tf.Variable(0, name='global_steps', trainable=False,
+      global_steps = tf.Variable(0, name='global_steps', dtype=tf.int64, trainable=False,
                                  collections=[tf.GraphKeys.GLOBAL_VARIABLES,
                                               tf.GraphKeys.GLOBAL_STEP])
       loss, train_op = self.build_training(inferences, targets, global_steps)
@@ -120,7 +120,8 @@ class ModelBuilder(object):
       saver = tf.train.Saver(tf.trainable_variables())
 
       init_op = self.build_init()
-      ready_op = tf.report_uninitialized_variables(name='ready')
+      ready_op = tf.concat(0, [tf.report_uninitialized_variables(tf.trainable_variables()),
+                               tf.resources.report_uninitialized_resources()], name='ready')
 
     # Create the summary op that will merge all summaries across all sub-graphs
     summary_op = tf.merge_all_summaries()
