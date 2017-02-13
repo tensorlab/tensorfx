@@ -15,6 +15,7 @@
 
 import os
 import tensorflow as tf
+import tensorflow.core.framework.summary_pb2 as summaries
 import yaml
 
 from tensorflow.python.lib.io import file_io as tfio
@@ -23,10 +24,17 @@ def save_job_spec(output, config, dataset, args):
   job = {
     'config': config._env,
     'data': dataset._refs,
-    'args': args._args
+    'args': ' '.join(args._args)
   }
   job_definition = yaml.safe_dump(job, default_flow_style=False)
   job_file = os.path.join(output, 'job.yaml')
 
   tfio.recursive_create_dir(output)
   tfio.write_string_to_file(job_file, job_definition)
+
+
+def add_summary_value(summary_writer, tag, value, global_steps):
+  summary_value = summaries.Summary.Value(tag=tag, simple_value=value)
+  summary = summaries.Summary(value=[summary_value])
+
+  summary_writer.add_summary(summary, global_steps)

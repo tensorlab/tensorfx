@@ -115,19 +115,21 @@ class ModelBuilder(object):
                                               tf.GraphKeys.GLOBAL_STEP])
       loss, train_op = self.build_training(inferences, targets, global_steps)
 
+    with tf.name_scope('initialization'):
+      # Create the saver that will be used to save and restore trained variables
+      saver = tf.train.Saver(tf.trainable_variables())
+
+      init_op = self.build_init()
+      ready_op = tf.report_uninitialized_variables(name='ready')
+
     # Create the summary op that will merge all summaries across all sub-graphs
     summary_op = tf.merge_all_summaries()
-
-    # Create the saver that will be used to save all trained variables
-    saver = tf.train.Saver(tf.trainable_variables())
-
-    with tf.name_scope('initialization'):
-      init_op = self.build_init()
 
     return {
       'global_steps': global_steps,
       'loss': loss,
       'init_op': init_op,
+      'ready_op': ready_op,
       'train_op': train_op,
       'summary_op': summary_op,
       'saver': saver
@@ -156,14 +158,14 @@ class ModelBuilder(object):
     with tf.name_scope('evaluation'):
       metric, eval_op = self.build_evaluation(outputs, targets)
 
+    with tf.name_scope('initialization'):
+      # Create the saver that will be used to save and restore trained variables
+      saver = tf.train.Saver(tf.trainable_variables())
+
+      init_op = self.build_init()
+
     # Create the summary op that will merge all summaries across all sub-graphs
     summary_op = tf.merge_all_summaries()
-
-    # Create the saver that will be used to restore all trained variables
-    saver = tf.train.Saver(tf.trainable_variables())
-
-    with tf.name_scope('initialization'):
-      init_op = self.build_init()
 
     return {
       'metric': metric,
@@ -188,10 +190,10 @@ class ModelBuilder(object):
     with tf.name_scope('output'):
       outputs = self.build_output(inferences)
 
-    # Create the saver that will be used to restore all trained variables
-    saver = tf.train.Saver(tf.trainable_variables())
-
     with tf.name_scope('initialization'):
+      # Create the saver that will be used to save and restore trained variables
+      saver = tf.train.Saver(tf.trainable_variables())
+
       init_op = self.build_init()
 
     return {
@@ -211,7 +213,7 @@ class ModelBuilder(object):
     init_variables = tf.initialize_all_variables()
     init_locals = tf.initialize_local_variables()
 
-    return tf.group(init_variables, init_locals)
+    return tf.group(init_variables, init_locals, name='init')
 
   def build_input(self, dataset, source, batch, epochs, shuffle):
     """Builds the input sub-graph.

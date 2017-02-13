@@ -22,7 +22,7 @@ import tensorflow as tf
 import tensorfx as tfx
 import _utils as utils
 from _config import Configuration
-from _hooks import StopTrainingHook, LogSessionLoopHook, LogTrainingJobHook
+from _hooks import *
 
 from tensorflow.python.lib.io import file_io as tfio
 
@@ -160,7 +160,7 @@ class ModelTrainer(object):
       master = server.target if server else ''
       config = self._create_session_config(training, args)
       scaffold = self._create_session_scaffold(training, args)
-      hooks = self._create_session_hooks(training, args)
+      hooks = self._create_session_hooks(training, args, output)
 
       if self._config.master:
         checkpoints = os.path.join(output, 'checkpoints')
@@ -190,15 +190,16 @@ class ModelTrainer(object):
     # TODO: Setup device filters, parallelization, and run timeouts
     return tf.ConfigProto(log_device_placement=args.log_device_placement)
 
-  def _create_session_hooks(self, training, args):
+  def _create_session_hooks(self, training, args, output):
     """Creates the TensorFlow session hooks that customize the session loop.
     """
     hooks = []
 
-    hooks.append(LogSessionLoopHook(args.log_steps_interval, args.batch_size))
+    hooks.append(LogSessionHook(args.log_steps_interval, args.batch_size))
     if self._config.master:
-      hooks.append(LogTrainingJobHook(training.global_steps, training.loss,
-                                      args.log_steps_interval, args.batch_size))
+      hooks.append(LogTrainingHook(training.global_steps, training.loss, training.summary_op,
+                                   args.log_steps_interval, args.batch_size,
+                                   output))
     if args.max_steps:
       hooks.append(StopTrainingHook(training.global_steps, args.max_steps))
 
@@ -208,6 +209,7 @@ class ModelTrainer(object):
     """Creates a TensorFlow Scaffold that will be associated with the Session.
     """
     scaffold = tf.train.Scaffold(init_op=training.init_op,
+                                 ready_op=training.ready_op,
                                  summary_op=training.summary_op,
                                  saver=training.saver)
     scaffold.finalize()

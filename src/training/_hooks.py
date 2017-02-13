@@ -14,8 +14,12 @@
 # Implements various session hooks needed for training.
 
 import logging
+import os
 import tensorflow as tf
 import time
+import _utils as utils
+
+from tensorflow.python.lib.io import file_io as tfio
 
 
 class StopTrainingHook(tf.train.SessionRunHook):
@@ -40,7 +44,7 @@ class StopTrainingHook(tf.train.SessionRunHook):
       context.request_stop()
 
 
-class LogSessionLoopHook(tf.train.SessionRunHook):
+class LogSessionHook(tf.train.SessionRunHook):
   """Logs the session loop by outputting steps, and throughput into logs.
   """
   _MESSAGE_FORMAT = 'Run: %.2f sec; Steps: %d; Duration: %d sec; Throughput: %.1f instances/sec'
@@ -65,44 +69,52 @@ class LogSessionLoopHook(tf.train.SessionRunHook):
       duration = end_time - self._start_time
       throughput = self._steps_completed * float(self._batch_size) / float(duration)
 
-      logging.info(LogSessionLoopHook._MESSAGE_FORMAT,
+      logging.info(LogSessionHook._MESSAGE_FORMAT,
                    run_time, self._steps_completed, duration, throughput)
 
 
-class LogTrainingJobHook(tf.train.SessionRunHook):
-  """Logs the training job by outputting progress and convergence.
+class LogTrainingHook(tf.train.SessionRunHook):
+  """Logs the training job by logging progress as well as producing summary events.
   """
   _MESSAGE_FORMAT = 'Global steps: %d; Duration: %d sec; Throughput: %.1f instances/sec; Loss: %.3f'
-  def __init__(self, global_steps, loss, log_steps_interval, batch_size):
+  def __init__(self, global_steps, loss, summary_op, log_steps_interval, batch_size, output):
     self._global_steps = global_steps
     self._loss = loss
+    self._summary_op = summary_op
+
     self._log_steps_interval = log_steps_interval
     self._batch_size = batch_size
 
+    summary_path = os.path.join(output, 'summaries', 'train')
+    self._summary_writer = tf.train.SummaryWriter(summary_path)
+    self._summary_writer.add_graph(tf.get_default_graph())
+
     self._start_time = time.time()
+    self._global_steps_completed = 0
 
   def before_run(self, context):
-    return tf.train.SessionRunArgs([self._global_steps, self._loss])
+    current_step = self._global_steps_completed + 1
+    if current_step % self._log_steps_interval == 0:
+      return tf.train.SessionRunArgs([self._global_steps, self._loss, self._summary_op])
+    else:
+      return tf.train.SessionRunArgs([self._global_steps])
 
   def after_run(self, context, values):
-    global_steps_completed, loss_value = values.results
+    if len(values.results) == 1:
+      self._global_steps_completed, = values.results
+    else:
+      self._global_steps_completed, loss_value, summary = values.results
 
-    if global_steps_completed % self._log_steps_interval == 0:
       end_time = time.time()
       duration = end_time - self._start_time
-      throughput = global_steps_completed * float(self._batch_size) / float(duration)
+      throughput = self._global_steps_completed * float(self._batch_size) / float(duration)
 
-      logging.info(LogTrainingJobHook._MESSAGE_FORMAT,
-                   global_steps_completed, duration, throughput, loss_value)
+      logging.info(LogTrainingHook._MESSAGE_FORMAT,
+                   self._global_steps_completed, duration, throughput, loss_value)
 
-
-class SaveSummaryHook(tf.train.SessionRunHook):
-  """Logs summary events at regular interval.
-
-  This should only be used in master tasks.
-  """
-  # TODO: Implement this
-  pass
+      self._summary_writer.add_summary(summary, self._global_steps_completed)
+      utils.add_summary_value(self._summary_writer, 'throughput', throughput,
+                              self._global_steps_completed)
 
 
 class SaveCheckpointHook(tf.train.SessionRunHook):
