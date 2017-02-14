@@ -209,6 +209,7 @@ class ModelTrainer(object):
     """Creates a TensorFlow Scaffold that will be associated with the Session.
     """
     scaffold = tf.train.Scaffold(init_op=training.init_op,
+                                 local_init_op=training.local_init_op,
                                  ready_op=training.ready_op,
                                  summary_op=training.summary_op,
                                  saver=training.saver)

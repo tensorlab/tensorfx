@@ -108,20 +108,23 @@ class ModelBuilder(object):
     
     with tf.name_scope('inference'):
       inferences = self.build_inference(features, training=True)
-    
+
     with tf.name_scope('train'):
-      global_steps = tf.Variable(0, name='global_steps', dtype=tf.int64, trainable=False,
+      # Global steps is marked as trainable (explicitly), so as to have it be saved into checkpoints
+      # for the purposes of resumed training.
+      global_steps = tf.Variable(0, name='global_steps', dtype=tf.int64, trainable=True,
                                  collections=[tf.GraphKeys.GLOBAL_VARIABLES,
-                                              tf.GraphKeys.GLOBAL_STEP])
+                                              tf.GraphKeys.GLOBAL_STEP,
+                                              tf.GraphKeys.TRAINABLE_VARIABLES])
       loss, train_op = self.build_training(inferences, targets, global_steps)
 
     with tf.name_scope('initialization'):
-      # Create the saver that will be used to save and restore trained variables
+      # Create the saver that will be used to save and restore (in cases of resumed training)
+      # trained variables.
       saver = tf.train.Saver(tf.trainable_variables())
 
-      init_op = self.build_init()
-      ready_op = tf.concat(0, [tf.report_uninitialized_variables(tf.trainable_variables()),
-                               tf.resources.report_uninitialized_resources()], name='ready')
+      init_op, local_init_op = self.build_init()
+      ready_op = tf.report_uninitialized_variables(tf.trainable_variables())
 
     # Create the summary op that will merge all summaries across all sub-graphs
     summary_op = tf.merge_all_summaries()
@@ -130,6 +133,7 @@ class ModelBuilder(object):
       'global_steps': global_steps,
       'loss': loss,
       'init_op': init_op,
+      'local_init_op': local_init_op,
       'ready_op': ready_op,
       'train_op': train_op,
       'summary_op': summary_op,
@@ -160,10 +164,10 @@ class ModelBuilder(object):
       metric, eval_op = self.build_evaluation(outputs, targets)
 
     with tf.name_scope('initialization'):
-      # Create the saver that will be used to save and restore trained variables
+      # Create the saver that will be used to restore trained variables,
       saver = tf.train.Saver(tf.trainable_variables())
 
-      init_op = self.build_init()
+      init_op, local_init_op = self.build_init()
 
     # Create the summary op that will merge all summaries across all sub-graphs
     summary_op = tf.merge_all_summaries()
@@ -171,6 +175,7 @@ class ModelBuilder(object):
     return {
       'metric': metric,
       'init_op': init_op,
+      'local_init_op': local_init_op,
       'eval_op': eval_op,
       'summary_op': summary_op,
       'saver': saver
@@ -192,29 +197,46 @@ class ModelBuilder(object):
       outputs = self.build_output(inferences)
 
     with tf.name_scope('initialization'):
-      # Create the saver that will be used to save and restore trained variables
+      # Create the saver that will be used to restore trained variables.
       saver = tf.train.Saver(tf.trainable_variables())
 
-      init_op = self.build_init()
+      init_op, local_init_op = self.build_init()
 
     return {
       'init_op': init_op,
+      'local_init_op': local_init_op,
       'saver': saver
     }
 
   def build_init(self):
-    """Builds the initialization sub-graph
+    """Builds the initialization sub-graph.
 
     The default implementation creates an initialization op that initializes all variables,
-    locals, and tables.
+    locals for initialization, and another for all non-traininable variables and tables for local
+    initialization.
+
+    Initialization is run when the graph is first created, before training. Local initialization is
+    performed after a previously trained model is loaded.
 
     Returns:
-      The init op to use to initialize the graph.
+      A tuple containing the init op and local init op to use to initialize the graph.
     """
-    init_variables = tf.initialize_all_variables()
-    init_locals = tf.initialize_local_variables()
+    init_op = tf.initialize_variables(tf.global_variables(), name='init')
 
-    return tf.group(init_variables, init_locals, name='init')
+    # For some reason local variables are not in the local variables collection, but rather in the
+    # global variables collection. So compute the local ones, by starting with global variables
+    # and remove the trainable ones, to determine the set of variables to be initialized after
+    # restoring from a checkpoint.
+    # TODO: Figure out if/when we can use tf.local_variables
+    variables = tf.global_variables()
+    for trainable in tf.trainable_variables():
+      variables.remove(trainable)
+
+    local_init_op = tf.group(tf.initialize_variables(variables),
+                             tf.initialize_all_tables(),
+                             name='local_init_op')
+
+    return init_op, local_init_op
 
   def build_input(self, dataset, source, batch, epochs, shuffle):
     """Builds the input sub-graph.
@@ -278,4 +300,3 @@ class ModelBuilder(object):
       The eval metric tensor and the eval op.
     """
     raise NotImplementedError('build_evaluation must be implemented in a derived class.')
-  
