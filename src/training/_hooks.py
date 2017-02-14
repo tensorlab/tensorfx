@@ -77,7 +77,7 @@ class LogTrainingHook(tf.train.SessionRunHook):
   """Logs the training job by logging progress as well as producing summary events.
   """
   _MESSAGE_FORMAT = 'Global steps: %d; Duration: %d sec; Throughput: %.1f instances/sec; Loss: %.3f'
-  def __init__(self, training, args, output):
+  def __init__(self, args, output, training):
     self._global_steps = training.global_steps
     self._loss = training.loss
     self._summary_op = training.summary_op
@@ -87,7 +87,7 @@ class LogTrainingHook(tf.train.SessionRunHook):
     self._batch_size = args.batch_size
 
     self._summary_writer = tf.train.SummaryWriter(os.path.join(output, 'summaries', 'train'))
-    self._summary_writer.add_graph(tf.get_default_graph())
+    self._summary_writer.add_graph(training.graph)
 
     self._start_time = time.time()
     self._global_steps_completed = 0
@@ -114,7 +114,7 @@ class LogTrainingHook(tf.train.SessionRunHook):
                    self._global_steps_completed, duration, throughput, loss_value)
 
       self._summary_writer.add_summary(summary, self._global_steps_completed)
-      utils.add_summary_value(self._summary_writer, 'throughput', throughput,
+      utils.add_summary_value(self._summary_writer, 'metrics/throughput', throughput,
                               self._global_steps_completed)
 
 
@@ -123,7 +123,8 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
 
   This should only be used in master tasks.
   """
-  def __init__(self, training, args, output):
+  _MESSAGE_FORMAT = 'Global steps: %d; Evaluation metric: %.3f'
+  def __init__(self, args, output, training, evaluation):
     self._global_steps = training.global_steps
     self._saver = training.saver
 
@@ -135,14 +136,22 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
     self._last_save_time = time.time()
     self._last_save_steps = 0
 
+    self._evaluation = evaluation
+    self._summary_writer = tf.train.SummaryWriter(os.path.join(output, 'summaries', 'eval'))
+    self._summary_writer.add_graph(evaluation.graph)
+
   def before_run(self, context):
-    if time.time() - self._last_save_time >= self._checkpoint_interval_secs:
+    # Save a checkpoint after the first step (this produces early evaluation results), as well as,
+    # every checkpoint interval.
+    if self._last_save_steps == 0 or \
+       time.time() - self._last_save_time >= self._checkpoint_interval_secs:
       return tf.train.SessionRunArgs([self._global_steps])
 
   def after_run(self, context, values):
     if values.results:
       global_steps_completed, = values.results
-      self._saver.save(context.session, self._checkpoint_name, global_steps_completed)
+      checkpoint = self._saver.save(context.session, self._checkpoint_name, global_steps_completed)
+      self._evaluate(checkpoint, global_steps_completed)
 
       self._last_save_steps = global_steps_completed
       self._last_save_time = time.time()
@@ -150,7 +159,35 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
   def end(self, session):
     global_steps_completed = session.run(self._global_steps)
     if global_steps_completed != self._last_save_steps:
-      self._saver.save(session, self._checkpoint_name, global_steps_completed)
+      checkpoint = self._saver.save(session, self._checkpoint_name, global_steps_completed)
+      self._evaluate(checkpoint, global_steps_completed)
+
+  def _evaluate(self, checkpoint, global_steps_completed):
+    with self._evaluation.graph.as_default():
+      with tf.Session() as session:
+        self._evaluation.init_op.run()
+        self._evaluation.saver.restore(session, checkpoint)
+        self._evaluation.local_init_op.run()
+
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(coord=coord)
+
+        try:
+          while not coord.should_stop():
+            session.run(self._evaluation.eval_op)
+        except tf.errors.OutOfRangeError:
+          # Ignore the error raised at the end of an epoch of eval data.
+          pass
+        finally:
+          coord.request_stop()
+        coord.join(threads)
+
+        metric_value = session.run(self._evaluation.metric)
+
+        summary = session.run(self._evaluation.summary_op)
+        self._summary_writer.add_summary(summary, global_steps_completed)
+
+        logging.info(SaveCheckpointHook._MESSAGE_FORMAT, global_steps_completed, metric_value)
 
 
 class CheckNaNLossHook(tf.train.SessionRunHook):

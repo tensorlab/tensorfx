@@ -223,16 +223,18 @@ class ModelBuilder(object):
     """
     init_op = tf.initialize_variables(tf.global_variables(), name='init')
 
-    # For some reason local variables are not in the local variables collection, but rather in the
-    # global variables collection. So compute the local ones, by starting with global variables
-    # and remove the trainable ones, to determine the set of variables to be initialized after
-    # restoring from a checkpoint.
-    # TODO: Figure out if/when we can use tf.local_variables
+    # For some reason not all local variables are in the local variables collection, but some are in
+    # the global variables collection (such as those setup by reader ops).
+    # So in addition to initializing local variables in the local_init_op, we also initialize the
+    # set of variables in the global variables, that are not trainable.
+    # Just to add to the mix, tables are neither, and so must be explicitly included as well.
+    # All of these will be initialized after restoring from a checkpoint.
     variables = tf.global_variables()
     for trainable in tf.trainable_variables():
       variables.remove(trainable)
 
     local_init_op = tf.group(tf.initialize_variables(variables),
+                             tf.initialize_variables(tf.local_variables()),
                              tf.initialize_all_tables(),
                              name='local_init_op')
 

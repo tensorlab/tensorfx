@@ -156,11 +156,12 @@ class ModelTrainer(object):
     utils.save_job_spec(output, self._config, dataset, args)
 
     training = model_builder.training(dataset)
+    evaluation = model_builder.evaluation(dataset)
     with training.graph.as_default() as graph:
       master = server.target if server else ''
       config = self._create_session_config(training, args)
       scaffold = self._create_session_scaffold(training, args)
-      hooks = self._create_session_hooks(training, args, output)
+      hooks = self._create_session_hooks(training, evaluation, args, output)
 
       if self._config.master:
         checkpoint_path = os.path.join(output, 'checkpoints')
@@ -192,15 +193,15 @@ class ModelTrainer(object):
     # TODO: Setup device filters, parallelization, and run timeouts
     return tf.ConfigProto(log_device_placement=args.log_device_placement)
 
-  def _create_session_hooks(self, training, args, output):
+  def _create_session_hooks(self, training, evaluation, args, output):
     """Creates the TensorFlow session hooks that customize the session loop.
     """
     hooks = []
 
     hooks.append(LogSessionHook(args))
     if self._config.master:
-      hooks.append(LogTrainingHook(training, args, output))
-      hooks.append(SaveCheckpointHook(training, args, output))
+      hooks.append(LogTrainingHook(args, output, training))
+      hooks.append(SaveCheckpointHook(args, output, training, evaluation))
     hooks.append(StopTrainingHook(training.global_steps, args.max_steps))
 
     return hooks
