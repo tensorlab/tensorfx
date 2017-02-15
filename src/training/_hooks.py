@@ -17,9 +17,35 @@ import logging
 import os
 import tensorflow as tf
 import time
-import _utils as utils
 
+from tensorflow.core.framework import summary_pb2 as tfsummaries
+from tensorflow.core.protobuf import meta_graph_pb2 as tfmeta
 from tensorflow.python.lib.io import file_io as tfio
+from tensorflow.python.saved_model import builder as tfmodel
+
+
+def _log_summary_value(summary_writer, tag, value, global_steps):
+  summary_value = tfsummaries.Summary.Value(tag=tag, simple_value=value)
+  summary = tfsummaries.Summary(value=[summary_value])
+
+  summary_writer.add_summary(summary, global_steps)
+
+
+def _build_tensor_info(tensor):
+  return tfmeta.TensorInfo(name=tensor.name,
+                           dtype=tensor.dtype.as_datatype_enum,
+                           tensor_shape=tensor.get_shape().as_proto())
+
+
+def _build_signatures(inputs, outputs):
+  signature = tfmeta.SignatureDef()
+  signature.method_name = 'tensorflow/serving/predict'
+  for tensor in inputs:
+    signature.inputs[tensor.name].CopyFrom(_build_tensor_info(tensor))
+  for tensor in outputs:
+    signature.outputs[tensor.name].CopyFrom(_build_tensor_info(tensor))
+
+  return {'serving_default': signature}
 
 
 class StopTrainingHook(tf.train.SessionRunHook):
@@ -114,17 +140,17 @@ class LogTrainingHook(tf.train.SessionRunHook):
                    self._global_steps_completed, duration, throughput, loss_value)
 
       self._summary_writer.add_summary(summary, self._global_steps_completed)
-      utils.add_summary_value(self._summary_writer, 'metrics/throughput', throughput,
-                              self._global_steps_completed)
+      _log_summary_value(self._summary_writer, 'metrics/throughput', throughput,
+                         self._global_steps_completed)
 
 
 class SaveCheckpointHook(tf.train.SessionRunHook):
-  """Saves checkpoints at regular interval, and then runs evaluation.
+  """Saves checkpoints during training, evaluates them, and exports the final checkpoint as a model.
 
   This should only be used in master tasks.
   """
   _MESSAGE_FORMAT = 'Global steps: %d; Evaluation metric: %.3f'
-  def __init__(self, args, output, training, evaluation):
+  def __init__(self, args, output, training, evaluation, prediction):
     self._global_steps = training.global_steps
     self._saver = training.saver
 
@@ -139,6 +165,9 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
     self._evaluation = evaluation
     self._summary_writer = tf.train.SummaryWriter(os.path.join(output, 'summaries', 'eval'))
     self._summary_writer.add_graph(evaluation.graph)
+
+    self._prediction = prediction
+    self._output = output
 
   def before_run(self, context):
     # Save a checkpoint after the first step (this produces early evaluation results), as well as,
@@ -161,6 +190,7 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
     if global_steps_completed != self._last_save_steps:
       checkpoint = self._saver.save(session, self._checkpoint_name, global_steps_completed)
       self._evaluate(checkpoint, global_steps_completed)
+      self._export(checkpoint)
 
   def _evaluate(self, checkpoint, global_steps_completed):
     with self._evaluation.graph.as_default():
@@ -189,11 +219,29 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
 
         logging.info(SaveCheckpointHook._MESSAGE_FORMAT, global_steps_completed, metric_value)
 
+  def _export(self, checkpoint):
+    summary_writer = tf.train.SummaryWriter(os.path.join(self._output, 'summaries', 'prediction'))
+    summary_writer.add_graph(self._prediction.graph)
+    summary_writer.close()
+
+    with self._prediction.graph.as_default():
+      with tf.Session() as session:
+        self._prediction.init_op.run()
+        self._prediction.saver.restore(session, checkpoint)
+        self._prediction.local_init_op.run()
+
+        signatures = _build_signatures(self._prediction.inputs, self._prediction.outputs)
+        model_builder = tfmodel.SavedModelBuilder(os.path.join(self._output, 'model'))
+        model_builder.add_meta_graph_and_variables(session,
+                                                  tags=['SERVING'],
+                                                  signature_def_map=signatures,
+                                                  clear_devices=True)
+        model_builder.save()
+
 
 class CheckNaNLossHook(tf.train.SessionRunHook):
   """Checks for NaN loss values to stop or abort training.
   """
   # TODO: Implement this
   pass
-
 

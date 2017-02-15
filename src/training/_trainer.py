@@ -20,7 +20,7 @@ import os
 import sys
 import tensorflow as tf
 import tensorfx as tfx
-import _utils as utils
+import yaml
 from _config import Configuration
 from _hooks import *
 
@@ -153,15 +153,19 @@ class ModelTrainer(object):
     logs, and finally exporting the trained model.
     """
     args = model_builder.args
-    utils.save_job_spec(output, self._config, dataset, args)
 
+    self._save_job_spec(dataset, args, output)
+
+    # TODO: Create model_builder.build_interfaces, and add properties for each
     training = model_builder.training(dataset)
     evaluation = model_builder.evaluation(dataset)
+    prediction = model_builder.prediction(dataset)
+
     with training.graph.as_default() as graph:
       master = server.target if server else ''
       config = self._create_session_config(training, args)
       scaffold = self._create_session_scaffold(training, args)
-      hooks = self._create_session_hooks(training, evaluation, args, output)
+      hooks = self._create_session_hooks(training, evaluation, prediction, args, output)
 
       if self._config.master:
         checkpoint_path = os.path.join(output, 'checkpoints')
@@ -174,10 +178,6 @@ class ModelTrainer(object):
       with tf.train.MonitoredSession(session_creator, hooks) as session:
         while not session.should_stop():
           session.run(training.train_op)
-
-      if self._config.master:
-        # TODO: Build a Model and return it
-        pass
 
       return None
 
@@ -193,7 +193,7 @@ class ModelTrainer(object):
     # TODO: Setup device filters, parallelization, and run timeouts
     return tf.ConfigProto(log_device_placement=args.log_device_placement)
 
-  def _create_session_hooks(self, training, evaluation, args, output):
+  def _create_session_hooks(self, training, evaluation, prediction, args, output):
     """Creates the TensorFlow session hooks that customize the session loop.
     """
     hooks = []
@@ -201,7 +201,7 @@ class ModelTrainer(object):
     hooks.append(LogSessionHook(args))
     if self._config.master:
       hooks.append(LogTrainingHook(args, output, training))
-      hooks.append(SaveCheckpointHook(args, output, training, evaluation))
+      hooks.append(SaveCheckpointHook(args, output, training, evaluation, prediction))
     hooks.append(StopTrainingHook(training.global_steps, args.max_steps))
 
     return hooks
@@ -217,6 +217,18 @@ class ModelTrainer(object):
     scaffold.finalize()
 
     return scaffold
+
+  def _save_job_spec(self, dataset, args, output):
+    job_info = {
+      'config': self._config._env,
+      'data': dataset._refs,
+      'args': ' '.join(args._args)
+    }
+    job_spec = yaml.safe_dump(job_info, default_flow_style=False)
+    job_file = os.path.join(output, 'job.yaml')
+
+    tfio.recursive_create_dir(output)
+    tfio.write_string_to_file(job_file, job_spec)
 
   def _setup_logging(self, model_builder):
     tf.logging.set_verbosity(model_builder.args.log_level.value)

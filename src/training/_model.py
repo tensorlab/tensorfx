@@ -205,7 +205,9 @@ class ModelBuilder(object):
     return {
       'init_op': init_op,
       'local_init_op': local_init_op,
-      'saver': saver
+      'saver': saver,
+      'inputs': tf.get_collection('inputs'),
+      'outputs': tf.get_collection('outputs')
     }
 
   def build_init(self):
@@ -257,6 +259,7 @@ class ModelBuilder(object):
       return dataset.parse_instances(instances)
     else:
       instances = tf.placeholder(dtype=tf.string, shape=(None,), name='instances')
+      tf.add_to_collection('inputs', instances)
       return dataset.parse_instances(instances, prediction=True)
 
   def build_inference(self, features, training):
