@@ -32,18 +32,24 @@ def _log_summary_value(summary_writer, tag, value, global_steps):
 
 
 def _build_tensor_info(tensor):
-  return tfmeta.TensorInfo(name=tensor.name,
+  local_name = tensor.name.split('/')[-1]
+  alias = local_name.split(':')[0]
+
+  info = tfmeta.TensorInfo(name=tensor.name,
                            dtype=tensor.dtype.as_datatype_enum,
                            tensor_shape=tensor.get_shape().as_proto())
+  return alias, info
 
 
 def _build_signatures(inputs, outputs):
   signature = tfmeta.SignatureDef()
   signature.method_name = 'tensorflow/serving/predict'
   for tensor in inputs:
-    signature.inputs[tensor.name].CopyFrom(_build_tensor_info(tensor))
+    alias, info = _build_tensor_info(tensor)
+    signature.inputs[alias].CopyFrom(info)
   for tensor in outputs:
-    signature.outputs[tensor.name].CopyFrom(_build_tensor_info(tensor))
+    alias, info = _build_tensor_info(tensor)
+    signature.outputs[alias].CopyFrom(info)
 
   return {'serving_default': signature}
 
