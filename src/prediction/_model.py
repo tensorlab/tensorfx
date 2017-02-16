@@ -11,9 +11,8 @@
 # the License.
 
 # _model.py
-# Implements the Model base class.
+# Implements the Model class.
 
-import os
 import tensorflow as tf
 
 

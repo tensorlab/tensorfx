@@ -107,6 +107,12 @@ class Configuration(object):
     return self._task
 
   @property
+  def device(self):
+    """Retrieve the device associated with the current node.
+    """
+    return '/job:%s/task:%d' % (self._task.type, self._task.index)
+
+  @property
   def master(self):
     """Retrieves whether the current task is a master task.
     """

@@ -129,7 +129,7 @@ class ModelTrainer(object):
     server = None
     if self._config.distributed:
       server = self._create_server()
-      if config.param_server:
+      if self._config.param_server:
         return self._run_ps(server)
 
     return self._run_training(server, model_builder, dataset, output)
@@ -162,27 +162,37 @@ class ModelTrainer(object):
     prediction = model_builder.prediction(dataset)
 
     with training.graph.as_default() as graph:
-      master = server.target if server else ''
-      config = self._create_session_config(training, args)
-      scaffold = self._create_session_scaffold(training, args)
-      hooks = self._create_session_hooks(training, evaluation, prediction, args, output)
+      with tf.device(self._create_device_setter()):
+        master = server.target if server else ''
+        config = self._create_session_config(training, args)
+        scaffold = self._create_session_scaffold(training, args)
+        hooks = self._create_session_hooks(training, evaluation, prediction, args, output)
 
-      if self._config.master:
-        checkpoint_path = os.path.join(output, 'checkpoints')
-        tfio.recursive_create_dir(checkpoint_path)
+        if self._config.master:
+          checkpoint_path = os.path.join(output, 'checkpoints')
+          tfio.recursive_create_dir(checkpoint_path)
 
-        session_creator = tf.train.ChiefSessionCreator(scaffold, master, config, checkpoint_path)
-      else:
-        session_creator = tf.train.WorkerSessionCreator(scaffold, master, config)
+          session_creator = tf.train.ChiefSessionCreator(scaffold, master, config, checkpoint_path)
+        else:
+          session_creator = tf.train.WorkerSessionCreator(scaffold, master, config)
 
-      with tf.train.MonitoredSession(session_creator, hooks) as session:
-        while not session.should_stop():
-          session.run(training.train_op)
+        with tf.train.MonitoredSession(session_creator, hooks) as session:
+          while not session.should_stop():
+            # TODO: Add session run timeouts
+            session.run(training.train_op)
 
-      if self._config.master:
-        return tfx.prediction.Model.load(os.path.join(output, 'model'))
-      else:
-        return None
+        if self._config.master:
+          return tfx.prediction.Model.load(os.path.join(output, 'model'))
+        else:
+          return None
+
+  def _create_device_setter(self):
+    """Creates the device setter, which assigns variables and ops to devices in distributed mode.
+    """
+    # TODO: Provide a way to provide a custom stragery or setter
+    return tf.train.replica_device_setter(cluster=self._config.cluster,
+                                          ps_device='/job:ps',
+                                          worker_device=self._config.device)
 
   def _create_server(self):
     """Creates the TensorFlow server, which is required for distributed training.
@@ -193,8 +203,22 @@ class ModelTrainer(object):
   def _create_session_config(self, training, args):
     """Creates the TensorFlow session config object.
     """
-    # TODO: Setup device filters, parallelization, and run timeouts
-    return tf.ConfigProto(log_device_placement=args.log_device_placement)
+    if self._config.local:
+      # Don't have each process (esp. in case of distributed simulation) on the local machine to
+      # attempt using all CPUs
+      parallelism = 1
+    else:
+      # Use default
+      parallelism = 0
+
+    # Limit communication to specific devices. Specifically the goal is to disable communications
+    # across workers, so as to increase performance and reliability.
+    device_filters = ['/job:ps', self._config.device]
+
+    return tf.ConfigProto(log_device_placement=args.log_device_placement,
+                          device_filters=device_filters,
+                          intra_op_parallelism_threads=parallelism,
+                          inter_op_parallelism_threads=parallelism)
 
   def _create_session_hooks(self, training, evaluation, prediction, args, output):
     """Creates the TensorFlow session hooks that customize the session loop.
