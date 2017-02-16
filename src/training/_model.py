@@ -202,12 +202,20 @@ class ModelBuilder(object):
 
       init_op, local_init_op = self.build_init()
 
+    inputs = tf.get_collection('inputs')
+    if len(inputs) != 1 or inputs[0].dtype != tf.string:
+      raise Exception('Invalid prediction graph. Must have a single string input.')
+
+    outputs = tf.get_collection('outputs')
+    if len(outputs) == 0:
+      raise Exception('Invalid prediction graph. Must have at least one output.')
+
     return {
       'init_op': init_op,
       'local_init_op': local_init_op,
       'saver': saver,
-      'inputs': tf.get_collection('inputs'),
-      'outputs': tf.get_collection('outputs')
+      'inputs': inputs,
+      'outputs': outputs
     }
 
   def build_init(self):
@@ -239,6 +247,7 @@ class ModelBuilder(object):
                              tf.initialize_variables(tf.local_variables()),
                              tf.initialize_all_tables(),
                              name='local_init_op')
+    tf.add_to_collection(tf.GraphKeys.LOCAL_INIT_OP, local_init_op)
 
     return init_op, local_init_op
 
