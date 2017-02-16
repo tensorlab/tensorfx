@@ -16,42 +16,9 @@
 import logging
 import os
 import tensorflow as tf
+import tensorfx as tfx
 import time
-
 from tensorflow.core.framework import summary_pb2 as tfsummaries
-from tensorflow.core.protobuf import meta_graph_pb2 as tfmeta
-from tensorflow.python.lib.io import file_io as tfio
-from tensorflow.python.saved_model import builder as tfmodel
-
-
-def _log_summary_value(summary_writer, tag, value, global_steps):
-  summary_value = tfsummaries.Summary.Value(tag=tag, simple_value=value)
-  summary = tfsummaries.Summary(value=[summary_value])
-
-  summary_writer.add_summary(summary, global_steps)
-
-
-def _build_tensor_info(tensor):
-  local_name = tensor.name.split('/')[-1]
-  alias = local_name.split(':')[0]
-
-  info = tfmeta.TensorInfo(name=tensor.name,
-                           dtype=tensor.dtype.as_datatype_enum,
-                           tensor_shape=tensor.get_shape().as_proto())
-  return alias, info
-
-
-def _build_signatures(inputs, outputs):
-  signature = tfmeta.SignatureDef()
-  signature.method_name = 'tensorflow/serving/predict'
-  for tensor in inputs:
-    alias, info = _build_tensor_info(tensor)
-    signature.inputs[alias].CopyFrom(info)
-  for tensor in outputs:
-    alias, info = _build_tensor_info(tensor)
-    signature.outputs[alias].CopyFrom(info)
-
-  return {'serving_default': signature}
 
 
 class StopTrainingHook(tf.train.SessionRunHook):
@@ -236,13 +203,9 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
         self._prediction.saver.restore(session, checkpoint)
         self._prediction.local_init_op.run()
 
-        signatures = _build_signatures(self._prediction.inputs, self._prediction.outputs)
-        model_builder = tfmodel.SavedModelBuilder(os.path.join(self._output, 'model'))
-        model_builder.add_meta_graph_and_variables(session,
-                                                  tags=['SERVING'],
-                                                  signature_def_map=signatures,
-                                                  clear_devices=True)
-        model_builder.save()
+        model_path = os.path.join(self._output, 'model')
+        tfx.prediction.Model.save(session, model_path,
+                                  self._prediction.inputs, self._prediction.outputs)
 
 
 class CheckNaNLossHook(tf.train.SessionRunHook):
@@ -251,3 +214,9 @@ class CheckNaNLossHook(tf.train.SessionRunHook):
   # TODO: Implement this
   pass
 
+
+def _log_summary_value(summary_writer, tag, value, global_steps):
+  summary_value = tfsummaries.Summary.Value(tag=tag, simple_value=value)
+  summary = tfsummaries.Summary(value=[summary_value])
+
+  summary_writer.add_summary(summary, global_steps)

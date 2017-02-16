@@ -179,7 +179,10 @@ class ModelTrainer(object):
         while not session.should_stop():
           session.run(training.train_op)
 
-      return None
+      # if self._config.master:
+      #   return tfx.prediction.Model.load(os.path.join(output, 'model'))
+      # else:
+      #   return None
 
   def _create_server(self):
     """Creates the TensorFlow server, which is required for distributed training.
