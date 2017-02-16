@@ -127,7 +127,7 @@ class ModelBuilder(object):
       ready_op = tf.report_uninitialized_variables(tf.trainable_variables())
 
     # Create the summary op that will merge all summaries across all sub-graphs
-    summary_op = tf.merge_all_summaries()
+    summary_op = tf.summary.merge_all()
 
     return {
       'global_steps': global_steps,
@@ -170,7 +170,7 @@ class ModelBuilder(object):
       init_op, local_init_op = self.build_init()
 
     # Create the summary op that will merge all summaries across all sub-graphs
-    summary_op = tf.merge_all_summaries()
+    summary_op = tf.summary.merge_all()
 
     return {
       'metric': metric,

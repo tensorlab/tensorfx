@@ -85,7 +85,7 @@ class LogTrainingHook(tf.train.SessionRunHook):
     self._max_steps = args.max_steps
     self._batch_size = args.batch_size
 
-    self._summary_writer = tf.train.SummaryWriter(os.path.join(output, 'summaries', 'train'))
+    self._summary_writer = tf.summary.FileWriter(os.path.join(output, 'summaries', 'train'))
     self._summary_writer.add_graph(training.graph)
 
     self._start_time = time.time()
@@ -136,7 +136,7 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
     self._last_save_steps = 0
 
     self._evaluation = evaluation
-    self._summary_writer = tf.train.SummaryWriter(os.path.join(output, 'summaries', 'eval'))
+    self._summary_writer = tf.summary.FileWriter(os.path.join(output, 'summaries', 'eval'))
     self._summary_writer.add_graph(evaluation.graph)
 
     self._prediction = prediction
@@ -193,7 +193,7 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
         logging.info(SaveCheckpointHook._MESSAGE_FORMAT, global_steps_completed, metric_value)
 
   def _export(self, checkpoint):
-    summary_writer = tf.train.SummaryWriter(os.path.join(self._output, 'summaries', 'prediction'))
+    summary_writer = tf.summary.FileWriter(os.path.join(self._output, 'summaries', 'prediction'))
     summary_writer.add_graph(self._prediction.graph)
     summary_writer.close()
 

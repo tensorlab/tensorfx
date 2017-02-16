@@ -188,7 +188,7 @@ class ModelTrainer(object):
     """Creates the TensorFlow server, which is required for distributed training.
     """
     return tf.train.Server(self._config.cluster, self._config.task.type, self._config.task.index,
-                            protocol='grpc')
+                           protocol='grpc')
 
   def _create_session_config(self, training, args):
     """Creates the TensorFlow session config object.
