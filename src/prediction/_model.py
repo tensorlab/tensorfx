@@ -22,15 +22,20 @@ class Model(object):
 
   A model is loaded from a checkpoint that was produced during training.
   """
-  def __init__(self, session, signature):
+  def __init__(self, session, inputs, outputs):
     """Initializes a Model using a TensorFlow session containing an initialized prediction graph.
 
     Arguments:
       session: The TensorFlow session to use for evaluating inferences.
-      signature: The signature defining the input and outputs for prediction.
+      inputs: A map of input names to corresponding graph tensors.
+      outputs: A map of output names to corresponding graph tensors.
     """
     self._session = session
-    self._signature = signature
+    self._inputs = inputs
+    self._outputs = outputs
+
+    # Optimize for the one input key for the currently supported single input graphs
+    self._input_key = inputs[inputs.keys()[0]]
 
   @classmethod
   def load(cls, path):
@@ -41,15 +46,23 @@ class Model(object):
     Returns:
       An initialized Model object that can be used for performing prediction.
     """
-    with tf.Graph().as_default() as g:
-      with tf.Session() as session:
-        model = tf.saved_model.loader.load(session, ['SERVING'], path)
-        signature = _parse_signature(model)
+    with tf.Graph().as_default() as graph:
+      session = tf.Session()
 
-        local_init_op = tf.get_collection(tf.GraphKeys.LOCAL_INIT_OP)[0]
-        session.run(local_init_op)
+      metagraph = tf.saved_model.loader.load(session, ['SERVING'], path)
+      signature = _parse_signature(metagraph)
 
-        return cls(session, signature)
+      local_init_op = tf.get_collection(tf.GraphKeys.LOCAL_INIT_OP)[0]
+      session.run(local_init_op)
+
+      inputs = {}
+      for alias in signature.inputs:
+        inputs[alias] = signature.inputs[alias].name
+      outputs = {}
+      for alias in signature.outputs:
+        outputs[alias] = signature.outputs[alias].name
+
+    return cls(session, inputs, outputs)
 
 
   @staticmethod
@@ -76,8 +89,22 @@ class Model(object):
     Arguments:
       - instances: either an object, or list of objects each containing feature values.
     """
-    raise NotImplementedError()
+    # TODO: Support for DataFrames and a flag of whether to append prediction outputs to input
+    #       DataFrame.
 
+    # Run the instances through the session to retrieve the prediction outputs
+    results = self._session.run(self._outputs, feed_dict={self._input_key: instances})
+
+    # Convert outputs, which are in dictionary of lists representation (alias -> batch of values) to
+    # list of predictions representation (list of dictionaries, where each dict is alias -> value).
+    predictions = [{} for _ in range(len(instances))]
+
+    for alias in self._outputs.iterkeys():
+      values = results[alias]
+      for index, value in enumerate(values):
+        predictions[index][alias] = value
+
+    return predictions
 
 def _build_signature(inputs, outputs):
   def tensor_alias(tensor):
@@ -97,13 +124,13 @@ def _build_signature(inputs, outputs):
     method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME)
 
 
-def _parse_signature(model):
-  if not model.signature_def:
+def _parse_signature(metagraph):
+  if not metagraph.signature_def:
     raise ValueError('Invalid model. The saved model does not define a signature.')
-  if len(model.signature_def) > 1:
+  if len(metagraph.signature_def) > 1:
     raise ValueError('Invalid model. Only models with a single signature are supported.')
 
-  signature = model.signature_def.get('serving_default', None)
+  signature = metagraph.signature_def.get('serving_default', None)
   if not signature:
     raise ValueError('Invalid model. Unexpected signature type.')
 
