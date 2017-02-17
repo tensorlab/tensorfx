@@ -238,6 +238,7 @@ class ModelTrainer(object):
     scaffold = tf.train.Scaffold(init_op=training.init_op,
                                  local_init_op=training.local_init_op,
                                  ready_op=training.ready_op,
+                                 ready_for_local_init_op=training.ready_op,
                                  summary_op=training.summary_op,
                                  saver=training.saver)
     scaffold.finalize()
