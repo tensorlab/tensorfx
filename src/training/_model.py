@@ -129,6 +129,14 @@ class ModelBuilder(object):
     # Create the summary op that will merge all summaries across all sub-graphs
     summary_op = tf.summary.merge_all()
 
+    scaffold = tf.train.Scaffold(init_op=init_op,
+                                 local_init_op=local_init_op,
+                                 ready_op=ready_op,
+                                 ready_for_local_init_op=ready_op,
+                                 summary_op=summary_op,
+                                 saver=saver)
+    scaffold.finalize()
+
     return {
       'global_steps': global_steps,
       'loss': loss,
@@ -137,7 +145,8 @@ class ModelBuilder(object):
       'ready_op': ready_op,
       'train_op': train_op,
       'summary_op': summary_op,
-      'saver': saver
+      'saver': saver,
+      'scaffold': scaffold
     }
 
   def build_evaluation_graph(self, dataset):

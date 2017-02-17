@@ -164,16 +164,16 @@ class ModelTrainer(object):
       with tf.device(self._create_device_setter()):
         master = server.target if server else ''
         config = self._create_session_config(training, args)
-        scaffold = self._create_session_scaffold(training, args)
         hooks = self._create_session_hooks(training, evaluation, prediction, args, output)
 
         if self._config.master:
           checkpoint_path = os.path.join(output, 'checkpoints')
           tfio.recursive_create_dir(checkpoint_path)
 
-          session_creator = tf.train.ChiefSessionCreator(scaffold, master, config, checkpoint_path)
+          session_creator = tf.train.ChiefSessionCreator(training.scaffold,
+                                                         master, config, checkpoint_path)
         else:
-          session_creator = tf.train.WorkerSessionCreator(scaffold, master, config)
+          session_creator = tf.train.WorkerSessionCreator(training.scaffold, master, config)
 
         with tf.train.MonitoredSession(session_creator, hooks) as session:
           while not session.should_stop():
@@ -231,19 +231,6 @@ class ModelTrainer(object):
     hooks.append(StopTrainingHook(training.global_steps, args.max_steps))
 
     return hooks
-
-  def _create_session_scaffold(self, training, args):
-    """Creates a TensorFlow Scaffold that will be associated with the Session.
-    """
-    scaffold = tf.train.Scaffold(init_op=training.init_op,
-                                 local_init_op=training.local_init_op,
-                                 ready_op=training.ready_op,
-                                 ready_for_local_init_op=training.ready_op,
-                                 summary_op=training.summary_op,
-                                 saver=training.saver)
-    scaffold.finalize()
-
-    return scaffold
 
   def _save_job_spec(self, dataset, args, output):
     job_info = {
