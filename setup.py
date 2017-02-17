@@ -28,6 +28,7 @@ setuptools.setup(
   name='tensorfx',
   version=version,
   packages=[
+    'tensorfx',
     'tensorfx.data',
     'tensorfx.training',
     'tensorfx.prediction',
@@ -47,6 +48,6 @@ setuptools.setup(
     'Google'
   ],
   classifiers=[
-  ]
+  ],
+  data_files=[('.', ['requirements.txt'])]
 )
-
