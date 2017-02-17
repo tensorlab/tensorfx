@@ -11,4 +11,4 @@
 # the License.
 
 # __init__.py
-# tensorfx.toolbox module declaration.
+# tensorfx.models module declaration.

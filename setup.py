@@ -32,7 +32,9 @@ setuptools.setup(
     'tensorfx.data',
     'tensorfx.training',
     'tensorfx.prediction',
-    'tensorfx.tools'
+    'tensorfx.tools',
+    'tensorfx.models',
+    'tensorfx.models.nn'
   ],
   install_requires=dependencies,
   author='Nikhil Kothari',
