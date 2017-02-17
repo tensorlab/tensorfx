@@ -15,14 +15,12 @@
 
 import argparse
 import autocli
-import logging
-import os
 import sys
 import tensorflow as tf
 import tensorfx as tfx
-import yaml
 from _config import Configuration
 from _hooks import *
+from _job import Job
 
 from tensorflow.python.lib.io import file_io as tfio
 
@@ -123,15 +121,14 @@ class ModelTrainer(object):
     Returns:
       The trained Model. The resulting value is only relevant for master nodes.
     """
-    self._setup_logging(model_builder)
+    job = Job(output, model_builder, dataset, self._config)
+    job.configure_logging()
 
-    server = None
-    if self._config.distributed:
-      server = self._create_server()
-      if self._config.param_server:
-        return self._run_ps(server)
+    server = self._config.create_server()
+    if server and self._config.param_server:
+      return self._run_ps(server)
 
-    return self._run_training(server, model_builder, dataset, output)
+    return self._run_training(server, job)
 
   def _run_ps(self, server):
     """Runs the parameter server task.
@@ -143,7 +140,7 @@ class ModelTrainer(object):
     except AbortError:
       pass
 
-  def _run_training(self, server, model_builder, dataset, output):
+  def _run_training(self, server, job):
     """Runs the worker and master tasks.
 
     Worker and master tasks create a TensorFlow session, and run the session loop. The session
@@ -151,55 +148,31 @@ class ModelTrainer(object):
     is also responsible for producing and evaluating checkpoints, as well producing summary event
     logs, and finally exporting the trained model.
     """
-    args = model_builder.args
+    job.start()
 
-    self._save_job_spec(dataset, args, output)
+    with job.training.graph.as_default() as graph:
+      master = server.target if server else ''
+      config = self._create_session_config(job)
+      hooks = self._create_session_hooks(job)
 
-    # TODO: Create model_builder.build_interfaces, and add properties for each
-    training = model_builder.training(dataset)
-    evaluation = model_builder.evaluation(dataset)
-    prediction = model_builder.prediction(dataset)
+      if self._config.master:
+        tfio.recursive_create_dir(job.checkpoints_path)
+        session_creator = tf.train.ChiefSessionCreator(job.training.scaffold,
+                                                       master, config, job.checkpoints_path)
+      else:
+        session_creator = tf.train.WorkerSessionCreator(job.training.scaffold, master, config)
 
-    with training.graph.as_default() as graph:
-      with tf.device(self._create_device_setter()):
-        master = server.target if server else ''
-        config = self._create_session_config(training, args)
-        hooks = self._create_session_hooks(training, evaluation, prediction, args, output)
+      with tf.train.MonitoredSession(session_creator, hooks) as session:
+        while not session.should_stop():
+          # TODO: Add session run timeouts
+          session.run(job.training.train_op)
 
-        if self._config.master:
-          checkpoint_path = os.path.join(output, 'checkpoints')
-          tfio.recursive_create_dir(checkpoint_path)
+      if self._config.master:
+        return tfx.prediction.Model.load(job.model_path)
+      else:
+        return None
 
-          session_creator = tf.train.ChiefSessionCreator(training.scaffold,
-                                                         master, config, checkpoint_path)
-        else:
-          session_creator = tf.train.WorkerSessionCreator(training.scaffold, master, config)
-
-        with tf.train.MonitoredSession(session_creator, hooks) as session:
-          while not session.should_stop():
-            # TODO: Add session run timeouts
-            session.run(training.train_op)
-
-        if self._config.master:
-          return tfx.prediction.Model.load(os.path.join(output, 'model'))
-        else:
-          return None
-
-  def _create_device_setter(self):
-    """Creates the device setter, which assigns variables and ops to devices in distributed mode.
-    """
-    # TODO: Provide a way to provide a custom stragery or setter
-    return tf.train.replica_device_setter(cluster=self._config.cluster,
-                                          ps_device='/job:ps',
-                                          worker_device=self._config.device)
-
-  def _create_server(self):
-    """Creates the TensorFlow server, which is required for distributed training.
-    """
-    return tf.train.Server(self._config.cluster, self._config.task.type, self._config.task.index,
-                           protocol='grpc')
-
-  def _create_session_config(self, training, args):
+  def _create_session_config(self, job):
     """Creates the TensorFlow session config object.
     """
     if self._config.local:
@@ -214,51 +187,20 @@ class ModelTrainer(object):
     # across workers, so as to increase performance and reliability.
     device_filters = ['/job:ps', self._config.device]
 
-    return tf.ConfigProto(log_device_placement=args.log_device_placement,
+    return tf.ConfigProto(log_device_placement=job.args.log_device_placement,
                           device_filters=device_filters,
                           intra_op_parallelism_threads=parallelism,
                           inter_op_parallelism_threads=parallelism)
 
-  def _create_session_hooks(self, training, evaluation, prediction, args, output):
+  def _create_session_hooks(self, job):
     """Creates the TensorFlow session hooks that customize the session loop.
     """
     hooks = []
 
-    hooks.append(LogSessionHook(args))
+    hooks.append(LogSessionHook(job))
     if self._config.master:
-      hooks.append(LogTrainingHook(args, output, training))
-      hooks.append(SaveCheckpointHook(args, output, training, evaluation, prediction))
-    hooks.append(StopTrainingHook(training.global_steps, args.max_steps))
+      hooks.append(LogTrainingHook(job))
+      hooks.append(SaveCheckpointHook(job))
+    hooks.append(StopTrainingHook(job))
 
     return hooks
-
-  def _save_job_spec(self, dataset, args, output):
-    job_info = {
-      'config': self._config._env,
-      'data': dataset._refs,
-      'args': ' '.join(args._args)
-    }
-    job_spec = yaml.safe_dump(job_info, default_flow_style=False)
-    job_file = os.path.join(output, 'job.yaml')
-
-    tfio.recursive_create_dir(output)
-    tfio.write_string_to_file(job_file, job_spec)
-
-  def _setup_logging(self, model_builder):
-    tf.logging.set_verbosity(model_builder.args.log_level.value)
-
-    if hasattr(self._config.job, 'local'):
-      # Additional setup to output logs to console for local runs. On cloud, this should
-      # be handled by the environment.
-      if self._config.distributed:
-        format = '%%(levelname)s %s:%d: %%(message)s'
-        format = format % (self._config.task.type, self._config.task.index)
-      else:
-        format = '%(levelname)s: %(message)s'
-      
-      handler = logging.StreamHandler(stream=sys.stderr)
-      handler.setFormatter(logging.Formatter(fmt=format))
-
-      logger = logging.getLogger()
-      logger.addHandler(handler)
-      logger.setLevel(logging.INFO)

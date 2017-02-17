@@ -129,3 +129,21 @@ class Configuration(object):
     """Retrieves whether the current task is a worker task.
     """
     return self._task.type == _TASK_WORKER
+
+  def create_device_setter(self, args):
+    """Creates the device setter, which assigns variables and ops to devices in distributed mode.
+
+    Arguments:
+      args: the arguments associated with the current job.
+    """
+    # TODO: Provide a way to provide a custom stragery or setter
+    return tf.train.replica_device_setter(cluster=self._cluster,
+                                          ps_device='/job:ps',
+                                          worker_device=self.device)
+
+  def create_server(self):
+    """Creates the TensorFlow server, which is required for distributed training.
+    """
+    if not self.distributed:
+      return None
+    return tf.train.Server(self._cluster, self._task.type, self._task.index, protocol='grpc')

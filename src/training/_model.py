@@ -52,41 +52,32 @@ class ModelBuilder(object):
     """
     return self._args
 
-  def training(self, dataset):
-    """Builds the training graph to use for training a model.
+  def build_graph_interfaces(self, dataset, config):
+    """Builds graph interfaces for training and evaluating a model, and for predicting using it.
+
+    A graph interface is an object containing a TensorFlow graph member, as well as members
+    corresponding to various tensors and ops within the graph.
 
     Arguments:
       dataset: The DataSet providing a reference to training data.
+      config: The training Configuration object.
     Returns:
-      A training interface consisting of a TensorFlow graph and associated tensors and ops.
+      A tuple consisting of the training, evaluation and prediction interfaces.
     """
     with tf.Graph().as_default() as graph:
-      references = self.build_training_graph(dataset)
-      return _create_interface('Training', graph, references)
+      with tf.device(config.create_device_setter(self._args)):
+        references = self.build_training_graph(dataset)
+        training = _create_interface('Training', graph, references)
 
-  def evaluation(self, dataset):
-    """Builds the evaluation graph to use for evaluating a model.
-
-    Arguments:
-      dataset: The DataSet providing a reference to evaluation data.
-    Returns:
-      An evaluation interface consisting of a TensorFlow graph and associated tensors and ops.
-    """
     with tf.Graph().as_default() as graph:
       references = self.build_evaluation_graph(dataset)
-      return _create_interface('Evaluation', graph, references)
+      evaluation = _create_interface('Evaluation', graph, references)
 
-  def prediction(self, dataset):
-    """Builds the prediction graph to use for predicting with a model.
-
-    Arguments:
-      dataset: The DataSet providing schema and feature information.
-    Returns:
-      A prediction interface consisting of a TensorFlow graph and associated tensors and ops.
-    """
     with tf.Graph().as_default() as graph:
       references = self.build_prediction_graph(dataset)
-      return _create_interface('Prediction', graph, references)
+      prediction = _create_interface('Prediction', graph, references)
+
+    return training, evaluation, prediction
 
   def build_training_graph(self, dataset):
     """Builds the graph to use for training a model.

@@ -24,15 +24,14 @@ from tensorflow.core.framework import summary_pb2 as tfsummaries
 class StopTrainingHook(tf.train.SessionRunHook):
   """Stops training after a specified number of steps.
   """
-  def __init__(self, global_steps, max_steps):
+  def __init__(self, job):
     """Initializes an instance of StopTrainingHook.
 
     Arguments:
-      global_steps: The global steps tensor.
-      max_steps: The max steps after which training should be stopped.
+      job: The current training job.
     """
-    self._global_steps = global_steps
-    self._max_steps = max_steps
+    self._global_steps = job.training.global_steps
+    self._max_steps = job.args.max_steps
 
   def before_run(self, context):
     return tf.train.SessionRunArgs(self._global_steps)
@@ -47,9 +46,14 @@ class LogSessionHook(tf.train.SessionRunHook):
   """Logs the session loop by outputting steps, and throughput into logs.
   """
   _MESSAGE_FORMAT = 'Run: %.2f sec; Steps: %d; Duration: %d sec; Throughput: %.1f instances/sec'
-  def __init__(self, args):
-    self._log_interval_steps = args.log_interval_steps
-    self._batch_size = args.batch_size
+  def __init__(self, job):
+    """Initializes an instance of LogSessionHook.
+
+    Arguments:
+      job: The current training job.
+    """
+    self._log_interval_steps = job.args.log_interval_steps
+    self._batch_size = job.args.batch_size
 
     self._start_time = time.time()
     self._steps_completed = 0
@@ -76,17 +80,22 @@ class LogTrainingHook(tf.train.SessionRunHook):
   """Logs the training job by logging progress as well as producing summary events.
   """
   _MESSAGE_FORMAT = 'Global steps: %d; Duration: %d sec; Throughput: %.1f instances/sec; Loss: %.3f'
-  def __init__(self, args, output, training):
-    self._global_steps = training.global_steps
-    self._loss = training.loss
-    self._summary_op = training.summary_op
+  def __init__(self, job):
+    """Initializes an instance of LogTrainingHook.
 
-    self._log_interval_steps = args.log_interval_steps
-    self._max_steps = args.max_steps
-    self._batch_size = args.batch_size
+    Arguments:
+      job: The current training job.
+    """
+    self._global_steps = job.training.global_steps
+    self._loss = job.training.loss
+    self._summary_op = job.training.summary_op
 
-    self._summary_writer = tf.summary.FileWriter(os.path.join(output, 'summaries', 'train'))
-    self._summary_writer.add_graph(training.graph)
+    self._log_interval_steps = job.args.log_interval_steps
+    self._max_steps = job.args.max_steps
+    self._batch_size = job.args.batch_size
+
+    self._summary_writer = tf.summary.FileWriter(job.summaries_path('train'))
+    self._summary_writer.add_graph(job.training.graph)
 
     self._start_time = time.time()
     self._global_steps_completed = 0
@@ -124,24 +133,26 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
   This should only be used in master tasks.
   """
   _MESSAGE_FORMAT = 'Global steps: %d; Evaluation metric: %.3f'
-  def __init__(self, args, output, training, evaluation, prediction):
-    self._global_steps = training.global_steps
-    self._saver = training.saver
+  def __init__(self, job):
+    """Initializes an instance of SaveCheckpointHook.
 
-    self._checkpoint_interval_secs = args.checkpoint_interval_secs
+    Arguments:
+      job: The current training job.
+    """
+    self._job = job
 
-    self._checkpoint_path = os.path.join(output, 'checkpoints')
-    self._checkpoint_name = os.path.join(self._checkpoint_path, 'model.ckpt')
+    self._global_steps = job.training.global_steps
+    self._saver = job.training.saver
+
+    self._checkpoint_interval_secs = job.args.checkpoint_interval_secs
+
+    self._checkpoint_name = os.path.join(job.checkpoints_path, 'model.ckpt')
 
     self._last_save_time = time.time()
     self._last_save_steps = 0
 
-    self._evaluation = evaluation
-    self._summary_writer = tf.summary.FileWriter(os.path.join(output, 'summaries', 'eval'))
-    self._summary_writer.add_graph(evaluation.graph)
-
-    self._prediction = prediction
-    self._output = output
+    self._summary_writer = tf.summary.FileWriter(job.summaries_path('eval'))
+    self._summary_writer.add_graph(job.evaluation.graph)
 
   def before_run(self, context):
     # Save a checkpoint after the first step (this produces early evaluation results), as well as,
@@ -167,18 +178,18 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
       self._export(checkpoint)
 
   def _evaluate(self, checkpoint, global_steps_completed):
-    with self._evaluation.graph.as_default():
+    with self._job.evaluation.graph.as_default():
       with tf.Session() as session:
-        self._evaluation.init_op.run()
-        self._evaluation.saver.restore(session, checkpoint)
-        self._evaluation.local_init_op.run()
+        self._job.evaluation.init_op.run()
+        self._job.evaluation.saver.restore(session, checkpoint)
+        self._job.evaluation.local_init_op.run()
 
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
         try:
           while not coord.should_stop():
-            session.run(self._evaluation.eval_op)
+            session.run(self._job.evaluation.eval_op)
         except tf.errors.OutOfRangeError:
           # Ignore the error raised at the end of an epoch of eval data.
           pass
@@ -186,28 +197,27 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
           coord.request_stop()
         coord.join(threads)
 
-        metric_value = session.run(self._evaluation.metric)
+        metric_value = session.run(self._job.evaluation.metric)
 
-        summary = session.run(self._evaluation.summary_op)
+        summary = session.run(self._job.evaluation.summary_op)
         self._summary_writer.add_summary(summary, global_steps_completed)
         self._summary_writer.flush()
 
         logging.info(SaveCheckpointHook._MESSAGE_FORMAT, global_steps_completed, metric_value)
 
   def _export(self, checkpoint):
-    summary_writer = tf.summary.FileWriter(os.path.join(self._output, 'summaries', 'prediction'))
-    summary_writer.add_graph(self._prediction.graph)
+    summary_writer = tf.summary.FileWriter(self._job.summaries_path('prediction'))
+    summary_writer.add_graph(self._job.prediction.graph)
     summary_writer.close()
 
-    with self._prediction.graph.as_default():
+    with self._job.prediction.graph.as_default():
       with tf.Session() as session:
-        self._prediction.init_op.run()
-        self._prediction.saver.restore(session, checkpoint)
-        self._prediction.local_init_op.run()
+        self._job.prediction.init_op.run()
+        self._job.prediction.saver.restore(session, checkpoint)
+        self._job.prediction.local_init_op.run()
 
-        model_path = os.path.join(self._output, 'model')
-        tfx.prediction.Model.save(session, model_path,
-                                  self._prediction.inputs, self._prediction.outputs)
+        tfx.prediction.Model.save(session, self._job.model_path,
+                                  self._job.prediction.inputs, self._job.prediction.outputs)
 
 
 class CheckNaNLossHook(tf.train.SessionRunHook):
