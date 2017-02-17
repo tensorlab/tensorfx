@@ -84,10 +84,8 @@ class ModelTrainer(object):
       argparser.add_argument('--schema', type=str, required=True)
       argparser.add_argument('--features', type=str, required=False, default=None)
       argparser.add_argument('--metadata', type=str, required=False, default=None)
-      argparser.add_argument('--job_dir', dest='output', type=str, required=False, default='output')
+      argparser.add_argument('--job_dir', dest='output', type=str, required=True)
       job_args, model_args = argparser.parse_known_args(args)
-
-      output = os.path.join(os.getcwd(), job_args.output)
 
       schema_spec = tfio.read_file_to_string(job_args.schema)
       features = tfio.read_file_to_string(job_args.features) if job_args.features else None
@@ -101,6 +99,7 @@ class ModelTrainer(object):
         }
       }
 
+      output = job_args.output
       references = vars(job_args)
       references.pop('output')
 

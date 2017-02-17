@@ -115,6 +115,7 @@ class LogTrainingHook(tf.train.SessionRunHook):
       self._summary_writer.add_summary(summary, self._global_steps_completed)
       _log_summary_value(self._summary_writer, 'metrics/throughput', throughput,
                          self._global_steps_completed)
+      self._summary_writer.flush()
 
 
 class SaveCheckpointHook(tf.train.SessionRunHook):
@@ -189,6 +190,7 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
 
         summary = session.run(self._evaluation.summary_op)
         self._summary_writer.add_summary(summary, global_steps_completed)
+        self._summary_writer.flush()
 
         logging.info(SaveCheckpointHook._MESSAGE_FORMAT, global_steps_completed, metric_value)
 
