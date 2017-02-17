@@ -22,8 +22,6 @@ from _config import Configuration
 from _hooks import *
 from _job import Job
 
-from tensorflow.python.lib.io import file_io as tfio
-
 
 class ModelTrainer(object):
   """Provides the functionality to train a model during a training job.
@@ -46,70 +44,46 @@ class ModelTrainer(object):
     """
     return self._config
 
-  def parse_args(self, model_args_type, args=None, parse_job_args=True):
-    """Parses arguments into model arguments and optionally input/output arguments.
+  def parse_args(self, model_args_type, args=None):
+    """Parses arguments into model arguments, the DataSet and output location.
 
-    The arguments type is inspected for its fields to build a model arguments parser. The result is
-    an instance of that type. The autocli library is used for parsing the arguments.
-
-    When parse_job_args is True, the following job arguments are parsed into a DataSet and
-    output location:
-    - train: the training data
-    - eval: the eval data
-    - format: the format of the data
-    - schema: the schema of the data
-    - metadata: metadata about the fields in the schema inferred from analyzing the training data.
-    - features: the features to produce from transforming the data.
-    - job_dir: the output location associated with the job.
+    The arguments are parsed for the following list of flags:
+    - job_dir which represents the output location for the job.
+    - the fields defined on the class identified by model_args_type, and parsed with the autocli
+      library.
 
     Arguments:
       model_args_type: the type of the Arguments object to parse.
       args: the list of arguments to parse (by default this uses the process arguments).
-      parse_io_flags: whether to parse input dataset and output location arguments.
     Returns:
-      A dataset, output and model args tuple if parse_job_args is True or just the latter if False.
+      A dataset, output and model args tuple.
     """
     if args is None:
       args = sys.argv[1:]
 
-    if parse_job_args:
-      # Arguments include standard args (inputs and output) which are parsed out first.
-      # The remaining arguments are handled as model-specific args.
-      argparser = argparse.ArgumentParser(add_help=False)
-      argparser.add_argument('--train', type=str, required=True)
-      argparser.add_argument('--eval', type=str, required=True)
-      argparser.add_argument('--format', type=str, required=True)
-      argparser.add_argument('--schema', type=str, required=True)
-      argparser.add_argument('--features', type=str, required=False, default=None)
-      argparser.add_argument('--metadata', type=str, required=False, default=None)
-      argparser.add_argument('--job_dir', dest='output', type=str, required=True)
-      job_args, model_args = argparser.parse_known_args(args)
+    # Parse out the standard arguments. Currently, the only standard argument is the output
+    # location for the job.
+    argparser = argparse.ArgumentParser(add_help=False)
+    argparser.add_argument('--job_dir', dest='output', type=str, required=True)
+    job_args, model_args_list = argparser.parse_known_args(args)
 
-      schema_spec = tfio.read_file_to_string(job_args.schema)
-      features = tfio.read_file_to_string(job_args.features) if job_args.features else None
-      metadata = tfio.read_file_to_string(job_args.metadata) if job_args.metadata else None
+    # Parse the rest of the arguments as the model-specific arguments.
+    model_args = autocli.parse_object(model_args_type, model_args_list)
 
-      dataset_spec = {
-        'format': job_args.format,
-        'sources': {
-          'train': job_args.train,
-          'eval': job_args.eval
-        }
+    # Build the DataSet from the arguments.
+    dataset_spec = {
+      'format': model_args.data_format,
+      'sources': {
+        'train': model_args.data_train,
+        'eval': model_args.data_eval
       }
+    }
 
-      output = job_args.output
-      references = vars(job_args)
-      references.pop('output')
+    dataset = tfx.data.DataSet.parse(dataset_spec, model_args.data_schema,
+                                     metadata=model_args.data_metadata,
+                                     features=model_args.data_features)
 
-      dataset = tfx.data.DataSet.parse(schema_spec, dataset_spec,
-                                       metadata=metadata,
-                                       features=features,
-                                       refs=references)
-
-      model_args = autocli.parse_object(model_args_type, model_args)
-      return dataset, output, model_args
-    else:
-      return autocli.parse_object(model_args_type, args)
+    return dataset, job_args.output, model_args
 
   def train(self, model_builder, dataset, output):
     """Runs the training process to train a model.
@@ -156,7 +130,6 @@ class ModelTrainer(object):
       hooks = self._create_session_hooks(job)
 
       if self._config.master:
-        tfio.recursive_create_dir(job.checkpoints_path)
         session_creator = tf.train.ChiefSessionCreator(job.training.scaffold,
                                                        master, config, job.checkpoints_path)
       else:

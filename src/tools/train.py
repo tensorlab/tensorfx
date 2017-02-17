@@ -21,8 +21,8 @@ import sys
 
 _PORT = 14000
 
-def main(args, app_args):
-  cmd = ['python', '-m', args.module] + app_args
+def main(args, trainer_args):
+  cmd = ['python', '-m', args.module] + trainer_args
 
   if args.distributed:
     print 'Launching training tasks (master, worker, parameter server)...'
@@ -82,38 +82,20 @@ def _parse_args(argv):
   argparser = argparse.ArgumentParser(description='Launches training jobs for development/testing.')
   argparser.add_argument('--module', metavar='name', type=str, required=True,
                          help='The name of the training module to launch')
-  argparser.add_argument('--train-data', metavar='path', type=str, required=True,
-                         dest='train',
-                         help='The data to use for training')
-  argparser.add_argument('--eval-data', metavar='path', type=str, required=True,
-                         dest='eval',
-                         help='The data to use for evaluation')
-  argparser.add_argument('--schema', metavar='path', type=str, required=True,
-                         help='The schema describing the structure of the data')
-  argparser.add_argument('--metadata', metavar='path', type=str, default=None,
-                         help='The metadata containing results of training data analysis')
-  argparser.add_argument('--features', metavar='path', type=str, default=None,
-                         help='The features describing how source data is transformed')
   argparser.add_argument('--output', metavar='path', type=str, default='output',
                          help='The path to write outputs')
   argparser.add_argument('--distributed', action='store_true',
                          help='Runs a multi-node (master, worker, parameter server) cluster')
 
-  args, app_args = argparser.parse_known_args(argv)
+  args, trainer_args = argparser.parse_known_args(argv)
 
-  app_args.extend([
-    '--job_dir', os.path.abspath(args.output),
-    '--train', args.train, '--eval', args.eval,
-    '--schema', args.schema
+  trainer_args.extend([
+    '--job_dir', os.path.abspath(args.output)
   ])
-  if args.metadata:
-    app_args.extend(['--metadata', args.metadata])
-  if args.features:
-    app_args.extend(['--features', args.features])
 
-  return args, app_args
+  return args, trainer_args
 
 
 if __name__ == '__main__':
-  args, app_args = _parse_args(sys.argv[1:])
-  main(args, app_args)
+  args, trainer_args = _parse_args(sys.argv[1:])
+  main(args, trainer_args)

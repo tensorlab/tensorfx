@@ -14,6 +14,7 @@
 # Implementation of DataSet and DataSource classes.
 
 import tensorflow as tf
+from tensorflow.python.lib.io import file_io as tfio
 from ._schema import Schema
 from ._metadata import Metadata
 from ._features import FeatureSet
@@ -24,7 +25,7 @@ class DataSet(object):
 
   A DataSet contains one or more DataSource instances, each associated with a name.
   """
-  def __init__(self, datasources, schema, metadata=None, features=None, refs=None):
+  def __init__(self, datasources, schema, metadata=None, features=None):
     """Initializes a DataSet with the specified DataSource instances.
 
     Arguments:
@@ -32,13 +33,11 @@ class DataSet(object):
       schema: the description of the source data.
       metadata: additional per-field information associated with the data.
       features: the optional description of the transformed data.
-      refs: a dictionary containing data references that can be used for logging.
     """
     self._datasources = datasources
     self._schema = schema
     self._metadata = metadata
     self._features = features
-    self._refs = refs or {}
 
   @classmethod
   def create(cls, schema, *args, **kwargs):
@@ -62,8 +61,7 @@ class DataSet(object):
     datasources = dict(map(lambda ds: (ds.name, ds), args))
     return cls(datasources, schema,
                kwargs.get('metadata', None),
-               kwargs.get('features', None),
-               kwargs.get('refs', None))
+               kwargs.get('features', None))
 
   @property
   def schema(self):
@@ -105,25 +103,37 @@ class DataSet(object):
     return len(self._datasources)
 
   @staticmethod
-  def parse(schema, spec, **kwargs):
+  def parse(spec, schema, **kwargs):
     """Creates a DataSet with the specified set of DataSource urls.
 
     Arguments:
-      schema: the description of the source data.
       spec: A specification of the DataSet.
+      schema: the description of the source data.
       kwargs: optional information, such as metadata and features.
     Returns:
       A DataSet containing the specified DataSource instances.
     Raises:
       ValueError if the list of DataSources is empty, not-parseable or heterogenous.
     """
-    schema = Schema.parse(schema)
+    # TODO: Should the strings be interpretted as file paths (as they are), or file contents?
+    if type(schema) is str:
+      # Interpret this as a file path if the value is a string
+      schema = tfio.read_file_to_string(schema)
+      schema = Schema.parse(schema)
 
     metadata = kwargs.get('metadata', None)
-    metadata = Metadata.parse(metadata) if metadata else None
+    if metadata:
+      if type(metadata) is str:
+        # Interpret this as a file path if the value is a string
+        metadata = tfio.read_file_to_string(metadata)
+        metadata = Metadata.parse(metadata)
 
     features = kwargs.get('features', None)
-    features = FeatureSet.parse(features) if features else None
+    if features:
+      if type(features) is str:
+        # Interpret this as a file path if the value is a string
+        features = tfio.read_file_to_string(features)
+        features = FeatureSet.parse(features)
 
     data_format = spec['format']
     dataset_type = DataSetRegistry.lookup(data_format)
@@ -131,8 +141,7 @@ class DataSet(object):
     for name, path in spec['sources'].iteritems():
       data_sources.append(dataset_type.create_datasource(data_format, name, path))
 
-    return dataset_type.create(schema, *data_sources, metadata=metadata, features=features,
-                               refs=kwargs.get('refs', None))
+    return dataset_type.create(schema, *data_sources, metadata=metadata, features=features)
 
   def parse_instances(self, instances, prediction=False):
     """Parses input instances according to the associated schema, metadata and features.

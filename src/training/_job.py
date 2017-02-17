@@ -127,7 +127,6 @@ class Job(object):
       # Save out job information for later reference alongside all other outputs.
       job_info = {
         'config': self._config._env,
-        'data': self._dataset._refs,
         'args': ' '.join(self._model_builder.args._args)
       }
       job_spec = yaml.safe_dump(job_info, default_flow_style=False)
@@ -135,6 +134,10 @@ class Job(object):
 
       tfio.recursive_create_dir(self._output)
       tfio.write_string_to_file(job_file, job_spec)
+
+      # Create a checkpoints directory. This is needed to ensure checkpoint restoration logic
+      # can lookup an existing directory.
+      tfio.recursive_create_dir(self.checkpoints_path)
 
     # Build the graphs that will be used during the course of the job.
     self._training, self._evaluation, self._prediction = \

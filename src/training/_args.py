@@ -28,6 +28,14 @@ class JobLogging(enum.Enum):
 class ModelArguments(object):
   """An object that defines various arguments used to build and train models.
   """
+  # Arguments related to the input dataset
+  data_format = ''
+  data_schema = ''
+  data_metadata = ''
+  data_features = ''
+  data_train = ''
+  data_eval = ''
+
   # Arguments related to training data and reading
   batch_size = 128
   epochs = 0

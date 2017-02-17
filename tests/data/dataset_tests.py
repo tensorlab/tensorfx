@@ -62,7 +62,7 @@ class TestCases(unittest.TestCase):
     }
     schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
 
-    ds = tfx.data.DataSet.parse(schema, spec)
+    ds = tfx.data.DataSet.parse(spec, schema)
     self.assertEqual(len(ds.sources), 2)
     self.assertEqual(ds['train'].path, '/path/to/train.csv')
     self.assertEqual(ds['eval'].path, '/path/to/eval.csv')
@@ -77,7 +77,7 @@ class TestCases(unittest.TestCase):
     }
     schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
 
-    ds = tfx.data.DataSet.parse(schema, spec)
+    ds = tfx.data.DataSet.parse(spec, schema)
     self.assertEqual(len(ds), 2)
     self.assertEqual(ds['train'].path, 'https://path/to/train.csv')
     self.assertEqual(ds['eval'].path, 'https://path/to/eval.csv')
