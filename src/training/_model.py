@@ -231,7 +231,7 @@ class ModelBuilder(object):
     Returns:
       A tuple containing the init op and local init op to use to initialize the graph.
     """
-    init_op = tf.initialize_variables(tf.global_variables(), name='init')
+    init_op = tf.variables_initializer(tf.global_variables(), name='init')
 
     # For some reason not all local variables are in the local variables collection, but some are in
     # the global variables collection (such as those setup by reader ops).
@@ -243,9 +243,9 @@ class ModelBuilder(object):
     for trainable in tf.trainable_variables():
       variables.remove(trainable)
 
-    local_init_op = tf.group(tf.initialize_variables(variables),
-                             tf.initialize_variables(tf.local_variables()),
-                             tf.initialize_all_tables(),
+    local_init_op = tf.group(tf.variables_initializer(variables),
+                             tf.variables_initializer(tf.local_variables()),
+                             tf.tables_initializer(),
                              name='local_init_op')
     tf.add_to_collection(tf.GraphKeys.LOCAL_INIT_OP, local_init_op)
 
