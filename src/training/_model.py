@@ -97,13 +97,13 @@ class ModelBuilder(object):
     with tf.name_scope('input'):
       # For training, ensure the data is shuffled, and don't limit to any fixed number of epochs.
       # The datasource to use is the one named as 'train' within the dataset.
-      features = self.build_input('train',
-                                  batch=self.args.batch_size,
-                                  epochs=self.args.epochs,
-                                  shuffle=True)
+      inputs = self.build_input('train',
+                                batch=self.args.batch_size,
+                                epochs=self.args.epochs,
+                                shuffle=True)
     
     with tf.name_scope('inference'):
-      inferences = self.build_inference(features, training=True)
+      inferences = self.build_inference(inputs, training=True)
 
     with tf.name_scope('train'):
       # Global steps is marked as trainable (explicitly), so as to have it be saved into checkpoints
@@ -112,7 +112,7 @@ class ModelBuilder(object):
                                  collections=[tf.GraphKeys.GLOBAL_VARIABLES,
                                               tf.GraphKeys.GLOBAL_STEP,
                                               tf.GraphKeys.TRAINABLE_VARIABLES])
-      loss, train_op = self.build_training(global_steps, features, inferences)
+      loss, train_op = self.build_training(global_steps, inputs, inferences)
 
     with tf.name_scope('initialization'):
       # Create the saver that will be used to save and restore (in cases of resumed training)
@@ -155,16 +155,16 @@ class ModelBuilder(object):
       # For evaluation, compute the eval metric over a single pass over the evaluation data,
       # and avoid any overhead from shuffling.
       # The datasource to use is the one named as 'eval' within the dataset.
-      features = self.build_input('eval', batch=1, epochs=1, shuffle=False)
+      inputs = self.build_input('eval', batch=1, epochs=1, shuffle=False)
 
     with tf.name_scope('inference'):
-      inferences = self.build_inference(features, training=False)
+      inferences = self.build_inference(inputs, training=False)
 
     with tf.name_scope('output'):
       outputs = self.build_output(inferences)
 
     with tf.name_scope('evaluation'):
-      metric, eval_op = self.build_evaluation(features, outputs)
+      metric, eval_op = self.build_evaluation(inputs, outputs)
 
     with tf.name_scope('initialization'):
       # Create the saver that will be used to restore trained variables,
@@ -191,10 +191,10 @@ class ModelBuilder(object):
       The set of tensors and ops references required for prediction.
     """
     with tf.name_scope('input'):
-      features = self.build_input(source=None, batch=0, epochs=0, shuffle=False)
+      inputs = self.build_input(source=None, batch=0, epochs=0, shuffle=False)
 
     with tf.name_scope('inference'):
-      inferences = self.build_inference(features, training=False)
+      inferences = self.build_inference(inputs, training=False)
 
     with tf.name_scope('output'):
       outputs = self.build_output(inferences)
@@ -205,20 +205,20 @@ class ModelBuilder(object):
 
       init_op, local_init_op = self.build_init()
 
-    inputs = tf.get_collection('inputs')
-    if len(inputs) != 1 or inputs[0].dtype != tf.string:
+    graph_inputs = tf.get_collection('inputs')
+    if len(graph_inputs) != 1 or graph_inputs[0].dtype != tf.string:
       raise Exception('Invalid prediction graph. Must have a single string input.')
 
-    outputs = tf.get_collection('outputs')
-    if len(outputs) == 0:
+    graph_outputs = tf.get_collection('outputs')
+    if len(graph_outputs) == 0:
       raise Exception('Invalid prediction graph. Must have at least one output.')
 
     return {
       'init_op': init_op,
       'local_init_op': local_init_op,
       'saver': saver,
-      'inputs': inputs,
-      'outputs': outputs
+      'inputs': graph_inputs,
+      'outputs': graph_outputs
     }
 
   def build_init(self):
@@ -273,24 +273,24 @@ class ModelBuilder(object):
       tf.add_to_collection('inputs', instances)
       return self._dataset.parse_instances(instances, prediction=True)
 
-  def build_inference(self, features, training):
+  def build_inference(self, inputs, training):
     """Builds the inference sub-graph.
 
     Arguments:
-      features: the dictionary of tensors corresponding to the input.
+      inputs: the dictionary of tensors corresponding to the input.
       training: whether the inference sub-graph is being built for the training graph.
     Returns:
       The inference values.
     """
     raise NotImplementedError('build_inference must be implemented in a derived class.')
 
-  def build_training(self, global_steps, features, inferences):
+  def build_training(self, global_steps, inputs, inferences):
     """Builds the training sub-graph.
 
     Arguments:
       global_steps: the global steps variable to use.
+      inputs: the dictionary of tensors corresponding to the input.
       inferences: the inference values.
-      features: the input features containing target values to compare inferences to.
     Returns:
       The loss tensor, and the training op.
     """
@@ -306,11 +306,11 @@ class ModelBuilder(object):
     """
     raise NotImplementedError('build_output must be implemented in a derived class.')
 
-  def build_evaluation(self, features, outputs):
+  def build_evaluation(self, inputs, outputs):
     """Builds the evaluation graph.abs
 
     Arguments:
-      features: the input features containing expected target values.
+      inputs: the dictionary of tensors corresponding to the input.
       outputs: the dictionary containing output tensors.
     Returns:
       The eval metric tensor and the eval op.
