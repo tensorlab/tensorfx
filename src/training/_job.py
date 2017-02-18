@@ -117,9 +117,10 @@ class Job(object):
     """
     if self._config.master:
       # Save out job information for later reference alongside all other outputs.
+      job_args = ' '.join(self._model_builder.args._args).replace(' --', '\n--').split('\n')
       job_info = {
         'config': self._config._env,
-        'args': ' '.join(self._model_builder.args._args)
+        'args': job_args
       }
       job_spec = yaml.safe_dump(job_info, default_flow_style=False)
       job_file = os.path.join(self._output, 'job.yaml')
