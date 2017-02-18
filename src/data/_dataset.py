@@ -150,7 +150,7 @@ class DataSet(object):
       instances: The tensor containing input strings.
       prediction: Whether the instances are being parsed for producing predictions or not.
     Returns:
-      A tuple consisting of targets and a dictionary of tensors key'ed by feature names.
+      A dictionary of tensors key'ed by feature names.
     """
     raise NotImplementedError()
 

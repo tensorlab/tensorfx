@@ -35,16 +35,18 @@ class ModelBuilder(object):
   A ModelBuilder serves as a base class for various models. Each specific model adds its specific
   logic to build the required TensorFlow graph.
   """
-  def __init__(self, args):
+  def __init__(self, args, dataset):
     """Initializes an instance of a ModelBuilder.
 
     Arguments:
       args: the arguments specified for training.
+      dataset: the DataSet providing training and evaluation data.
     """
     if args is None or not isinstance(args, ModelArguments):
       raise ValueError('args must be an instance of ModelArguments')
 
     self._args = args
+    self._dataset = dataset
 
   @property
   def args(self):
@@ -52,50 +54,53 @@ class ModelBuilder(object):
     """
     return self._args
 
-  def build_graph_interfaces(self, dataset, config):
+  @property
+  def dataset(self):
+    """Retrieves the DataSet being used for training and evaluation data.
+    """
+    return self._dataset
+
+  def build_graph_interfaces(self, config):
     """Builds graph interfaces for training and evaluating a model, and for predicting using it.
 
     A graph interface is an object containing a TensorFlow graph member, as well as members
     corresponding to various tensors and ops within the graph.
 
     Arguments:
-      dataset: The DataSet providing a reference to training data.
       config: The training Configuration object.
     Returns:
       A tuple consisting of the training, evaluation and prediction interfaces.
     """
     with tf.Graph().as_default() as graph:
       with tf.device(config.create_device_setter(self._args)):
-        references = self.build_training_graph(dataset)
+        references = self.build_training_graph()
         training = _create_interface('Training', graph, references)
 
     with tf.Graph().as_default() as graph:
-      references = self.build_evaluation_graph(dataset)
+      references = self.build_evaluation_graph()
       evaluation = _create_interface('Evaluation', graph, references)
 
     with tf.Graph().as_default() as graph:
-      references = self.build_prediction_graph(dataset)
+      references = self.build_prediction_graph()
       prediction = _create_interface('Prediction', graph, references)
 
     return training, evaluation, prediction
 
-  def build_training_graph(self, dataset):
+  def build_training_graph(self):
     """Builds the graph to use for training a model.
 
     This operates on the current default graph.
 
-    Arguments:
-      dataset: The DataSet providing a reference to training data.
     Returns:
       The set of tensors and ops references required for training.
     """
     with tf.name_scope('input'):
       # For training, ensure the data is shuffled, and don't limit to any fixed number of epochs.
       # The datasource to use is the one named as 'train' within the dataset.
-      targets, features = self.build_input(dataset, 'train',
-                                           batch=self.args.batch_size,
-                                           epochs=self.args.epochs,
-                                           shuffle=True)
+      features = self.build_input('train',
+                                  batch=self.args.batch_size,
+                                  epochs=self.args.epochs,
+                                  shuffle=True)
     
     with tf.name_scope('inference'):
       inferences = self.build_inference(features, training=True)
@@ -107,7 +112,7 @@ class ModelBuilder(object):
                                  collections=[tf.GraphKeys.GLOBAL_VARIABLES,
                                               tf.GraphKeys.GLOBAL_STEP,
                                               tf.GraphKeys.TRAINABLE_VARIABLES])
-      loss, train_op = self.build_training(inferences, targets, global_steps)
+      loss, train_op = self.build_training(global_steps, features, inferences)
 
     with tf.name_scope('initialization'):
       # Create the saver that will be used to save and restore (in cases of resumed training)
@@ -140,11 +145,9 @@ class ModelBuilder(object):
       'scaffold': scaffold
     }
 
-  def build_evaluation_graph(self, dataset):
+  def build_evaluation_graph(self):
     """Builds the graph to use for evaluating a model during training.
 
-    Arguments:
-      dataset: The DataSet providing a reference to evaluation data.
     Returns:
       The set of tensors and ops references required for evaluation.
     """
@@ -152,7 +155,7 @@ class ModelBuilder(object):
       # For evaluation, compute the eval metric over a single pass over the evaluation data,
       # and avoid any overhead from shuffling.
       # The datasource to use is the one named as 'eval' within the dataset.
-      targets, features = self.build_input(dataset, 'eval', batch=1, epochs=1, shuffle=False)
+      features = self.build_input('eval', batch=1, epochs=1, shuffle=False)
 
     with tf.name_scope('inference'):
       inferences = self.build_inference(features, training=False)
@@ -161,7 +164,7 @@ class ModelBuilder(object):
       outputs = self.build_output(inferences)
 
     with tf.name_scope('evaluation'):
-      metric, eval_op = self.build_evaluation(outputs, targets)
+      metric, eval_op = self.build_evaluation(features, outputs)
 
     with tf.name_scope('initialization'):
       # Create the saver that will be used to restore trained variables,
@@ -181,14 +184,14 @@ class ModelBuilder(object):
       'saver': saver
     }
 
-  def build_prediction_graph(self, dataset):
+  def build_prediction_graph(self):
     """Builds the graph to use for predictions with the trained model.
 
     Returns:
       The set of tensors and ops references required for prediction.
     """
     with tf.name_scope('input'):
-      _, features = self.build_input(dataset, source=None, batch=0, epochs=0, shuffle=False)
+      features = self.build_input(source=None, batch=0, epochs=0, shuffle=False)
 
     with tf.name_scope('inference'):
       inferences = self.build_inference(features, training=False)
@@ -251,25 +254,24 @@ class ModelBuilder(object):
 
     return init_op, local_init_op
 
-  def build_input(self, dataset, source, batch, epochs, shuffle):
+  def build_input(self, source, batch, epochs, shuffle):
     """Builds the input sub-graph.
 
     Arguments:
-      dataset: The DataSet providing containing the specified datasource.
       source: the name of data source to use for input (for training and evaluation).
       batch: the number of instances to read per batch.
       epochs: the number of passes over the data.
       shuffle: whether to shuffle the data.
     Returns:
-      A tuple of targets and a dictionary of tensors key'd by feature names.
+      A dictionary of tensors key'ed by feature names.
     """
     if source:
-      instances = dataset[source].read(batch=batch, shuffle=shuffle, epochs=epochs)
-      return dataset.parse_instances(instances)
+      instances = self._dataset[source].read(batch=batch, shuffle=shuffle, epochs=epochs)
+      return self._dataset.parse_instances(instances)
     else:
       instances = tf.placeholder(dtype=tf.string, shape=(None,), name='instances')
       tf.add_to_collection('inputs', instances)
-      return dataset.parse_instances(instances, prediction=True)
+      return self._dataset.parse_instances(instances, prediction=True)
 
   def build_inference(self, features, training):
     """Builds the inference sub-graph.
@@ -282,13 +284,13 @@ class ModelBuilder(object):
     """
     raise NotImplementedError('build_inference must be implemented in a derived class.')
 
-  def build_training(self, inferences, targets, global_steps):
+  def build_training(self, global_steps, features, inferences):
     """Builds the training sub-graph.
 
     Arguments:
-      inferences: the inference values.
-      targets: the target values to compare inferences to.
       global_steps: the global steps variable to use.
+      inferences: the inference values.
+      features: the input features containing target values to compare inferences to.
     Returns:
       The loss tensor, and the training op.
     """
@@ -304,12 +306,12 @@ class ModelBuilder(object):
     """
     raise NotImplementedError('build_output must be implemented in a derived class.')
 
-  def build_evaluation(self, outputs, targets):
+  def build_evaluation(self, features, outputs):
     """Builds the evaluation graph.abs
 
     Arguments:
-      predictions: the dictionary containing output tensors.
-      targets: the expected target values.
+      features: the input features containing expected target values.
+      outputs: the dictionary containing output tensors.
     Returns:
       The eval metric tensor and the eval op.
     """

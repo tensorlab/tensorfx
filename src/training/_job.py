@@ -23,18 +23,16 @@ from tensorflow.python.lib.io import file_io as tfio
 class Job(object):
   """Represents a training job.
   """
-  def __init__(self, output, model_builder, dataset, config):
+  def __init__(self, model_builder, output, config):
     """Initializes a Job instance.
 
     Arguments:
-      output: the output path of the job.
       model_builder: the ModelBuilder associated with the job.
-      dataset: the DataSet being used during training.
+      output: the output path of the job.
       config: the Training configuration.
     """
-    self._output = output
-    self._dataset = dataset
     self._model_builder = model_builder
+    self._output = output
     self._config = config
 
   @property
@@ -42,12 +40,6 @@ class Job(object):
     """Retrieves the arguments associated with the job.
     """
     return self._model_builder.args
-
-  @property
-  def dataset(self):
-    """Retrieves the DataSet being used for training and evaluation data.
-    """
-    return self._dataset
 
   @property
   def model_builder(self):
@@ -141,4 +133,4 @@ class Job(object):
 
     # Build the graphs that will be used during the course of the job.
     self._training, self._evaluation, self._prediction = \
-      self._model_builder.build_graph_interfaces(self._dataset, self._config)
+      self._model_builder.build_graph_interfaces(self._config)

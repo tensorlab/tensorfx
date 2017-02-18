@@ -56,7 +56,7 @@ class ModelTrainer(object):
       model_args_type: the type of the Arguments object to parse.
       args: the list of arguments to parse (by default this uses the process arguments).
     Returns:
-      A dataset, output and model args tuple.
+      A model args, dataset, and output tuple.
     """
     if args is None:
       args = sys.argv[1:]
@@ -83,19 +83,18 @@ class ModelTrainer(object):
                                      metadata=model_args.data_metadata,
                                      features=model_args.data_features)
 
-    return dataset, job_args.output, model_args
+    return model_args, dataset, job_args.output
 
-  def train(self, model_builder, dataset, output):
+  def train(self, model_builder, output):
     """Runs the training process to train a model.
 
     Arguments:
       model_builder: the ModelBuilder to use to build graphs during training.
-      dataset: the DataSet to use for training and evaluation.
       output: the location of the output produced during training.
     Returns:
       The trained Model. The resulting value is only relevant for master nodes.
     """
-    job = Job(output, model_builder, dataset, self._config)
+    job = Job(model_builder, output, self._config)
     job.configure_logging()
 
     server = self._config.create_server()
