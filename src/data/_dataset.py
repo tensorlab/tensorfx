@@ -17,7 +17,7 @@ import tensorflow as tf
 from tensorflow.python.lib.io import file_io as tfio
 from ._schema import Schema
 from ._metadata import Metadata
-from ._features import FeatureSet
+from ._features import FeatureSet, FeatureType
 
 
 class DataSet(object):
@@ -154,6 +154,31 @@ class DataSet(object):
     """
     raise NotImplementedError()
 
+  def transform_instances(self, instances):
+    """Transforms input instances to create features.
+
+    Arguments:
+      instances: dictionary of tensors key'ed from schema field names to values.
+    Returns:
+      A dictionary of tensors key'ed by feature names
+    """
+    if not self._features:
+      return instances
+
+    # TODO: This needs to be thought through a bunch more.
+    with tf.name_scope('transform'):
+      features = {}
+
+      field_list = []
+      for feature in self._features:
+        if feature.type == FeatureType.target:
+          features['targets'] = tf.identity(instances[feature.field], name='target')
+        else:
+          field_list.append(instances[feature.field])
+
+      features['features'] = tf.transpose(tf.stack(field_list), name='features')
+
+    return features
 
 class DataSource(object):
   """A base class representing data that can be read for use in a job.

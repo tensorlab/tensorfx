@@ -89,12 +89,11 @@ class CsvDataSet(DataSet):
 
     values = tf.decode_csv(instances, defaults)
 
-    # TODO: Factor in features and metadata
-    features = {}
+    parsed_instances = {}
     for field, value in zip(self.schema, values):
-      features[field.name] = value
+      parsed_instances[field.name] = value
 
-    return features
+    return self.transform_instances(parsed_instances)
 
 
 DataSetRegistry.register('csv', CsvDataSet)

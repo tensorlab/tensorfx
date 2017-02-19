@@ -49,6 +49,7 @@ class Feature(object):
 
     Arguments:
       name: the name of the feature.
+      field: the name of the field.
     Returns:
       An instance of a Feature.
     """
@@ -60,16 +61,25 @@ class Feature(object):
     
     Arguments:
       name: the name of the feature.
+      field: the name of the field.
     Returns:
       An instance of a Feature.
     """
     return cls(name, FeatureType.target, [field])
-  
+
   @property
   def name(self):
     """Retrieves the name of the feature.
     """
     return self._name
+  
+  @property
+  def field(self):
+    """Retrieves the field making up the feature if the feature is based on a single field.
+    """
+    if len(self._fields) == 1:
+      return self._fields[0]
+    return None
   
   @property
   def fields(self):
@@ -102,7 +112,8 @@ class FeatureSet(object):
     Arguments:
       features: the list of features within a FeatureSet.
     """
-    self._features = dict(map(lambda f: (f.name, f), features))
+    self._features = features
+    self._features_map = dict(map(lambda f: (f.name, f), features))
 
   @staticmethod
   def create(*args):
@@ -137,11 +148,15 @@ class FeatureSet(object):
 
     features = []
     for f in spec['features']:
-      fields = f['fields']
+      name = f['name']
+      fields = f.get('fields', name)
+      feature_type = FeatureType[f.get('type', 'identity')]
+      transform = f.get('transform', None)
+
       if type(fields) is str:
         fields = map(lambda n: n.strip(), fields.split(','))
 
-      feature = Feature(f['name'], FeatureType[f['type']], fields,f.get('transform', None))
+      feature = Feature(name, feature_type, fields, transform)
       features.append(feature)
 
     return FeatureSet(features)
@@ -154,7 +169,7 @@ class FeatureSet(object):
     Returns:
       The SchemaField if it exists; None otherwise.
     """
-    return self._features.get(index, None)
+    return self._features_map.get(index, None)
 
   def __len__(self):
     """Retrieves the number of Features defined.
@@ -164,5 +179,5 @@ class FeatureSet(object):
   def __iter__(self):
     """Creates an iterator over the features in the FeatureSet.
     """
-    for name, field in self._features:
-      yield field
+    for feature in self._features:
+      yield feature

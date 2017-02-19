@@ -113,7 +113,7 @@ class Schema(object):
       raise ValueError('One or more fields must be specified')
 
     self._fields = fields
-    self._field_set = dict(map(lambda f: (f.name, f), fields))
+    self._field_map = dict(map(lambda f: (f.name, f), fields))
 
   @staticmethod
   def create(*args):
@@ -165,7 +165,7 @@ class Schema(object):
     if type(index) is int:
       return self._fields[index] if len(self._fields) > index else None
     else:
-      return self._field_set.get(index, None)
+      return self._field_map.get(index, None)
 
   def __iter__(self):
     """Creates an iterator to iterate over the fields.
