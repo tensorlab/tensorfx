@@ -34,7 +34,7 @@ class FeedForwardModelArguments(tfx.training.ModelArguments):
 
     nn = parser.add_argument_group(title='Neural Network',
       description='Arguments controlling the structure of the neural network.')
-    nn.add_argument('--hidden-layer', metavar='units', type=int, required=True,
+    nn.add_argument('--hidden-layers', metavar='units', type=int, required=False,
                     action=parser.var_args_action,
                     help='The size of each hidden layer to add.')
 
@@ -43,8 +43,12 @@ class FeedForwardModelArguments(tfx.training.ModelArguments):
   def process(self):
     super(FeedForwardModelArguments, self).process()
 
-    self.hidden_layers = map(lambda (i, s): ('layer_%d' % i, s, tf.nn.relu),
-                             enumerate(self.hidden_layer))
+    if self.hidden_layers:
+      self.hidden_layers = map(lambda (i, s): ('layer_%d' % i, s, tf.nn.relu),
+                              enumerate(self.hidden_layer))
+    else:
+      self.hidden_layers = []
+
     self.optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
 
     # TODO: Add a similar customization point for evaluation - an Evaluator object
