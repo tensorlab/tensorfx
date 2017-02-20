@@ -47,20 +47,20 @@ class ModelArguments(argparse.Namespace):
     return cls.parse(args=[])
 
   @classmethod
-  def parse(cls, args=None, parse_output=False):
+  def parse(cls, args=None, parse_job=False):
     """Parses training arguments.
 
     Arguments:
       args: the arguments to parse. If unspecified, the process arguments are used.
-      parse_output: whether to parse the training output directory.
+      parse_job: whether to parse the job related standard arguments.
     Returns:
       The model arguments, and optionally the training output path as well.
     """
     if args is None:
       args = sys.argv[1:]
 
-    output = None
-    if parse_output:
+    job_args = None
+    if parse_job:
       # Parse out the standard arguments. Currently, the only standard argument is the output
       # location for the job.
       # The standard arg parser is setup with add_help=False, so as to not eat up a --help option,
@@ -69,9 +69,7 @@ class ModelArguments(argparse.Namespace):
       standard_argparser = argparse.ArgumentParser(add_help=False)
       standard_argparser.add_argument('--job_dir', type=str, dest='output', required=False)
       standard_argparser.add_argument('--job-dir', type=str, dest='output', required=False)
-      standard_args, model_args_list = standard_argparser.parse_known_args(args)
-
-      output = standard_args.output
+      job_args, model_args_list = standard_argparser.parse_known_args(args)
     else:
       model_args_list = args
 
@@ -80,8 +78,8 @@ class ModelArguments(argparse.Namespace):
     model_args._args = model_args_list
     model_args.process()
 
-    if parse_output:
-      return model_args, output
+    if parse_job:
+      return model_args, job_args
     else:
       return model_args
 

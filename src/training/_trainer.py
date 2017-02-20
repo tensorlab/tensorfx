@@ -41,16 +41,16 @@ class ModelTrainer(object):
     """
     return self._config
 
-  def train(self, model_builder, output):
+  def train(self, model_builder, job_args):
     """Runs the training process to train a model.
 
     Arguments:
       model_builder: the ModelBuilder to use to build graphs during training.
-      output: the location of the output produced during training.
+      job_args: the arguments for the training job.
     Returns:
       The trained Model. The resulting value is only relevant for master nodes.
     """
-    job = Job(model_builder, output, self._config)
+    job = Job(model_builder, job_args.output, self._config)
     job.configure_logging()
 
     server = self._config.create_server()
