@@ -3,7 +3,6 @@
 #
 
 argparse==1.1
-autocli==0.6
 enum34>=1.1.6,<1.2
 pyyaml>=3.12,<4.0
 ujson>=1.35,<2.0

@@ -94,7 +94,10 @@ class Job(object):
   def configure_logging(self):
     """Initializes the loggers for the job.
     """
-    tf.logging.set_verbosity(self._model_builder.args.log_level.value)
+    args = self._model_builder.args
+
+    tf.logging.set_verbosity(getattr(tf.logging, args.log_level_tensorflow.name))
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = str(args.log_level_tensorflow.value)
 
     if hasattr(self._config.job, 'local'):
       # Additional setup to output logs to console for local runs. On cloud, this should
@@ -110,7 +113,7 @@ class Job(object):
 
       logger = logging.getLogger()
       logger.addHandler(handler)
-      logger.setLevel(logging.INFO)
+      logger.setLevel(getattr(logging, args.log_level.name))
 
   def start(self):
     """Performs startup logic, including building graphs.

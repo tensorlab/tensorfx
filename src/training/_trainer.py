@@ -13,9 +13,6 @@
 # _trainer.py
 # Implements Trainer.
 
-import argparse
-import autocli
-import sys
 import tensorflow as tf
 import tensorfx as tfx
 from _config import Configuration
@@ -43,47 +40,6 @@ class ModelTrainer(object):
     """Retrieves the training configuration.
     """
     return self._config
-
-  def parse_args(self, model_args_type, args=None):
-    """Parses arguments into model arguments, the DataSet and output location.
-
-    The arguments are parsed for the following list of flags:
-    - job_dir which represents the output location for the job.
-    - the fields defined on the class identified by model_args_type, and parsed with the autocli
-      library.
-
-    Arguments:
-      model_args_type: the type of the Arguments object to parse.
-      args: the list of arguments to parse (by default this uses the process arguments).
-    Returns:
-      A model args, dataset, and output tuple.
-    """
-    if args is None:
-      args = sys.argv[1:]
-
-    # Parse out the standard arguments. Currently, the only standard argument is the output
-    # location for the job.
-    argparser = argparse.ArgumentParser(add_help=False)
-    argparser.add_argument('--job_dir', dest='output', type=str, required=True)
-    job_args, model_args_list = argparser.parse_known_args(args)
-
-    # Parse the rest of the arguments as the model-specific arguments.
-    model_args = autocli.parse_object(model_args_type, model_args_list)
-
-    # Build the DataSet from the arguments.
-    dataset_spec = {
-      'format': model_args.data_format,
-      'sources': {
-        'train': model_args.data_train,
-        'eval': model_args.data_eval
-      }
-    }
-
-    dataset = tfx.data.DataSet.parse(dataset_spec, model_args.data_schema,
-                                     metadata=model_args.data_metadata,
-                                     features=model_args.data_features)
-
-    return model_args, dataset, job_args.output
 
   def train(self, model_builder, output):
     """Runs the training process to train a model.
