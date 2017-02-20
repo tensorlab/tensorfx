@@ -12,3 +12,5 @@
 
 # __init__.py
 # tensorfx.models module declaration.
+
+from ._classification import ClassificationScenario
