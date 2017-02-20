@@ -33,53 +33,57 @@ class ModelArguments(argparse.Namespace):
   def process(self):
     """Processes the parsed arguments to produce any additional objects.
     """
+    # Convert strings to enum values
     self.log_level = LogLevel[self.log_level]
     self.log_level_tensorflow = LogLevel[self.log_level_tensorflow]
 
   @classmethod
-  def parse(cls, args=None, parse_dataset=False):
+  def default(cls):
+    """Creates an instance of the arguments with default values.
+
+    Returns:
+      The model arguments with default values.
+    """
+    return cls.parse(args=[])
+
+  @classmethod
+  def parse(cls, args=None, parse_output=False):
     """Parses training arguments.
 
     Arguments:
       args: the arguments to parse. If unspecified, the process arguments are used.
-      parse_dataset: whether to parse a DataSet object.
+      parse_output: whether to parse the training output directory.
     Returns:
-      A tuple containing the model arguments, optionally a DataSet, and the training output path.
+      The model arguments, and optionally the training output path as well.
     """
     if args is None:
       args = sys.argv[1:]
 
-    # Parse out the standard arguments. Currently, the only standard argument is the output
-    # location for the job.
-    # The standard arg parser is setup with add_help=False, so as to not eat up a --help option,
-    # and have that be applied to the subsequent model arg parser.
-    # As such, we also have to make job-dir be not required
-    standard_argparser = argparse.ArgumentParser(add_help=False)
-    standard_argparser.add_argument('--job_dir', type=str, dest='output', required=False)
-    standard_argparser.add_argument('--job-dir', type=str, dest='output', required=False)
-    standard_args, model_args_list = standard_argparser.parse_known_args(args)
+    output = None
+    if parse_output:
+      # Parse out the standard arguments. Currently, the only standard argument is the output
+      # location for the job.
+      # The standard arg parser is setup with add_help=False, so as to not eat up a --help option,
+      # and have that be applied to the subsequent model arg parser.
+      # As such, we also have to make job-dir be not required
+      standard_argparser = argparse.ArgumentParser(add_help=False)
+      standard_argparser.add_argument('--job_dir', type=str, dest='output', required=False)
+      standard_argparser.add_argument('--job-dir', type=str, dest='output', required=False)
+      standard_args, model_args_list = standard_argparser.parse_known_args(args)
+
+      output = standard_args.output
+    else:
+      model_args_list = args
 
     model_argparser = cls.build_parser()
     model_args = model_argparser.parse_args(model_args_list, namespace=cls())
     model_args._args = model_args_list
     model_args.process()
 
-    if parse_dataset:
-      # Build the DataSet from the arguments.
-      dataset_spec = {
-        'format': model_args.data_format,
-        'sources': {
-          'train': model_args.data_train,
-          'eval': model_args.data_eval
-        }
-      }
-
-      dataset = tfx.data.DataSet.parse(dataset_spec, model_args.data_schema,
-                                       metadata=model_args.data_metadata,
-                                       features=model_args.data_features)
-      return model_args, dataset, standard_args.output
+    if parse_output:
+      return model_args, output
     else:
-      return model_args, standard_args.output
+      return model_args
 
   @classmethod
   def build_parser(cls):
@@ -92,17 +96,15 @@ class ModelArguments(argparse.Namespace):
 
     data = parser.add_argument_group(title='Data',
                                      description='Arguments describing the DataSet to use.')
-    data.add_argument('--data-format', metavar='format', type=str, choices=['csv'],
-                      help='The format of the data being referenced.')
     data.add_argument('--data-schema', metavar='path', type=str, required=False,
                       help='The schema (columns, types) of the data being referenced (YAML).')
     data.add_argument('--data-metadata', metavar='path', type=str, required=False,
                       help='The statistics and vocabularies of the data being referenced (JSON).')
     data.add_argument('--data-features', metavar='path', type=str, required=False,
                       help='The set of features to transform the raw data into (YAML).')
-    data.add_argument('--data-train', metavar='path', type=str, required=True,
+    data.add_argument('--data-train', metavar='path', type=str, required=False,
                       help='The data to use for training. This can include wildcards.')
-    data.add_argument('--data-eval', metavar='path', type=str, required=True,
+    data.add_argument('--data-eval', metavar='path', type=str, required=False,
                       help='The data to use for evaluation. This can include wildcards.')
 
     session = parser.add_argument_group(title='Session',

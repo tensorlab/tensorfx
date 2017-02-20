@@ -14,23 +14,22 @@
 # Implementation of CsvDataSource.
 
 import tensorflow as tf
-from ._dataset import DataSet, DataSource, DataSetRegistry
+from ._dataset import DataSet, DataSource
 from ._schema import SchemaFieldType
 
 
 class CsvDataSet(DataSet):
   """A DataSet representing data in csv format.
   """
-  def __init__(self, datasources, schema, metadata=None, features=None):
+  def __init__(self, schema, metadata=None, features=None):
     """Initializes a DataSet with the specified DataSource instances.
 
     Arguments:
-      datasources: a set of named DataSource instances.
       schema: the description of the source data.
       metadata: additional per-field information associated with the data.
       features: the optional description of the transformed data.
     """
-    super(CsvDataSet, self).__init__(datasources, schema, metadata, features)
+    super(CsvDataSet, self).__init__(schema, metadata, features)
 
   @staticmethod
   def create_datasource(format, name, path):
@@ -96,22 +95,17 @@ class CsvDataSet(DataSet):
     return self.transform_instances(parsed_instances)
 
 
-DataSetRegistry.register('csv', CsvDataSet)
-DataSetRegistry.register('tsv', CsvDataSet)
-
-
 class CsvDataSource(DataSource):
   """A DataSource representing one or more csv files.
   """
-  def __init__(self, name, path, delimiter=','):
+  def __init__(self, path, delimiter=','):
     """Initializes an instance of a CsvDataSource with the specified csv file(s).
 
     Arguments:
-      name: the name of the DataSource.
       path: the csv file containing the data. This can be a pattern to represent a set of files.
       delimiter: the delimiter character used.
     """
-    super(CsvDataSource, self).__init__(name)
+    super(CsvDataSource, self).__init__()
     self._path = path
     self._delimiter = delimiter
 

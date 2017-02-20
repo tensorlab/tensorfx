@@ -20,12 +20,11 @@ class DataFrameDataSource(DataSource):
 
   This class is useful for working with local/in-memory data.
   """
-  def __init__(self, name, df):
+  def __init__(self, df):
     """Initializes an instance of a DataFrameDataSource with the specified Pandas DataFrame.
 
     Arguments:
-      name: the name of the DataSource.
       df: the DataFrame instance to use.
     """
-    super(DataFrameDataSource, self).__init__(name)
+    super(DataFrameDataSource, self).__init__()
     self._df = df

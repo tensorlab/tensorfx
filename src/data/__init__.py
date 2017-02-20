@@ -17,6 +17,6 @@ from _schema import SchemaFieldType, SchemaField, Schema
 from _metadata import Metadata
 from _features import FeatureType, Feature, FeatureSet
 
-from _dataset import DataSet, DataSource, DataSetRegistry
-from _ds_csv import CsvDataSource
+from _dataset import DataSet, DataSource
+from _ds_csv import CsvDataSet, CsvDataSource
 from _ds_df import DataFrameDataSource

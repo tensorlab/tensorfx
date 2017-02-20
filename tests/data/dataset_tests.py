@@ -19,65 +19,32 @@ import tensorfx as tfx
 
 class TestCases(unittest.TestCase):
 
-  def test_create_dataset(self):
-    source = tfx.data.DataSource('foo')
+  def test_empty_dataset(self):
     schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
-    ds = tfx.data.DataSet.create(schema, source)
+    ds = tfx.data.DataSet(schema)
+
+    self.assertEqual(len(ds), 0)
+
+  def test_create_dataset(self):
+    schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
+    source = tfx.data.DataSource()
+
+    ds = tfx.data.DataSet(schema)
+    ds['foo'] = source
 
     self.assertEqual(ds['foo'], source)
 
   def test_create_multi_source_dataset(self):
-    train = tfx.data.DataSource('train')
-    eval = tfx.data.DataSource('eval')
     schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'),
                                     tfx.data.SchemaField.real('y'))
-    ds = tfx.data.DataSet.create(schema, train, eval)
+    train = tfx.data.CsvDataSource('...')
+    eval = tfx.data.CsvDataSource('...')
+
+    ds = tfx.data.CsvDataSet(schema)
+    ds['train'] = train
+    ds['eval'] = eval
 
     self.assertEqual(ds['train'], train)
     self.assertEqual(ds['eval'], eval)
-
-  def test_empty_dataset_raises_error(self):
-    with self.assertRaises(ValueError):
-      schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
-      source = tfx.data.DataSet.create(schema)
-
-  def test_mixed_datasources_raises_error(self):
-    class CustomDataSource(tfx.data.DataSource):
-      def __init__(self, name):
-        super(CustomDataSource, self).__init__(name)
-    
-    with self.assertRaises(ValueError):
-      source1 = tfx.data.DataSource('foo')
-      source2 = CustomDataSource('bar')
-      schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
-      ds = tfx.data.DataSet.create(schema, source1, source2)
-
-  def test_parse_local_spec(self):
-    spec = {
-      'format': 'csv',
-      'sources': {
-        'train': '/path/to/train.csv',
-        'eval': '/path/to/eval.csv'
-      }
-    }
-    schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
-
-    ds = tfx.data.DataSet.parse(spec, schema)
-    self.assertEqual(len(ds.sources), 2)
-    self.assertEqual(ds['train'].path, '/path/to/train.csv')
-    self.assertEqual(ds['eval'].path, '/path/to/eval.csv')
-
-  def test_parse_remote_spec(self):
-    spec = {
-      'format': 'csv',
-      'sources': {
-        'train': 'https://path/to/train.csv',
-        'eval': 'https://path/to/eval.csv'
-      }
-    }
-    schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
-
-    ds = tfx.data.DataSet.parse(spec, schema)
     self.assertEqual(len(ds), 2)
-    self.assertEqual(ds['train'].path, 'https://path/to/train.csv')
-    self.assertEqual(ds['eval'].path, 'https://path/to/eval.csv')
+    self.assertListEqual(ds.sources, ['train', 'eval'])
