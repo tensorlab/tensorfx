@@ -25,15 +25,16 @@ class DataSet(object):
 
   A DataSet contains one or more DataSource instances, each associated with a name.
   """
-  def __init__(self, schema, metadata=None, features=None):
+  def __init__(self, datasources, schema, metadata, features):
     """Initializes a DataSet with the specified DataSource instances.
 
     Arguments:
+      datasources: the set of contained DataSource instances key'ed by name.
       schema: the description of the source data.
       metadata: additional per-field information associated with the data.
       features: the optional description of the transformed data.
     """
-    self._datasources = {}
+    self._datasources = datasources
 
     if type(schema) is str:
       # Interpret this as a file path if the value is a string
@@ -88,15 +89,6 @@ class DataSet(object):
       The DataSource if there is one with the specified name; None otherwise.
     """
     return self._datasources.get(index, None)
-
-  def __setitem__(self, index, datasource):
-    """Sets a named DataSoruce within the DataSet.
-
-    Arguments:
-      index: the name of the DataSource to set.
-      datasource: the DataSource instance.
-    """
-    self._datasources[index] = datasource
 
   def __len__(self):
     """Retrieves the number of contained DataSource instances.

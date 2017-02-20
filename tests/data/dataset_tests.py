@@ -21,16 +21,14 @@ class TestCases(unittest.TestCase):
 
   def test_empty_dataset(self):
     schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
-    ds = tfx.data.DataSet(schema)
+    ds = tfx.data.DataSet({}, schema, None, None)
 
     self.assertEqual(len(ds), 0)
 
   def test_create_dataset(self):
     schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
     source = tfx.data.DataSource()
-
-    ds = tfx.data.DataSet(schema)
-    ds['foo'] = source
+    ds = tfx.data.DataSet({'foo': source}, schema, None, None)
 
     self.assertEqual(ds['foo'], source)
 
@@ -40,9 +38,7 @@ class TestCases(unittest.TestCase):
     train = tfx.data.CsvDataSource('...')
     eval = tfx.data.CsvDataSource('...')
 
-    ds = tfx.data.CsvDataSet(schema)
-    ds['train'] = train
-    ds['eval'] = eval
+    ds = tfx.data.CsvDataSet(schema, train=train, eval=eval)
 
     self.assertEqual(ds['train'], train)
     self.assertEqual(ds['eval'], eval)

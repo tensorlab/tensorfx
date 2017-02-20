@@ -21,33 +21,29 @@ from ._schema import SchemaFieldType
 class CsvDataSet(DataSet):
   """A DataSet representing data in csv format.
   """
-  def __init__(self, schema, metadata=None, features=None):
-    """Initializes a DataSet with the specified DataSource instances.
+  def __init__(self, schema, metadata=None, features=None, **kwargs):
+    """Initializes a CsvDataSet with the specified DataSource instances.
 
     Arguments:
       schema: the description of the source data.
       metadata: additional per-field information associated with the data.
       features: the optional description of the transformed data.
+      kwargs: the set of CsvDataSource instances or csv paths to populate this DataSet with.
     """
-    super(CsvDataSet, self).__init__(schema, metadata, features)
+    datasources = {}
+    for name, value in kwargs.iteritems():
+      if isinstance(value, str):
+        value = CsvDataSource(value)
 
-  @staticmethod
-  def create_datasource(format, name, path):
-    """Creates a DataSource representing the specified data.
+      if isinstance(value, CsvDataSource):
+        datasources[name] = value
+      else:
+        raise ValueError('The specified DataSource is not a CsvDataSource')
 
-    Arguments:
-      format: The type of DataSource to create.
-      name: The name of the DataSource.
-      path: The path of the data.
-    Returns:
-      A DataSource representing the specified data.
-    """
-    if format == 'csv':
-      return CsvDataSource(name, path)
-    elif format == 'tsv':
-      return CsvDataSource(name, path, delimiter='\t')
-    else:
-      raise ValueError('Unexpected format "%s"' % format)
+    if not len(datasources):
+      raise ValueError('At least one DataSource must be specified.')
+
+    super(CsvDataSet, self).__init__(datasources, schema, metadata, features)
 
   def parse_instances(self, instances, prediction=False):
     """Parses input instances according to the associated schema, metadata and features.
@@ -58,40 +54,7 @@ class CsvDataSet(DataSet):
     Returns:
       A dictionary of tensors key'ed by feature names.
     """
-    if prediction:
-      # For training and evaluation data, the expectation is the target column is always present.
-      # For prediction however, the target may or may not be present.
-      # - In true prediction use-cases, the target is unknown and never present.
-      # - In prediction for model evaluation use-cases, the target is present.
-      # To use a single prediction graph, the missing target needs to be detected by comparing
-      # number of columns in instances with number of columns defined in the schema. If there are
-      # fewer columns, then prepend a ',' (with assumption that target is always the first column).
-      #
-      # To get the number of columns in instances, split on the ',' on the first instance, and use
-      # the first dimension of the shape of the resulting substring values.
-      columns = tf.shape(tf.string_split([instances[0]], delimiter=',').values)[0]
-      instances = tf.cond(tf.less(columns, len(self.schema)),
-                          lambda: tf.string_join([tf.constant(','), instances]),
-                          lambda: instances)
-
-    # Convert the schema into a set of tensor defaults, to be used for parsing csv data.
-    defaults = []
-    for field in self.schema:
-      if field.type == SchemaFieldType.integer:
-        field_default = tf.constant(0, dtype=tf.int64)
-      elif field.type == SchemaFieldType.real:
-        field_default = tf.constant(0.0, dtype=tf.float32)
-      else:
-        # discrete, text, binary
-        field_default = tf.constant('', dtype=tf.string)
-      defaults.append([field_default])
-
-    values = tf.decode_csv(instances, defaults)
-
-    parsed_instances = {}
-    for field, value in zip(self.schema, values):
-      parsed_instances[field.name] = value
-
+    parsed_instances = parse_csv(self.schema, instances, prediction)
     return self.transform_instances(parsed_instances)
 
 
@@ -134,3 +97,42 @@ class CsvDataSource(DataSource):
 
     return instances
 
+
+def parse_csv(schema, instances, prediction):
+  """A wrapper around decode_csv that parses csv instances based on provided Schema information.
+  """
+  if prediction:
+    # For training and evaluation data, the expectation is the target column is always present.
+    # For prediction however, the target may or may not be present.
+    # - In true prediction use-cases, the target is unknown and never present.
+    # - In prediction for model evaluation use-cases, the target is present.
+    # To use a single prediction graph, the missing target needs to be detected by comparing
+    # number of columns in instances with number of columns defined in the schema. If there are
+    # fewer columns, then prepend a ',' (with assumption that target is always the first column).
+    #
+    # To get the number of columns in instances, split on the ',' on the first instance, and use
+    # the first dimension of the shape of the resulting substring values.
+    columns = tf.shape(tf.string_split([instances[0]], delimiter=',').values)[0]
+    instances = tf.cond(tf.less(columns, len(schema)),
+                        lambda: tf.string_join([tf.constant(','), instances]),
+                        lambda: instances)
+
+  # Convert the schema into a set of tensor defaults, to be used for parsing csv data.
+  defaults = []
+  for field in schema:
+    if field.type == SchemaFieldType.integer:
+      field_default = tf.constant(0, dtype=tf.int64)
+    elif field.type == SchemaFieldType.real:
+      field_default = tf.constant(0.0, dtype=tf.float32)
+    else:
+      # discrete, text, binary
+      field_default = tf.constant('', dtype=tf.string)
+    defaults.append([field_default])
+
+  values = tf.decode_csv(instances, defaults)
+
+  parsed_instances = {}
+  for field, value in zip(schema, values):
+    parsed_instances[field.name] = value
+
+  return parsed_instances
