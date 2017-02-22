@@ -1,0 +1,738 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>tensorfx.data</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="" href="index.html"/>
+        <link rel="next" title="tensorfx.models" href="tensorfx.models.html"/>
+        <link rel="prev" title="TensorFX Modules" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TensorFX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">tensorfx.data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dataset-and-datasource-implementations">DataSet and DataSource Implementations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#schema-and-metadata">Schema and Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#features">Features</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tensorfx.models.html">tensorfx.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tensorfx.models.nn.html">tensorfx.models.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tensorfx.training.html">tensorfx.training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tensorfx.prediction.html">tensorfx.prediction</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">TensorFX</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>tensorfx.data</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-tensorfx.data">
+<span id="tensorfx-data"></span><h1>tensorfx.data<a class="headerlink" href="#module-tensorfx.data" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="dataset-and-datasource-implementations">
+<h2>DataSet and DataSource Implementations<a class="headerlink" href="#dataset-and-datasource-implementations" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="tensorfx.data.DataSet">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">DataSet</code><span class="sig-paren">(</span><em>datasources</em>, <em>schema</em>, <em>metadata</em>, <em>features</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class representing data to be used within a job.</p>
+<p>A DataSet contains one or more DataSource instances, each associated with a name.</p>
+<dl class="attribute">
+<dt id="tensorfx.data.DataSet.features">
+<code class="descname">features</code><a class="headerlink" href="#tensorfx.data.DataSet.features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrives the features defined with the DataSet.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.data.DataSet.metadata">
+<code class="descname">metadata</code><a class="headerlink" href="#tensorfx.data.DataSet.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrives the metadata associated with the DataSet.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.data.DataSet.parse_instances">
+<code class="descname">parse_instances</code><span class="sig-paren">(</span><em>instances</em>, <em>prediction=False</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataSet.parse_instances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses input instances according to the associated schema, metadata and features.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>instances</strong> &#8211; The tensor containing input strings.</li>
+<li><strong>prediction</strong> &#8211; Whether the instances are being parsed for producing predictions or not.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary of tensors key&#8217;ed by feature names.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.data.DataSet.schema">
+<code class="descname">schema</code><a class="headerlink" href="#tensorfx.data.DataSet.schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrives the schema associated with the DataSet.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.data.DataSet.sources">
+<code class="descname">sources</code><a class="headerlink" href="#tensorfx.data.DataSet.sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the names of the contained DataSource instances.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.data.DataSet.transform_instances">
+<code class="descname">transform_instances</code><span class="sig-paren">(</span><em>instances</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataSet.transform_instances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms input instances to create features.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>instances</strong> &#8211; dictionary of tensors key&#8217;ed from schema field names to values.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A dictionary of tensors key&#8217;ed by feature names</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tensorfx.data.DataSource">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">DataSource</code><a class="headerlink" href="#tensorfx.data.DataSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>A base class representing data that can be read for use in a job.</p>
+<dl class="method">
+<dt id="tensorfx.data.DataSource.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>batch=128</em>, <em>shuffle=False</em>, <em>shuffle_buffer=1000</em>, <em>epochs=0</em>, <em>threads=1</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataSource.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the data represented by this DataSource using a TensorFlow reader.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>batch</strong> &#8211; The number of records to read at a time.</li>
+<li><strong>shuffle</strong> &#8211; Whether to shuffle the list of files.</li>
+<li><strong>shuffle_buffer</strong> &#8211; When shuffling, the number of extra items to keep in the queue for randomness.</li>
+<li><strong>epochs</strong> &#8211; The number of epochs or passes over the data to perform.</li>
+<li><strong>threads</strong> &#8211; the number of threads to use to read from the queue.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A tensor containing a list of instances read.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.data.DataSource.read_instances">
+<code class="descname">read_instances</code><span class="sig-paren">(</span><em>count</em>, <em>shuffle</em>, <em>epochs</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataSource.read_instances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the data represented by this DataSource using a TensorFlow reader.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>count</strong> &#8211; The number of instances to read in at most.</li>
+<li><strong>shuffle</strong> &#8211; Whether to shuffle the input queue of files.</li>
+<li><strong>epochs</strong> &#8211; The number of epochs or passes over the data to perform.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A tensor containing instances that are read.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tensorfx.data.CsvDataSet">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">CsvDataSet</code><span class="sig-paren">(</span><em>schema</em>, <em>metadata=None</em>, <em>features=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.CsvDataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A DataSet representing data in csv format.</p>
+<dl class="method">
+<dt id="tensorfx.data.CsvDataSet.parse_instances">
+<code class="descname">parse_instances</code><span class="sig-paren">(</span><em>instances</em>, <em>prediction=False</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.CsvDataSet.parse_instances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses input instances according to the associated schema, metadata and features.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>instances</strong> &#8211; The tensor containing input strings.</li>
+<li><strong>prediction</strong> &#8211; Whether the instances are being parsed for producing predictions or not.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary of tensors key&#8217;ed by feature names.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tensorfx.data.CsvDataSource">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">CsvDataSource</code><span class="sig-paren">(</span><em>path</em>, <em>delimiter='</em>, <em>'</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.CsvDataSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>A DataSource representing one or more csv files.</p>
+<dl class="attribute">
+<dt id="tensorfx.data.CsvDataSource.path">
+<code class="descname">path</code><a class="headerlink" href="#tensorfx.data.CsvDataSource.path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrives the path represented by the DataSource.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.data.CsvDataSource.read_instances">
+<code class="descname">read_instances</code><span class="sig-paren">(</span><em>count</em>, <em>shuffle</em>, <em>epochs</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.CsvDataSource.read_instances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the data represented by this DataSource using a TensorFlow reader.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>epochs</strong> &#8211; The number of epochs or passes over the data to perform.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A tensor containing instances that are read.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tensorfx.data.DataFrameDataSet">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">DataFrameDataSet</code><span class="sig-paren">(</span><em>metadata=None</em>, <em>features=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataFrameDataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A DataSet representing data loaded as Pandas DataFrame instances.</p>
+<dl class="method">
+<dt id="tensorfx.data.DataFrameDataSet.parse_instances">
+<code class="descname">parse_instances</code><span class="sig-paren">(</span><em>instances</em>, <em>prediction=False</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataFrameDataSet.parse_instances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses input instances according to the associated schema, metadata and features.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>instances</strong> &#8211; The tensor containing input strings.</li>
+<li><strong>prediction</strong> &#8211; Whether the instances are being parsed for producing predictions or not.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary of tensors key&#8217;ed by feature names.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tensorfx.data.DataFrameDataSource">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">DataFrameDataSource</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataFrameDataSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>A DataSource representing a Pandas DataFrame.</p>
+<p>This class is useful for working with local/in-memory data.</p>
+<dl class="attribute">
+<dt id="tensorfx.data.DataFrameDataSource.dataframe">
+<code class="descname">dataframe</code><a class="headerlink" href="#tensorfx.data.DataFrameDataSource.dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the DataFrame represented by this DataSource.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.data.DataFrameDataSource.read_instances">
+<code class="descname">read_instances</code><span class="sig-paren">(</span><em>count</em>, <em>shuffle</em>, <em>epochs</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataFrameDataSource.read_instances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the data represented by this DataSource using a TensorFlow reader.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>epochs</strong> &#8211; The number of epochs or passes over the data to perform.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A tensor containing instances that are read.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="schema-and-metadata">
+<h2>Schema and Metadata<a class="headerlink" href="#schema-and-metadata" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="tensorfx.data.Schema">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">Schema</code><span class="sig-paren">(</span><em>fields</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the schema of a DataSet.</p>
+<p>The schema represents the structure of the source data before it is transformed into features.</p>
+<dl class="staticmethod">
+<dt id="tensorfx.data.Schema.create">
+<em class="property">static </em><code class="descname">create</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Schema.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a Schema from a set of fields.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>args</strong> &#8211; a list or sequence of ordered fields defining the schema.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A Schema instance.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.data.Schema.fields">
+<code class="descname">fields</code><a class="headerlink" href="#tensorfx.data.Schema.fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the names of the fields in the schema.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="tensorfx.data.Schema.parse">
+<em class="property">static </em><code class="descname">parse</code><span class="sig-paren">(</span><em>spec</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Schema.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses a Schema from a YAML specification.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>spec</strong> &#8211; The schema specification to parse.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A Schema instance.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tensorfx.data.SchemaField">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">SchemaField</code><span class="sig-paren">(</span><em>name</em>, <em>type</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.SchemaField" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines a named and typed field within a Schema.</p>
+<dl class="classmethod">
+<dt id="tensorfx.data.SchemaField.binary">
+<em class="property">classmethod </em><code class="descname">binary</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.SchemaField.binary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a field representing a binary byte buffer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; the name of the field.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.data.SchemaField.discrete">
+<em class="property">classmethod </em><code class="descname">discrete</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.SchemaField.discrete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a field representing a discrete value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; the name of the field.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.data.SchemaField.integer">
+<em class="property">classmethod </em><code class="descname">integer</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.SchemaField.integer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a field representing an integer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; the name of the field.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.data.SchemaField.name">
+<code class="descname">name</code><a class="headerlink" href="#tensorfx.data.SchemaField.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the name of the field.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.data.SchemaField.real">
+<em class="property">classmethod </em><code class="descname">real</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.SchemaField.real" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a field representing a real number.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; the name of the field.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.data.SchemaField.text">
+<em class="property">classmethod </em><code class="descname">text</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.SchemaField.text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a field representing a text string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; the name of the field.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.data.SchemaField.type">
+<code class="descname">type</code><a class="headerlink" href="#tensorfx.data.SchemaField.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the type of the field.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tensorfx.data.SchemaFieldType">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">SchemaFieldType</code><a class="headerlink" href="#tensorfx.data.SchemaFieldType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the types of SchemaField instances.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="tensorfx.data.Metadata">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">Metadata</code><span class="sig-paren">(</span><em>md</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class encapsulates metadata for individual fields within a dataset.</p>
+<p>Metadata is key&#8217;ed by individual field names, and is represented as key/value pairs, specific
+to the type of the field, and the analysis performed to generate the metadata.</p>
+<dl class="staticmethod">
+<dt id="tensorfx.data.Metadata.parse">
+<em class="property">static </em><code class="descname">parse</code><span class="sig-paren">(</span><em>metadata</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Metadata.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses a Metadata instance from a JSON specification.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>metadata</strong> &#8211; The metadata to parse.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A Metadata instance.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="tensorfx.data.FeatureSet">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">FeatureSet</code><span class="sig-paren">(</span><em>features</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.FeatureSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents the set of features consumed by a model during training and prediction.</p>
+<p>A FeatureSet contains a set of named features. Features are derived from input fields specified
+in a schema and constructed using a transformation.</p>
+<dl class="staticmethod">
+<dt id="tensorfx.data.FeatureSet.create">
+<em class="property">static </em><code class="descname">create</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.FeatureSet.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a FeatureSet from a set of features.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>args</strong> &#8211; a list or sequence of features defining the FeatureSet.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A FeatureSet instance.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="tensorfx.data.FeatureSet.parse">
+<em class="property">static </em><code class="descname">parse</code><span class="sig-paren">(</span><em>spec</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.FeatureSet.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses a FeatureSet from a YAML specification.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>spec</strong> &#8211; The feature specification to parse.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A FeatureSet instance.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tensorfx.data.Feature">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">Feature</code><span class="sig-paren">(</span><em>name</em>, <em>type</em>, <em>fields</em>, <em>transform=None</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Feature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines a named feature within a FeatureSet.</p>
+<dl class="attribute">
+<dt id="tensorfx.data.Feature.field">
+<code class="descname">field</code><a class="headerlink" href="#tensorfx.data.Feature.field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the field making up the feature if the feature is based on a single field.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.data.Feature.fields">
+<code class="descname">fields</code><a class="headerlink" href="#tensorfx.data.Feature.fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the fields making up the feature.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.data.Feature.identity">
+<em class="property">classmethod </em><code class="descname">identity</code><span class="sig-paren">(</span><em>name</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Feature.identity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a feature representing an un-transformed schema field.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; the name of the feature.</li>
+<li><strong>field</strong> &#8211; the name of the field.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An instance of a Feature.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.data.Feature.name">
+<code class="descname">name</code><a class="headerlink" href="#tensorfx.data.Feature.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the name of the feature.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.data.Feature.target">
+<em class="property">classmethod </em><code class="descname">target</code><span class="sig-paren">(</span><em>name</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Feature.target" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a feature representing the target value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; the name of the feature.</li>
+<li><strong>field</strong> &#8211; the name of the field.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An instance of a Feature.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.data.Feature.transform">
+<code class="descname">transform</code><a class="headerlink" href="#tensorfx.data.Feature.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the transform configuration to produce the feature.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.data.Feature.type">
+<code class="descname">type</code><a class="headerlink" href="#tensorfx.data.Feature.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the type of the feature.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tensorfx.data.FeatureType">
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">FeatureType</code><a class="headerlink" href="#tensorfx.data.FeatureType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the type of Feature instances.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tensorfx.models.html" class="btn btn-neutral float-right" title="tensorfx.models" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="TensorFX Modules" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, TensorLab Project.
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

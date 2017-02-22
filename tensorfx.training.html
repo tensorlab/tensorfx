@@ -1,0 +1,630 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>tensorfx.training</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="" href="index.html"/>
+        <link rel="next" title="tensorfx.prediction" href="tensorfx.prediction.html"/>
+        <link rel="prev" title="tensorfx.models.nn" href="tensorfx.models.nn.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TensorFX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tensorfx.data.html">tensorfx.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tensorfx.models.html">tensorfx.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tensorfx.models.nn.html">tensorfx.models.nn</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">tensorfx.training</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#model-builder">Model Builder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#training-jobs">Training Jobs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tensorfx.prediction.html">tensorfx.prediction</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">TensorFX</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>tensorfx.training</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-tensorfx.training">
+<span id="tensorfx-training"></span><h1>tensorfx.training<a class="headerlink" href="#module-tensorfx.training" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="model-builder">
+<h2>Model Builder<a class="headerlink" href="#model-builder" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="tensorfx.training.ModelArguments">
+<em class="property">class </em><code class="descclassname">tensorfx.training.</code><code class="descname">ModelArguments</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelArguments" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="classmethod">
+<dt id="tensorfx.training.ModelArguments.build_parser">
+<em class="property">classmethod </em><code class="descname">build_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelArguments.build_parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the argument parser.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An argument parser with arguments added.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.training.ModelArguments.default">
+<em class="property">classmethod </em><code class="descname">default</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelArguments.default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an instance of the arguments with default values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The model arguments with default values.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.training.ModelArguments.parse">
+<em class="property">classmethod </em><code class="descname">parse</code><span class="sig-paren">(</span><em>args=None</em>, <em>parse_job=False</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelArguments.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses training arguments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>args</strong> &#8211; the arguments to parse. If unspecified, the process arguments are used.</li>
+<li><strong>parse_job</strong> &#8211; whether to parse the job related standard arguments.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The model arguments, and optionally the training output path as well.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.ModelArguments.process">
+<code class="descname">process</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelArguments.process" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes the parsed arguments to produce any additional objects.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tensorfx.training.ModelBuilder">
+<em class="property">class </em><code class="descclassname">tensorfx.training.</code><code class="descname">ModelBuilder</code><span class="sig-paren">(</span><em>args</em>, <em>dataset</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelBuilder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds model graphs for different phases: training, evaluation and prediction.</p>
+<p>A model graph is an interface that encapsulates a TensorFlow graph, and references to tensors and
+ops within that graph.</p>
+<p>A ModelBuilder serves as a base class for various models. Each specific model adds its specific
+logic to build the required TensorFlow graph.</p>
+<dl class="attribute">
+<dt id="tensorfx.training.ModelBuilder.args">
+<code class="descname">args</code><a class="headerlink" href="#tensorfx.training.ModelBuilder.args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the set of arguments specified for training.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.ModelBuilder.build_evaluation">
+<code class="descname">build_evaluation</code><span class="sig-paren">(</span><em>inputs</em>, <em>outputs</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelBuilder.build_evaluation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the evaluation graph.abs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> &#8211; the dictionary of tensors corresponding to the input.</li>
+<li><strong>outputs</strong> &#8211; the dictionary containing output tensors.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The eval metric tensor and the eval op.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.ModelBuilder.build_evaluation_graph">
+<code class="descname">build_evaluation_graph</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelBuilder.build_evaluation_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the graph to use for evaluating a model during training.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The set of tensors and ops references required for evaluation.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.ModelBuilder.build_graph_interfaces">
+<code class="descname">build_graph_interfaces</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelBuilder.build_graph_interfaces" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds graph interfaces for training and evaluating a model, and for predicting using it.</p>
+<p>A graph interface is an object containing a TensorFlow graph member, as well as members
+corresponding to various tensors and ops within the graph.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> &#8211; The training Configuration object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A tuple consisting of the training, evaluation and prediction interfaces.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.ModelBuilder.build_inference">
+<code class="descname">build_inference</code><span class="sig-paren">(</span><em>inputs</em>, <em>training</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelBuilder.build_inference" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the inference sub-graph.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> &#8211; the dictionary of tensors corresponding to the input.</li>
+<li><strong>training</strong> &#8211; whether the inference sub-graph is being built for the training graph.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The inference values.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.ModelBuilder.build_init">
+<code class="descname">build_init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelBuilder.build_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the initialization sub-graph.</p>
+<p>The default implementation creates an initialization op that initializes all variables,
+locals for initialization, and another for all non-traininable variables and tables for local
+initialization.</p>
+<p>Initialization is run when the graph is first created, before training. Local initialization is
+performed after a previously trained model is loaded.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A tuple containing the init op and local init op to use to initialize the graph.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.ModelBuilder.build_input">
+<code class="descname">build_input</code><span class="sig-paren">(</span><em>source</em>, <em>batch</em>, <em>epochs</em>, <em>shuffle</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelBuilder.build_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the input sub-graph.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> &#8211; the name of data source to use for input (for training and evaluation).</li>
+<li><strong>batch</strong> &#8211; the number of instances to read per batch.</li>
+<li><strong>epochs</strong> &#8211; the number of passes over the data.</li>
+<li><strong>shuffle</strong> &#8211; whether to shuffle the data.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary of tensors key&#8217;ed by feature names.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.ModelBuilder.build_output">
+<code class="descname">build_output</code><span class="sig-paren">(</span><em>inferences</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelBuilder.build_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the output sub-graph</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>inferences</strong> &#8211; the inference values.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A dictionary consisting of the output prediction tensors.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.ModelBuilder.build_prediction_graph">
+<code class="descname">build_prediction_graph</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelBuilder.build_prediction_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the graph to use for predictions with the trained model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The set of tensors and ops references required for prediction.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.ModelBuilder.build_training">
+<code class="descname">build_training</code><span class="sig-paren">(</span><em>global_steps</em>, <em>inputs</em>, <em>inferences</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelBuilder.build_training" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the training sub-graph.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>global_steps</strong> &#8211; the global steps variable to use.</li>
+<li><strong>inputs</strong> &#8211; the dictionary of tensors corresponding to the input.</li>
+<li><strong>inferences</strong> &#8211; the inference values.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The loss tensor, and the training op.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.ModelBuilder.build_training_graph">
+<code class="descname">build_training_graph</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelBuilder.build_training_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the graph to use for training a model.</p>
+<p>This operates on the current default graph.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The set of tensors and ops references required for training.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.training.ModelBuilder.dataset">
+<code class="descname">dataset</code><a class="headerlink" href="#tensorfx.training.ModelBuilder.dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the DataSet being used for training and evaluation data.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="training-jobs">
+<h2>Training Jobs<a class="headerlink" href="#training-jobs" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="tensorfx.training.Configuration">
+<em class="property">class </em><code class="descclassname">tensorfx.training.</code><code class="descname">Configuration</code><span class="sig-paren">(</span><em>task</em>, <em>cluster</em>, <em>job</em>, <em>env</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.Configuration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains configuration information for the training process.</p>
+<dl class="attribute">
+<dt id="tensorfx.training.Configuration.cluster">
+<code class="descname">cluster</code><a class="headerlink" href="#tensorfx.training.Configuration.cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the cluster definition containing the current node.</p>
+<p>This is None if the current node is part of a single node training job.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.Configuration.create_device_setter">
+<code class="descname">create_device_setter</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.Configuration.create_device_setter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the device setter, which assigns variables and ops to devices in distributed mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>args</strong> &#8211; the arguments associated with the current job.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.Configuration.create_server">
+<code class="descname">create_server</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.Configuration.create_server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the TensorFlow server, which is required for distributed training.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.training.Configuration.device">
+<code class="descname">device</code><a class="headerlink" href="#tensorfx.training.Configuration.device" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the device associated with the current node.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.training.Configuration.distributed">
+<code class="descname">distributed</code><a class="headerlink" href="#tensorfx.training.Configuration.distributed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines if training being performed is distributed or is single node training.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the configuration represents distributed training; False otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.training.Configuration.environment">
+<em class="property">classmethod </em><code class="descname">environment</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.Configuration.environment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a Configuration object for single node and distributed training.</p>
+<p>This relies on looking up configuration from an environment variable, &#8216;TF_CONFIG&#8217; which allows
+a hosting environment to configure the training process.
+The specific environment variable is expected to be a JSON formatted dictionary containing
+configuration about the current task, cluster and job.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A Configuration instance matching the current environment.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.training.Configuration.job">
+<code class="descname">job</code><a class="headerlink" href="#tensorfx.training.Configuration.job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the job definition of the current training job.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.training.Configuration.local">
+<em class="property">classmethod </em><code class="descname">local</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.Configuration.local" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a Configuration object representing single node training in a process.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A default Configuration instance with simple configuration.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.training.Configuration.master">
+<code class="descname">master</code><a class="headerlink" href="#tensorfx.training.Configuration.master" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves whether the current task is a master task.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.training.Configuration.param_server">
+<code class="descname">param_server</code><a class="headerlink" href="#tensorfx.training.Configuration.param_server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves whether the current task is a parameter server task.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.training.Configuration.task">
+<code class="descname">task</code><a class="headerlink" href="#tensorfx.training.Configuration.task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the task definition associated with the current node.</p>
+<p>If no job information is provided, this is None.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.training.Configuration.worker">
+<code class="descname">worker</code><a class="headerlink" href="#tensorfx.training.Configuration.worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves whether the current task is a worker task.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tensorfx.training.ModelTrainer">
+<em class="property">class </em><code class="descclassname">tensorfx.training.</code><code class="descname">ModelTrainer</code><span class="sig-paren">(</span><em>config=None</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelTrainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides the functionality to train a model during a training job.</p>
+<dl class="attribute">
+<dt id="tensorfx.training.ModelTrainer.config">
+<code class="descname">config</code><a class="headerlink" href="#tensorfx.training.ModelTrainer.config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the training configuration.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.training.ModelTrainer.train">
+<code class="descname">train</code><span class="sig-paren">(</span><em>model_builder</em>, <em>job_args</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.training.ModelTrainer.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs the training process to train a model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>model_builder</strong> &#8211; the ModelBuilder to use to build graphs during training.</li>
+<li><strong>job_args</strong> &#8211; the arguments for the training job.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The trained Model. The resulting value is only relevant for master nodes.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tensorfx.prediction.html" class="btn btn-neutral float-right" title="tensorfx.prediction" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="tensorfx.models.nn.html" class="btn btn-neutral" title="tensorfx.models.nn" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, TensorLab Project.
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
