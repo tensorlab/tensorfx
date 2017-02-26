@@ -23,26 +23,26 @@ class FeatureType(enum.Enum):
   """
   identity = 'identity'
   target = 'target'
+  composite = 'composite'
 
 
 class Feature(object):
   """Defines a named feature within a FeatureSet.
   """
-  def __init__(self, name, type, fields, transform=None):
+  def __init__(self, name, type, fields=None, features=None, transform=None):
     """Initializes a Feature with its name and source fields.
 
     Arguments:
       name: the name of the feature.
       type: the type of the feature.
       fields: the names of the fields making up this feature.
+      features: the names of the features making up this feature in case of composite features.
       transform: transform configuration to produce the feature.
     """
-    if transform is None:
-      transform = {}
-
     self._name = name
     self._type = type
     self._fields = fields
+    self._features = features
     self._transform = transform
 
   @classmethod
@@ -55,7 +55,7 @@ class Feature(object):
     Returns:
       An instance of a Feature.
     """
-    return cls(name, FeatureType.identity, [field])
+    return cls(name, FeatureType.identity, fields=[field])
 
   @classmethod
   def target(cls, name, field):
@@ -67,7 +67,19 @@ class Feature(object):
     Returns:
       An instance of a Feature.
     """
-    return cls(name, FeatureType.target, [field])
+    return cls(name, FeatureType.target, fields=[field])
+
+  @classmethod
+  def stack(cls, name, features):
+    """Creates a composite feature that is a stacking of multiple features.
+
+    Arguments:
+      name: the name of the feature.
+      features: the sequence of features to compose.
+    Returns:
+      An instance of a Feature.
+    """
+    return cls(name, FeatureType.composite, features=features, transform={'composition': 'stack'})
 
   @property
   def name(self):
@@ -100,6 +112,45 @@ class Feature(object):
     """Retrieves the transform configuration to produce the feature.
     """
     return self._transform
+
+  def format(self):
+    """Retrieves the raw serializable representation of the features.
+    """
+    data = {'name': self._name, 'type': self._type}
+    if self._fields:
+      data['fields'] = ','.join(self._fields)
+    if self._transform:
+      data['transform'] = self._transform
+    if self._features:
+      data['features'] = map(lambda f: f.format(), self._features)
+    return data
+
+  @staticmethod
+  def parse(data):
+    """Parses a feature from its serialized data representation.
+
+    Arguments:
+      data: A dictionary holding the serialized representation.
+    Returns:
+      The parsed Feature instance.
+    """
+    name = data['name']
+    feature_type = FeatureType[data.get('type', 'identity')]
+    transform = data.get('transform', None)
+
+    fields = None
+    features = None
+    if feature_type == FeatureType.composite:
+      features = []
+      for f in data['features']:
+        feature = Feature.parse(f)
+        features.append(feature)
+    else:
+      fields = data.get('fields', name)
+      if type(fields) is str:
+        fields = map(lambda n: n.strip(), fields.split(','))
+
+    return Feature(name, feature_type, fields=fields, features=features, transform=transform)
 
 
 class FeatureSet(object):
@@ -150,15 +201,7 @@ class FeatureSet(object):
 
     features = []
     for f in spec['features']:
-      name = f['name']
-      fields = f.get('fields', name)
-      feature_type = FeatureType[f.get('type', 'identity')]
-      transform = f.get('transform', None)
-
-      if type(fields) is str:
-        fields = map(lambda n: n.strip(), fields.split(','))
-
-      feature = Feature(name, feature_type, fields, transform)
+      feature = Feature.parse(f)
       features.append(feature)
 
     return FeatureSet(features)
