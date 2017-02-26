@@ -58,16 +58,15 @@ class Feature(object):
     return cls(name, FeatureType.identity, fields=[field])
 
   @classmethod
-  def target(cls, name, field):
+  def target(cls, field):
     """Creates a feature representing the target value.
     
     Arguments:
-      name: the name of the feature.
       field: the name of the field.
     Returns:
       An instance of a Feature.
     """
-    return cls(name, FeatureType.target, fields=[field])
+    return cls('target', FeatureType.target, fields=[field])
 
   @classmethod
   def stack(cls, name, features):
@@ -159,14 +158,16 @@ class FeatureSet(object):
   A FeatureSet contains a set of named features. Features are derived from input fields specified
   in a schema and constructed using a transformation.
   """
-  def __init__(self, features):
+  def __init__(self, features, target):
     """Initializes a FeatureSet from its specified set of features.
 
     Arguments:
       features: the list of features within a FeatureSet.
+      target: the target value feature.
     """
     self._features = features
     self._features_map = dict(map(lambda f: (f.name, f), features))
+    self._target = target
 
   @staticmethod
   def create(*args):
@@ -204,7 +205,18 @@ class FeatureSet(object):
       feature = Feature.parse(f)
       features.append(feature)
 
-    return FeatureSet(features)
+    target = None
+    target_field = spec.get('target', None)
+    if target_field:
+      target = Feature.target(target_field)
+
+    return FeatureSet(features, target)
+
+  @property
+  def target(self):
+    """Retrieves the target value feature if one has been defined.
+    """
+    return self._target
 
   def transform_instances(self, instances, schema, metadata):
     """Transforms input instances to create features.
@@ -218,13 +230,10 @@ class FeatureSet(object):
     """
     features = {}
 
-    field_list = []
-    for feature in self._features:
-      if feature.type == FeatureType.target:
-        features['targets'] = tf.identity(instances[feature.field], name='target')
-      else:
-        field_list.append(instances[feature.field])
+    if self._target:
+      features['targets'] = tf.identity(instances[self._target.field], name='target')
 
+    field_list = map(lambda f: instances[f.field], self._features)
     features['features'] = tf.transpose(tf.stack(field_list), name='features')
 
     return features

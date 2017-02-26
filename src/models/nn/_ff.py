@@ -68,8 +68,7 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
   def __init__(self, args, dataset):
     super(FeedForwardClassification, self).__init__(args, dataset)
 
-    target_feature = filter(lambda f: f.type == tfx.data.FeatureType.target, dataset.features)[0]
-    target_field = dataset.schema[target_feature.field]
+    target_field = dataset.schema[dataset.features.target.field]
     target_metadata = dataset.metadata[target_field.name]
 
     self._classification = models.ClassificationScenario(target_metadata['values'])
