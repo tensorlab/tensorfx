@@ -14,6 +14,7 @@
 # Implements the ModelBuilder base class.
 
 import tensorflow as tf
+import tensorfx as tfx
 from ._args import ModelArguments
 
 
@@ -279,9 +280,8 @@ class ModelBuilder(object):
 
     if self._dataset.features:
       with tf.name_scope('transform'):
-        return self._dataset.features.transform_instances(parsed_instances,
-                                                          self._dataset.schema,
-                                                          self._dataset.metadata)
+        transformer = tfx.data.Transformer(self._dataset)
+        return transformer.transform(parsed_instances)
     else:
       return parsed_instances
 

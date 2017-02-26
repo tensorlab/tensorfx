@@ -16,6 +16,7 @@
 import enum
 import tensorflow as tf
 import yaml
+from ._transforms import Transformer
 
 
 class FeatureType(enum.Enum):
@@ -217,26 +218,6 @@ class FeatureSet(object):
     """Retrieves the target value feature if one has been defined.
     """
     return self._target
-
-  def transform_instances(self, instances, schema, metadata):
-    """Transforms input instances to create features.
-
-    Arguments:
-      instances: dictionary of tensors key'ed from schema field names to values.
-      schema: the associated schema describing the instances.
-      metadata: the associated metadata from analyzing the data.
-    Returns:
-      A dictionary of tensors key'ed by feature names
-    """
-    features = {}
-
-    if self._target:
-      features['targets'] = tf.identity(instances[self._target.field], name='target')
-
-    field_list = map(lambda f: instances[f.field], self._features)
-    features['features'] = tf.transpose(tf.stack(field_list), name='features')
-
-    return features
 
   def __getitem__(self, index):
     """Retrives the specified Feature by name.
