@@ -45,7 +45,7 @@ class FeedForwardModelArguments(tfx.training.ModelArguments):
 
     if self.hidden_layers:
       self.hidden_layers = map(lambda (i, s): ('layer_%d' % i, s, tf.nn.relu),
-                              enumerate(self.hidden_layer))
+                              enumerate(self.hidden_layers))
     else:
       self.hidden_layers = []
 
