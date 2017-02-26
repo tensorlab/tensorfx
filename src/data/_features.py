@@ -16,7 +16,6 @@
 import enum
 import tensorflow as tf
 import yaml
-from ._transforms import Transformer
 
 
 class FeatureType(enum.Enum):
@@ -25,6 +24,8 @@ class FeatureType(enum.Enum):
   identity = 'identity'
   target = 'target'
   composite = 'composite'
+  log = 'log'
+  scale = 'scale'
 
 
 class Feature(object):
@@ -70,8 +71,8 @@ class Feature(object):
     return cls('target', FeatureType.target, fields=[field])
 
   @classmethod
-  def stack(cls, name, features):
-    """Creates a composite feature that is a stacking of multiple features.
+  def concatenate(cls, name, features):
+    """Creates a composite feature that is a concatenation of multiple features.
 
     Arguments:
       name: the name of the feature.
@@ -79,13 +80,46 @@ class Feature(object):
     Returns:
       An instance of a Feature.
     """
-    return cls(name, FeatureType.composite, features=features, transform={'composition': 'stack'})
+    return cls(name, FeatureType.composite, features=features, transform={'composition': 'concat'})
+
+  @classmethod
+  def log(cls, name, field):
+    """Creates a feature representing a log value of a numeric field.
+
+    Returns:
+      An instance of a Feature.
+    """
+    return cls(name, FeatureType.log, fields=[field])
+
+  @classmethod
+  def scale(cls, name, field, range=(0, 1), log=False):
+    """Creates a feature representing a scaled version of a numeric field.
+
+    In order to perform scaling, the metadata will be looked up for the field, to retrieve min, max
+    and mean values.
+
+    Arguments:
+      range: The target range of the feature.
+      log: Whether the log value of the field should be used. Useful for unbounded values.
+
+    Returns:
+      An instance of a Feature.
+    """
+    # TODO: What about the other scaling approaches, besides this (min-max scaling)?
+    transform = {'min': range[0], 'max': range[1], 'log': log}
+    return cls(name, FeatureType.scale, fields=[field], transform=transform)
 
   @property
   def name(self):
     """Retrieves the name of the feature.
     """
     return self._name
+
+  @property
+  def features(self):
+    """Retrieves the features making up a composite feature.
+    """
+    return self._features
   
   @property
   def field(self):
@@ -94,7 +128,7 @@ class Feature(object):
     if len(self._fields) == 1:
       return self._fields[0]
     return None
-  
+
   @property
   def fields(self):
     """Retrieves the fields making up the feature.
@@ -141,6 +175,8 @@ class Feature(object):
     fields = None
     features = None
     if feature_type == FeatureType.composite:
+      if not transform:
+        transform = {'composition': 'concat'}
       features = []
       for f in data['features']:
         feature = Feature.parse(f)

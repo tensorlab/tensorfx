@@ -128,7 +128,7 @@ def parse_csv(schema, instances, prediction):
       field_default = tf.constant('', dtype=tf.string)
     defaults.append([field_default])
 
-  values = tf.decode_csv(instances, defaults)
+  values = tf.decode_csv(instances, defaults, name='csv')
 
   parsed_instances = {}
   for field, value in zip(schema, values):
