@@ -68,8 +68,8 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
   def __init__(self, args, dataset):
     super(FeedForwardClassification, self).__init__(args, dataset)
 
-    target_field = dataset.schema[dataset.features.target.field]
-    target_metadata = dataset.metadata[target_field.name]
+    target_feature = filter(lambda f: f.type == tfx.data.FeatureType.target, dataset.features)[0]
+    target_metadata = dataset.metadata[target_feature.field]
 
     self._classification = models.ClassificationScenario(target_metadata['values'])
 
@@ -79,7 +79,7 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
 
     # Build a set of hidden layers. The input to the first hidden layer is
     # the features tensor, whose shape is (batch, size).
-    x = inputs['features']
+    x = inputs['X']
     x_size = x.get_shape()[1].value
 
     for name, size, activation in self.args.hidden_layers:
@@ -122,7 +122,7 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
     return logits
 
   def build_training(self, global_steps, inputs, inferences):
-    target_labels = inputs['targets']
+    target_labels = inputs['Y']
     label_indices = self._classification.labels_to_indices(target_labels, one_hot=True)
     cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=inferences, labels=label_indices)
 
@@ -160,7 +160,7 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
     }
 
   def build_evaluation(self, inputs, outputs):
-    target_labels = inputs['targets']
+    target_labels = inputs['Y']
     accuracy, eval = tf.contrib.metrics.streaming_accuracy(outputs['label'], target_labels)
 
     with tf.name_scope(''):

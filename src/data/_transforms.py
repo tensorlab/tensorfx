@@ -44,22 +44,7 @@ class Transformer(object):
     _, tensor_map = _transform_features(instances, features,
                                         self._dataset.schema,
                                         self._dataset.metadata)
-    if features.target:
-      tensor_map['targets'] = tf.identity(instances[features.target.field], name='target')
-
     return tensor_map
-
-
-def _composite(instances, feature, schema, metadata):
-  """Applies the composite transform, to compose a single tensor from a set of features.
-  """
-  tensors, _ = _transform_features(instances, feature.features, schema, metadata)
-
-  composition = feature.transform['composition']
-  if composition == 'concat':
-    return tf.transpose(tf.stack(tensors), name=feature.name)
-
-  raise ValueError('Unknown composition "%s" in feature "%s".' % (composition, feature.field))
 
 
 def _identity(instances, feature, schema, metadata):
@@ -68,12 +53,20 @@ def _identity(instances, feature, schema, metadata):
   return tf.identity(instances[feature.field], name=feature.name)
 
 
+def _concat(instances, feature, schema, metadata):
+  """Applies the composite transform, to compose a single tensor from a set of features.
+  """
+  tensors, _ = _transform_features(instances, feature.features, schema, metadata)
+  return tf.transpose(tf.stack(tensors), name=feature.name)
+
+
 def _log(instances, feature, schema, metadata):
   """Applies the log transform to a numeric field.
   """
   field = schema[feature.field]
   if field.type != SchemaFieldType.real and field.type != SchemaFieldType.integer:
-    raise ValueError('log cannot be applied to non-numerical field "%s".' % feature.field)
+    raise ValueError('A log transform cannot be applied to non-numerical field "%s".' %
+                     feature.field)
   return tf.log(instances[feature.field], name=feature.name)
 
 
@@ -82,7 +75,8 @@ def _scale(instances, feature, schema, metadata):
   """
   field = schema[feature.field]
   if field.type != SchemaFieldType.real and field.type != SchemaFieldType.integer:
-    raise ValueError('log cannot be applied to non-numerical field "%s".' % feature.field)
+    raise ValueError('A scale transform cannot be applied to non-numerical field "%s".' %
+                     feature.field)
 
   transform = feature.transform
   md = metadata[feature.field]
@@ -107,8 +101,8 @@ def _scale(instances, feature, schema, metadata):
 
 _transformers = {
     FeatureType.identity.name: _identity,
-    FeatureType.target.name: None,
-    FeatureType.composite.name: _composite,
+    FeatureType.target.name: _identity,
+    FeatureType.concat.name: _concat,
     FeatureType.log.name: _log,
     FeatureType.scale.name: _scale
   }

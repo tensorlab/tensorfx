@@ -23,7 +23,7 @@ class FeatureType(enum.Enum):
   """
   identity = 'identity'
   target = 'target'
-  composite = 'composite'
+  concat = 'concat'
   log = 'log'
   scale = 'scale'
 
@@ -60,27 +60,36 @@ class Feature(object):
     return cls(name, FeatureType.identity, fields=[field])
 
   @classmethod
-  def target(cls, field):
+  def target(cls, name, field):
     """Creates a feature representing the target value.
     
     Arguments:
+      name: the name of the feature.
       field: the name of the field.
     Returns:
       An instance of a Feature.
     """
-    return cls('target', FeatureType.target, fields=[field])
+    return cls(name, FeatureType.target, fields=[field])
 
   @classmethod
-  def concatenate(cls, name, features):
+  def concatenate(cls, name, *args):
     """Creates a composite feature that is a concatenation of multiple features.
 
     Arguments:
       name: the name of the feature.
-      features: the sequence of features to compose.
+      args: the sequence of features to concatenate.
     Returns:
       An instance of a Feature.
     """
-    return cls(name, FeatureType.composite, features=features, transform={'composition': 'concat'})
+    if not len(args):
+      raise ValueError('One or more features must be specified.')
+
+    if type(args[0]) == list:
+      features = args[0]
+    else:
+      features = list(args)
+
+    return cls(name, FeatureType.concat, features=features)
 
   @classmethod
   def log(cls, name, field):
@@ -174,9 +183,7 @@ class Feature(object):
 
     fields = None
     features = None
-    if feature_type == FeatureType.composite:
-      if not transform:
-        transform = {'composition': 'concat'}
+    if feature_type == FeatureType.concat:
       features = []
       for f in data['features']:
         feature = Feature.parse(f)
@@ -195,16 +202,14 @@ class FeatureSet(object):
   A FeatureSet contains a set of named features. Features are derived from input fields specified
   in a schema and constructed using a transformation.
   """
-  def __init__(self, features, target):
+  def __init__(self, features):
     """Initializes a FeatureSet from its specified set of features.
 
     Arguments:
       features: the list of features within a FeatureSet.
-      target: the target value feature.
     """
     self._features = features
     self._features_map = dict(map(lambda f: (f.name, f), features))
-    self._target = target
 
   @staticmethod
   def create(*args):
@@ -242,18 +247,7 @@ class FeatureSet(object):
       feature = Feature.parse(f)
       features.append(feature)
 
-    target = None
-    target_field = spec.get('target', None)
-    if target_field:
-      target = Feature.target(target_field)
-
-    return FeatureSet(features, target)
-
-  @property
-  def target(self):
-    """Retrieves the target value feature if one has been defined.
-    """
-    return self._target
+    return FeatureSet(features)
 
   def __getitem__(self, index):
     """Retrives the specified Feature by name.
