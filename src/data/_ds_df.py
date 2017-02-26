@@ -76,7 +76,7 @@ class DataFrameDataSet(DataSet):
     super(DataFrameDataSet, self).__init__(datasources, schema, metadata, features)
 
   def parse_instances(self, instances, prediction=False):
-    """Parses input instances according to the associated schema, metadata and features.
+    """Parses input instances according to the associated schema.
 
     Arguments:
       instances: The tensor containing input strings.
@@ -84,8 +84,7 @@ class DataFrameDataSet(DataSet):
     Returns:
       A dictionary of tensors key'ed by feature names.
     """
-    parsed_instances = parse_csv(self.schema, instances, prediction)
-    return self.transform_instances(parsed_instances)
+    return parse_csv(self.schema, instances, prediction)
 
 
 class DataFrameDataSource(DataSource):

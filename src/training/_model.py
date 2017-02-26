@@ -265,13 +265,25 @@ class ModelBuilder(object):
     Returns:
       A dictionary of tensors key'ed by feature names.
     """
+    prediction = False
     if source:
-      instances = self._dataset[source].read(batch=batch, shuffle=shuffle, epochs=epochs)
-      return self._dataset.parse_instances(instances)
+      with tf.name_scope('read'):
+        instances = self._dataset[source].read(batch=batch, shuffle=shuffle, epochs=epochs)
     else:
+      prediction = True
       instances = tf.placeholder(dtype=tf.string, shape=(None,), name='instances')
       tf.add_to_collection('inputs', instances)
-      return self._dataset.parse_instances(instances, prediction=True)
+
+    with tf.name_scope('parse'):
+      parsed_instances = self._dataset.parse_instances(instances, prediction)
+
+    if self._dataset.features:
+      with tf.name_scope('transform'):
+        return self._dataset.features.transform_instances(parsed_instances,
+                                                          self._dataset.schema,
+                                                          self._dataset.metadata)
+    else:
+      return parsed_instances
 
   def build_inference(self, inputs, training):
     """Builds the inference sub-graph.

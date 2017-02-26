@@ -46,16 +46,15 @@ class CsvDataSet(DataSet):
     super(CsvDataSet, self).__init__(datasources, schema, metadata, features)
 
   def parse_instances(self, instances, prediction=False):
-    """Parses input instances according to the associated schema, metadata and features.
+    """Parses input instances according to the associated schema.
 
     Arguments:
       instances: The tensor containing input strings.
       prediction: Whether the instances are being parsed for producing predictions or not.
     Returns:
-      A dictionary of tensors key'ed by feature names.
+      A dictionary of tensors key'ed by field names.
     """
-    parsed_instances = parse_csv(self.schema, instances, prediction)
-    return self.transform_instances(parsed_instances)
+    return parse_csv(self.schema, instances, prediction)
 
 
 class CsvDataSource(DataSource):

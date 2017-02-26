@@ -14,7 +14,9 @@
 # Implementation of FeatureSet and related class.
 
 import enum
+import tensorflow as tf
 import yaml
+
 
 class FeatureType(enum.Enum):
   """Defines the type of Feature instances.
@@ -160,6 +162,29 @@ class FeatureSet(object):
       features.append(feature)
 
     return FeatureSet(features)
+
+  def transform_instances(self, instances, schema, metadata):
+    """Transforms input instances to create features.
+
+    Arguments:
+      instances: dictionary of tensors key'ed from schema field names to values.
+      schema: the associated schema describing the instances.
+      metadata: the associated metadata from analyzing the data.
+    Returns:
+      A dictionary of tensors key'ed by feature names
+    """
+    features = {}
+
+    field_list = []
+    for feature in self._features:
+      if feature.type == FeatureType.target:
+        features['targets'] = tf.identity(instances[feature.field], name='target')
+      else:
+        field_list.append(instances[feature.field])
+
+    features['features'] = tf.transpose(tf.stack(field_list), name='features')
+
+    return features
 
   def __getitem__(self, index):
     """Retrives the specified Feature by name.
