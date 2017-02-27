@@ -50,14 +50,22 @@ class Transformer(object):
 def _identity(instances, feature, schema, metadata):
   """Applies the identity transform, which causes the unmodified field value to be used.
   """
-  return tf.identity(instances[feature.field], name=feature.name)
+  return tf.identity(instances[feature.field], name='identity')
+
+
+def _target(instances, feature, schema, metadata):
+  """Applies the target transform, which causes the unmodified field value to be used.
+  """
+  # The result of parsing csv is a tensor of shape (None, 1), and we want to return a list of
+  # scalars, or specifically, tensor of shape (None, ).
+  return tf.squeeze(instances[feature.field], name='target')
 
 
 def _concat(instances, feature, schema, metadata):
   """Applies the composite transform, to compose a single tensor from a set of features.
   """
   tensors, _ = _transform_features(instances, feature.features, schema, metadata)
-  return tf.transpose(tf.stack(tensors), name=feature.name)
+  return tf.concat(tensors, axis=1, name='concat')
 
 
 def _log(instances, feature, schema, metadata):
@@ -67,7 +75,9 @@ def _log(instances, feature, schema, metadata):
   if field.type != SchemaFieldType.real and field.type != SchemaFieldType.integer:
     raise ValueError('A log transform cannot be applied to non-numerical field "%s".' %
                      feature.field)
-  return tf.log(instances[feature.field], name=feature.name)
+
+  # log can only be applied to float, so do an implict conversion first.
+  return tf.log(tf.to_float(instances[feature.field], name='float'), name='log')
 
 
 def _scale(instances, feature, schema, metadata):
@@ -83,7 +93,8 @@ def _scale(instances, feature, schema, metadata):
 
   value = instances[feature.field]
   if transform and transform['log']:
-    value = tf.log(value)
+    # log can only be applied to float, so do an implict conversion first.
+    value = tf.log(tf.to_float(value, name='float'), name='log')
 
   range_min = float(md['min'])
   range_max = float(md['max'])
@@ -95,13 +106,12 @@ def _scale(instances, feature, schema, metadata):
     if (target_min != 0.0) or (target_max != 1.0):
       value = value * (target_max - target_min) + target_min
 
-  value = tf.identity(value, name=feature.name)
-  return value
+  return tf.identity(value, name='scale')
 
 
 _transformers = {
     FeatureType.identity.name: _identity,
-    FeatureType.target.name: _identity,
+    FeatureType.target.name: _target,
     FeatureType.concat.name: _concat,
     FeatureType.log.name: _log,
     FeatureType.scale.name: _scale

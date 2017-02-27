@@ -132,6 +132,8 @@ def parse_csv(schema, instances, prediction):
 
   parsed_instances = {}
   for field, value in zip(schema, values):
-    parsed_instances[field.name] = value
+    # The parsed values are scalars, so each tensor is of shape (None,); turn them into tensors
+    # of shape (None, 1).
+    parsed_instances[field.name] = tf.expand_dims(value, axis=1, name=field.name)
 
   return parsed_instances
