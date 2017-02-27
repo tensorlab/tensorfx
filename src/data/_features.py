@@ -28,6 +28,13 @@ class FeatureType(enum.Enum):
   scale = 'scale'
 
 
+def _lookup_feature_type(s):
+  for t in FeatureType:
+    if t.value == s:
+      return t
+  raise ValueError('Invalid FeatureType "%s".' % s)
+
+
 class Feature(object):
   """Defines a named feature within a FeatureSet.
   """
@@ -101,7 +108,7 @@ class Feature(object):
     return cls(name, FeatureType.log, fields=[field])
 
   @classmethod
-  def scale(cls, name, field, range=(0, 1), log=False):
+  def scale(cls, name, field, range=(0, 1)):
     """Creates a feature representing a scaled version of a numeric field.
 
     In order to perform scaling, the metadata will be looked up for the field, to retrieve min, max
@@ -109,13 +116,11 @@ class Feature(object):
 
     Arguments:
       range: The target range of the feature.
-      log: Whether the log value of the field should be used. Useful for unbounded values.
-
     Returns:
       An instance of a Feature.
     """
     # TODO: What about the other scaling approaches, besides this (min-max scaling)?
-    transform = {'min': range[0], 'max': range[1], 'log': log}
+    transform = {'min': range[0], 'max': range[1]}
     return cls(name, FeatureType.scale, fields=[field], transform=transform)
 
   @property
@@ -159,7 +164,7 @@ class Feature(object):
   def format(self):
     """Retrieves the raw serializable representation of the features.
     """
-    data = {'name': self._name, 'type': self._type}
+    data = {'name': self._name, 'type': self._type.value}
     if self._fields:
       data['fields'] = ','.join(self._fields)
     if self._transform:
@@ -178,7 +183,7 @@ class Feature(object):
       The parsed Feature instance.
     """
     name = data['name']
-    feature_type = FeatureType[data.get('type', 'identity')]
+    feature_type = _lookup_feature_type(data.get('type', 'identity'))
     transform = data.get('transform', None)
 
     fields = None

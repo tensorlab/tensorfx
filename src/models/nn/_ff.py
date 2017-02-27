@@ -71,7 +71,7 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
     target_feature = filter(lambda f: f.type == tfx.data.FeatureType.target, dataset.features)[0]
     target_metadata = dataset.metadata[target_feature.field]
 
-    self._classification = models.ClassificationScenario(target_metadata['values'])
+    self._classification = models.ClassificationScenario(target_metadata['entries'])
 
   def build_inference(self, inputs, training):
     histograms = {}

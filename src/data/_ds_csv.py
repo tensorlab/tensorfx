@@ -119,9 +119,7 @@ def parse_csv(schema, instances, prediction):
   # Convert the schema into a set of tensor defaults, to be used for parsing csv data.
   defaults = []
   for field in schema:
-    if field.type == SchemaFieldType.integer:
-      field_default = tf.constant(0, dtype=tf.int64)
-    elif field.type == SchemaFieldType.real:
+    if field.type == SchemaFieldType.numeric:
       field_default = tf.constant(0.0, dtype=tf.float32)
     else:
       # discrete, text, binary

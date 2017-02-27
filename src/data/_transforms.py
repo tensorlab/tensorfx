@@ -72,19 +72,19 @@ def _log(instances, feature, schema, metadata):
   """Applies the log transform to a numeric field.
   """
   field = schema[feature.field]
-  if field.type != SchemaFieldType.real and field.type != SchemaFieldType.integer:
+  if field.type != SchemaFieldType.numeric:
     raise ValueError('A log transform cannot be applied to non-numerical field "%s".' %
                      feature.field)
 
-  # log can only be applied to float, so do an implict conversion first.
-  return tf.log(tf.to_float(instances[feature.field], name='float'), name='log')
+  # Add 1 to avoid log of 0 (still assuming the field does not have negative values)
+  return tf.log(instances[feature.field] + 1, name='log')
 
 
 def _scale(instances, feature, schema, metadata):
   """Applies the scale transform to a numeric field.
   """
   field = schema[feature.field]
-  if field.type != SchemaFieldType.real and field.type != SchemaFieldType.integer:
+  if field.type != SchemaFieldType.numeric:
     raise ValueError('A scale transform cannot be applied to non-numerical field "%s".' %
                      feature.field)
 
@@ -92,9 +92,6 @@ def _scale(instances, feature, schema, metadata):
   md = metadata[feature.field]
 
   value = instances[feature.field]
-  if transform and transform['log']:
-    # log can only be applied to float, so do an implict conversion first.
-    value = tf.log(tf.to_float(value, name='float'), name='log')
 
   range_min = float(md['min'])
   range_max = float(md['max'])

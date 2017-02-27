@@ -20,8 +20,7 @@ import yaml
 class SchemaFieldType(enum.Enum):
   """Defines the types of SchemaField instances.
   """
-  integer = 'integer'
-  real = 'real'
+  numeric = 'numeric'
   discrete = 'discrete'
   text = 'text'
   binary = 'binary'
@@ -41,22 +40,13 @@ class SchemaField(object):
     self._type = type
 
   @classmethod
-  def integer(cls, name):
-    """Creates a field representing an integer.
+  def numeric(cls, name):
+    """Creates a field representing a number.
 
     Arguments:
       name: the name of the field.
     """
-    return cls(name, SchemaFieldType.integer)
-
-  @classmethod
-  def real(cls, name):
-    """Creates a field representing a real number.
-
-    Arguments:
-      name: the name of the field.
-    """
-    return cls(name, SchemaFieldType.real)
+    return cls(name, SchemaFieldType.numeric)
 
   @classmethod
   def discrete(cls, name):
@@ -131,6 +121,17 @@ class Schema(object):
       return Schema(args[0])
     else:
       return Schema(list(args))
+
+  def format(self):
+    """Formats a Schema instance into its YAML specification.
+    
+    Returns:
+      A string containing the YAML specification.
+    """
+    fields = map(lambda f: {'name': f.name, 'type': f.type.name}, self._fields)
+    spec = {'fields': fields}
+
+    return yaml.safe_dump(spec, default_flow_style=False)
 
   @staticmethod
   def parse(spec):
