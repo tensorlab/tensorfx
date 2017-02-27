@@ -26,6 +26,7 @@ class FeatureType(enum.Enum):
   concat = 'concat'
   log = 'log'
   scale = 'scale'
+  bucketize = 'bucketize'
   one_hot = 'one-hot'
 
 
@@ -128,6 +129,23 @@ class Feature(object):
     # TODO: What about the other scaling approaches, besides this (min-max scaling)?
     transform = {'min': range[0], 'max': range[1]}
     return cls(name, FeatureType.scale, fields=[field], transform=transform)
+
+  @classmethod
+  def bucketize(cls, name, field, boundaries):
+    """Creates a feature representing a bucketized version of a numeric field.
+
+    The value is returned is the index of the bucket that the value falls into in one-hot
+    representation.
+
+    Arguments:
+      name: The name of the feature.
+      field: The name of the field to create the feature from.
+      boundaries: The list of bucket boundaries.
+    Returns:
+      An instance of a Feature.
+    """
+    transform = {'boundaries': ','.join(map(str, boundaries))}
+    return cls(name, FeatureType.bucketize, fields=[field], transform=transform)
 
   @classmethod
   def one_hot(cls, name, field):
