@@ -106,12 +106,44 @@ def _scale(instances, feature, schema, metadata):
   return tf.identity(value, name='scale')
 
 
+def _one_hot(instances, feature, schema, metadata):
+  """Applies the one-hot transform to a discrete field.
+  """
+  field = schema[feature.field]
+  if field.type != SchemaFieldType.discrete:
+    raise ValueError('A one-hot transform cannot be applied to non-discrete field "%s".' %
+                     feature.field)
+
+  md = metadata[feature.field]
+  if not md:
+    raise ValueError('A one-hot transform requires metadata listing the unique values.')
+
+  entries = md['entries']
+  table = tf.contrib.lookup.HashTable(
+    tf.contrib.lookup.KeyValueTensorInitializer(entries,
+                                                tf.range(0, len(entries), dtype=tf.int64),
+                                                tf.string, tf.int64),
+    default_value=len(entries), name='entries')
+
+  # Create a one-hot encoded tensor with one added to the number of values to account for the
+  # default value returned by the table for unknown/failed lookups.
+  # A squeeze is needed to remove the extra dimension added to the shape.
+  value = instances[feature.field]
+
+  value = tf.squeeze(tf.one_hot(table.lookup(value), len(entries) + 1, on_value=1.0, off_value=0.0),
+                     axis=1,
+                     name='one_hot')
+  value.set_shape((None, len(entries) + 1))
+  return value
+
+
 _transformers = {
     FeatureType.identity.name: _identity,
     FeatureType.target.name: _target,
     FeatureType.concat.name: _concat,
     FeatureType.log.name: _log,
-    FeatureType.scale.name: _scale
+    FeatureType.scale.name: _scale,
+    FeatureType.one_hot.name: _one_hot
   }
 
 def _transform_features(instances, features, schema, metadata):

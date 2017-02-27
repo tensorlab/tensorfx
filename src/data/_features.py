@@ -26,6 +26,7 @@ class FeatureType(enum.Enum):
   concat = 'concat'
   log = 'log'
   scale = 'scale'
+  one_hot = 'one-hot'
 
 
 def _lookup_feature_type(s):
