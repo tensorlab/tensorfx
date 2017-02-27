@@ -103,6 +103,9 @@ class Feature(object):
   def log(cls, name, field):
     """Creates a feature representing a log value of a numeric field.
 
+    Arguments:
+      name: The name of the feature.
+      field: The name of the field to create the feature from.
     Returns:
       An instance of a Feature.
     """
@@ -116,6 +119,8 @@ class Feature(object):
     and mean values.
 
     Arguments:
+      name: The name of the feature.
+      field: The name of the field to create the feature from.
       range: The target range of the feature.
     Returns:
       An instance of a Feature.
@@ -123,6 +128,18 @@ class Feature(object):
     # TODO: What about the other scaling approaches, besides this (min-max scaling)?
     transform = {'min': range[0], 'max': range[1]}
     return cls(name, FeatureType.scale, fields=[field], transform=transform)
+
+  @classmethod
+  def one_hot(cls, name, field):
+    """Creates a feature representing a one-hot representation of a discrete field.
+
+    Arguments:
+      name: The name of the feature.
+      field: The name of the field to create the feature from.
+    Returns:
+      An instance of a Feature.
+    """
+    return cls(name, FeatureType.one_hot, fields=[field])
 
   @property
   def name(self):
