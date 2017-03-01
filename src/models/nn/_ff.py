@@ -44,7 +44,7 @@ class FeedForwardModelArguments(tfx.training.ModelArguments):
     super(FeedForwardModelArguments, self).process()
 
     if self.hidden_layers:
-      self.hidden_layers = map(lambda (i, s): ('layer_%d' % i, s, tf.nn.relu),
+      self.hidden_layers = map(lambda (i, s): ('layer_%d' % i, s, 'relu'),
                               enumerate(self.hidden_layers))
     else:
       self.hidden_layers = []
@@ -94,7 +94,8 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
         scalars[outputs.op.name + '.sparsity'] = tf.nn.zero_fraction(outputs)
 
         if activation:
-          outputs = activation(outputs, name=activation.__name__)
+          activation_fn = getattr(tf.nn, activation)
+          outputs = activation_fn(outputs, name=activation)
       x = outputs
       x_size = size
 
