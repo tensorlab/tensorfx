@@ -22,3 +22,13 @@ using TensorFX.
         ... trainer specific argumenrts
 
 
+## Census
+
+This sample demonstrates more involved feature specification. The original census data (data/raw) is
+prepared using the following command:
+
+    python census/data.py
+
+The training program is run with the following command:
+
+    census/run.sh

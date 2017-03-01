@@ -1,0 +1,27 @@
+fields:
+- name: income_bracket
+  type: discrete
+- name: age
+  type: numeric
+- name: workclass
+  type: discrete
+- name: education_num
+  type: numeric
+- name: marital_status
+  type: discrete
+- name: occupation
+  type: discrete
+- name: relationship
+  type: discrete
+- name: race
+  type: discrete
+- name: gender
+  type: discrete
+- name: capital_gain
+  type: numeric
+- name: capital_loss
+  type: numeric
+- name: hours_per_week
+  type: numeric
+- name: native_country
+  type: discrete
