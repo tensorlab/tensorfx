@@ -23,16 +23,6 @@ dataset = tfx.data.CsvDataSet(args.data_schema,
                               metadata=args.data_metadata,
                               features=args.data_features)
 
-#import pandas as pd
-#columns = ['species', 'petal_length', 'petal_width', 'sepal_length', 'sepal_width']
-#df_train = pd.read_csv(args.data_train, names=columns)
-#df_eval = pd.read_csv(args.data_eval, names=columns)
-
-#dataset = tfx.data.DataFrameDataSet(train=df_train,
-#                                    eval=df_eval,
-#                                    metadata=args.data_metadata,
-#                                    features=args.data_features)
-
 classification = nn.FeedForwardClassification(args, dataset)
 
 trainer = tfx.training.ModelTrainer()
