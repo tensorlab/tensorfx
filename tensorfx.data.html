@@ -191,22 +191,6 @@
 <dd><p>Retrieves the names of the contained DataSource instances.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="tensorfx.data.DataSet.transform_instances">
-<code class="descname">transform_instances</code><span class="sig-paren">(</span><em>instances</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataSet.transform_instances" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transforms input instances to create features.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>instances</strong> &#8211; dictionary of tensors key&#8217;ed from schema field names to values.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A dictionary of tensors key&#8217;ed by feature names</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="class">
@@ -268,7 +252,7 @@
 <dl class="method">
 <dt id="tensorfx.data.CsvDataSet.parse_instances">
 <code class="descname">parse_instances</code><span class="sig-paren">(</span><em>instances</em>, <em>prediction=False</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.CsvDataSet.parse_instances" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parses input instances according to the associated schema, metadata and features.</p>
+<dd><p>Parses input instances according to the associated schema.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -279,7 +263,7 @@
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary of tensors key&#8217;ed by feature names.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary of tensors key&#8217;ed by field names.</p>
 </td>
 </tr>
 </tbody>
@@ -318,12 +302,12 @@
 
 <dl class="class">
 <dt id="tensorfx.data.DataFrameDataSet">
-<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">DataFrameDataSet</code><span class="sig-paren">(</span><em>metadata=None</em>, <em>features=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataFrameDataSet" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">DataFrameDataSet</code><span class="sig-paren">(</span><em>features=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataFrameDataSet" title="Permalink to this definition">¶</a></dt>
 <dd><p>A DataSet representing data loaded as Pandas DataFrame instances.</p>
 <dl class="method">
 <dt id="tensorfx.data.DataFrameDataSet.parse_instances">
 <code class="descname">parse_instances</code><span class="sig-paren">(</span><em>instances</em>, <em>prediction=False</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.DataFrameDataSet.parse_instances" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parses input instances according to the associated schema, metadata and features.</p>
+<dd><p>Parses input instances according to the associated schema.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -402,6 +386,20 @@
 <dd><p>Retrieve the names of the fields in the schema.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="tensorfx.data.Schema.format">
+<code class="descname">format</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Schema.format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formats a Schema instance into its YAML specification.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A string containing the YAML specification.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="staticmethod">
 <dt id="tensorfx.data.Schema.parse">
 <em class="property">static </em><code class="descname">parse</code><span class="sig-paren">(</span><em>spec</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Schema.parse" title="Permalink to this definition">¶</a></dt>
@@ -452,20 +450,6 @@
 </table>
 </dd></dl>
 
-<dl class="classmethod">
-<dt id="tensorfx.data.SchemaField.integer">
-<em class="property">classmethod </em><code class="descname">integer</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.SchemaField.integer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a field representing an integer.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; the name of the field.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 <dl class="attribute">
 <dt id="tensorfx.data.SchemaField.name">
 <code class="descname">name</code><a class="headerlink" href="#tensorfx.data.SchemaField.name" title="Permalink to this definition">¶</a></dt>
@@ -473,9 +457,9 @@
 </dd></dl>
 
 <dl class="classmethod">
-<dt id="tensorfx.data.SchemaField.real">
-<em class="property">classmethod </em><code class="descname">real</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.SchemaField.real" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a field representing a real number.</p>
+<dt id="tensorfx.data.SchemaField.numeric">
+<em class="property">classmethod </em><code class="descname">numeric</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.SchemaField.numeric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a field representing a number.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -583,8 +567,59 @@ in a schema and constructed using a transformation.</p>
 
 <dl class="class">
 <dt id="tensorfx.data.Feature">
-<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">Feature</code><span class="sig-paren">(</span><em>name</em>, <em>type</em>, <em>fields</em>, <em>transform=None</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Feature" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">tensorfx.data.</code><code class="descname">Feature</code><span class="sig-paren">(</span><em>name</em>, <em>type</em>, <em>fields=None</em>, <em>features=None</em>, <em>transform=None</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Feature" title="Permalink to this definition">¶</a></dt>
 <dd><p>Defines a named feature within a FeatureSet.</p>
+<dl class="classmethod">
+<dt id="tensorfx.data.Feature.bucketize">
+<em class="property">classmethod </em><code class="descname">bucketize</code><span class="sig-paren">(</span><em>name</em>, <em>field</em>, <em>boundaries</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Feature.bucketize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a feature representing a bucketized version of a numeric field.</p>
+<p>The value is returned is the index of the bucket that the value falls into in one-hot
+representation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; The name of the feature.</li>
+<li><strong>field</strong> &#8211; The name of the field to create the feature from.</li>
+<li><strong>boundaries</strong> &#8211; The list of bucket boundaries.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An instance of a Feature.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.data.Feature.concatenate">
+<em class="property">classmethod </em><code class="descname">concatenate</code><span class="sig-paren">(</span><em>name</em>, <em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Feature.concatenate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a composite feature that is a concatenation of multiple features.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; the name of the feature.</li>
+<li><strong>args</strong> &#8211; the sequence of features to concatenate.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An instance of a Feature.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tensorfx.data.Feature.features">
+<code class="descname">features</code><a class="headerlink" href="#tensorfx.data.Feature.features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the features making up a composite feature.</p>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="tensorfx.data.Feature.field">
 <code class="descname">field</code><a class="headerlink" href="#tensorfx.data.Feature.field" title="Permalink to this definition">¶</a></dt>
@@ -595,6 +630,12 @@ in a schema and constructed using a transformation.</p>
 <dt id="tensorfx.data.Feature.fields">
 <code class="descname">fields</code><a class="headerlink" href="#tensorfx.data.Feature.fields" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieves the fields making up the feature.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tensorfx.data.Feature.format">
+<code class="descname">format</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Feature.format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the raw serializable representation of the features.</p>
 </dd></dl>
 
 <dl class="classmethod">
@@ -618,10 +659,92 @@ in a schema and constructed using a transformation.</p>
 </table>
 </dd></dl>
 
+<dl class="classmethod">
+<dt id="tensorfx.data.Feature.log">
+<em class="property">classmethod </em><code class="descname">log</code><span class="sig-paren">(</span><em>name</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Feature.log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a feature representing a log value of a numeric field.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; The name of the feature.</li>
+<li><strong>field</strong> &#8211; The name of the field to create the feature from.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An instance of a Feature.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="tensorfx.data.Feature.name">
 <code class="descname">name</code><a class="headerlink" href="#tensorfx.data.Feature.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieves the name of the feature.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.data.Feature.one_hot">
+<em class="property">classmethod </em><code class="descname">one_hot</code><span class="sig-paren">(</span><em>name</em>, <em>field</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Feature.one_hot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a feature representing a one-hot representation of a discrete field.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; The name of the feature.</li>
+<li><strong>field</strong> &#8211; The name of the field to create the feature from.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An instance of a Feature.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="tensorfx.data.Feature.parse">
+<em class="property">static </em><code class="descname">parse</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Feature.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses a feature from its serialized data representation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> &#8211; A dictionary holding the serialized representation.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The parsed Feature instance.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="tensorfx.data.Feature.scale">
+<em class="property">classmethod </em><code class="descname">scale</code><span class="sig-paren">(</span><em>name</em>, <em>field</em>, <em>range=(0</em>, <em>1)</em><span class="sig-paren">)</span><a class="headerlink" href="#tensorfx.data.Feature.scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a feature representing a scaled version of a numeric field.</p>
+<p>In order to perform scaling, the metadata will be looked up for the field, to retrieve min, max
+and mean values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; The name of the feature.</li>
+<li><strong>field</strong> &#8211; The name of the field to create the feature from.</li>
+<li><strong>range</strong> &#8211; The target range of the feature.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An instance of a Feature.</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="classmethod">

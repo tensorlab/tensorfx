@@ -146,6 +146,7 @@
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
@@ -166,6 +167,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="tensorfx.data.html#tensorfx.data.SchemaField.binary">binary() (tensorfx.data.SchemaField class method)</a>
 </li>
+      <li><a href="tensorfx.data.html#tensorfx.data.Feature.bucketize">bucketize() (tensorfx.data.Feature class method)</a>
+</li>
       <li><a href="tensorfx.training.html#tensorfx.training.ModelBuilder.build_evaluation">build_evaluation() (tensorfx.training.ModelBuilder method)</a>
 </li>
       <li><a href="tensorfx.training.html#tensorfx.training.ModelBuilder.build_evaluation_graph">build_evaluation_graph() (tensorfx.training.ModelBuilder method)</a>
@@ -174,10 +177,10 @@
 </li>
       <li><a href="tensorfx.training.html#tensorfx.training.ModelBuilder.build_inference">build_inference() (tensorfx.training.ModelBuilder method)</a>
 </li>
-      <li><a href="tensorfx.training.html#tensorfx.training.ModelBuilder.build_init">build_init() (tensorfx.training.ModelBuilder method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="tensorfx.training.html#tensorfx.training.ModelBuilder.build_init">build_init() (tensorfx.training.ModelBuilder method)</a>
+</li>
       <li><a href="tensorfx.training.html#tensorfx.training.ModelBuilder.build_input">build_input() (tensorfx.training.ModelBuilder method)</a>
 </li>
       <li><a href="tensorfx.training.html#tensorfx.training.ModelBuilder.build_output">build_output() (tensorfx.training.ModelBuilder method)</a>
@@ -200,18 +203,20 @@
 </li>
       <li><a href="tensorfx.training.html#tensorfx.training.Configuration.cluster">cluster (tensorfx.training.Configuration attribute)</a>
 </li>
+      <li><a href="tensorfx.data.html#tensorfx.data.Feature.concatenate">concatenate() (tensorfx.data.Feature class method)</a>
+</li>
       <li><a href="tensorfx.training.html#tensorfx.training.ModelTrainer.config">config (tensorfx.training.ModelTrainer attribute)</a>
 </li>
       <li><a href="tensorfx.training.html#tensorfx.training.Configuration">Configuration (class in tensorfx.training)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="tensorfx.data.html#tensorfx.data.FeatureSet.create">create() (tensorfx.data.FeatureSet static method)</a>
 
       <ul>
         <li><a href="tensorfx.data.html#tensorfx.data.Schema.create">(tensorfx.data.Schema static method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="tensorfx.training.html#tensorfx.training.Configuration.create_device_setter">create_device_setter() (tensorfx.training.Configuration method)</a>
 </li>
       <li><a href="tensorfx.training.html#tensorfx.training.Configuration.create_server">create_server() (tensorfx.training.Configuration method)</a>
@@ -265,7 +270,11 @@
       <li><a href="tensorfx.data.html#tensorfx.data.Feature">Feature (class in tensorfx.data)</a>
 </li>
       <li><a href="tensorfx.data.html#tensorfx.data.DataSet.features">features (tensorfx.data.DataSet attribute)</a>
+
+      <ul>
+        <li><a href="tensorfx.data.html#tensorfx.data.Feature.features">(tensorfx.data.Feature attribute)</a>
 </li>
+      </ul></li>
       <li><a href="tensorfx.data.html#tensorfx.data.FeatureSet">FeatureSet (class in tensorfx.data)</a>
 </li>
       <li><a href="tensorfx.data.html#tensorfx.data.FeatureType">FeatureType (class in tensorfx.data)</a>
@@ -286,6 +295,12 @@
         <li><a href="tensorfx.data.html#tensorfx.data.Schema.fields">(tensorfx.data.Schema attribute)</a>
 </li>
       </ul></li>
+      <li><a href="tensorfx.data.html#tensorfx.data.Feature.format">format() (tensorfx.data.Feature method)</a>
+
+      <ul>
+        <li><a href="tensorfx.data.html#tensorfx.data.Schema.format">(tensorfx.data.Schema method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -297,8 +312,6 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="tensorfx.models.html#tensorfx.models.ClassificationScenario.indices_to_labels">indices_to_labels() (tensorfx.models.ClassificationScenario method)</a>
-</li>
-      <li><a href="tensorfx.data.html#tensorfx.data.SchemaField.integer">integer() (tensorfx.data.SchemaField class method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -323,6 +336,8 @@
       <li><a href="tensorfx.prediction.html#tensorfx.prediction.Model.load">load() (tensorfx.prediction.Model class method)</a>
 </li>
       <li><a href="tensorfx.training.html#tensorfx.training.Configuration.local">local() (tensorfx.training.Configuration class method)</a>
+</li>
+      <li><a href="tensorfx.data.html#tensorfx.data.Feature.log">log() (tensorfx.data.Feature class method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -362,6 +377,16 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="tensorfx.models.html#tensorfx.models.ClassificationScenario.num_labels">num_labels (tensorfx.models.ClassificationScenario attribute)</a>
 </li>
+      <li><a href="tensorfx.data.html#tensorfx.data.SchemaField.numeric">numeric() (tensorfx.data.SchemaField class method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="tensorfx.data.html#tensorfx.data.Feature.one_hot">one_hot() (tensorfx.data.Feature class method)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -370,9 +395,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="tensorfx.training.html#tensorfx.training.Configuration.param_server">param_server (tensorfx.training.Configuration attribute)</a>
 </li>
-      <li><a href="tensorfx.data.html#tensorfx.data.FeatureSet.parse">parse() (tensorfx.data.FeatureSet static method)</a>
+      <li><a href="tensorfx.data.html#tensorfx.data.Feature.parse">parse() (tensorfx.data.Feature static method)</a>
 
       <ul>
+        <li><a href="tensorfx.data.html#tensorfx.data.FeatureSet.parse">(tensorfx.data.FeatureSet static method)</a>
+</li>
         <li><a href="tensorfx.data.html#tensorfx.data.Metadata.parse">(tensorfx.data.Metadata static method)</a>
 </li>
         <li><a href="tensorfx.data.html#tensorfx.data.Schema.parse">(tensorfx.data.Schema static method)</a>
@@ -413,10 +440,6 @@
 </li>
       </ul></li>
   </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="tensorfx.data.html#tensorfx.data.SchemaField.real">real() (tensorfx.data.SchemaField class method)</a>
-</li>
-  </ul></td>
 </tr></table>
 
 <h2 id="S">S</h2>
@@ -424,12 +447,14 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="tensorfx.prediction.html#tensorfx.prediction.Model.save">save() (tensorfx.prediction.Model static method)</a>
 </li>
-      <li><a href="tensorfx.data.html#tensorfx.data.Schema">Schema (class in tensorfx.data)</a>
+      <li><a href="tensorfx.data.html#tensorfx.data.Feature.scale">scale() (tensorfx.data.Feature class method)</a>
 </li>
-      <li><a href="tensorfx.data.html#tensorfx.data.DataSet.schema">schema (tensorfx.data.DataSet attribute)</a>
+      <li><a href="tensorfx.data.html#tensorfx.data.Schema">Schema (class in tensorfx.data)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="tensorfx.data.html#tensorfx.data.DataSet.schema">schema (tensorfx.data.DataSet attribute)</a>
+</li>
       <li><a href="tensorfx.data.html#tensorfx.data.SchemaField">SchemaField (class in tensorfx.data)</a>
 </li>
       <li><a href="tensorfx.data.html#tensorfx.data.SchemaFieldType">SchemaFieldType (class in tensorfx.data)</a>
@@ -463,8 +488,6 @@
       <li><a href="tensorfx.training.html#tensorfx.training.ModelTrainer.train">train() (tensorfx.training.ModelTrainer method)</a>
 </li>
       <li><a href="tensorfx.data.html#tensorfx.data.Feature.transform">transform (tensorfx.data.Feature attribute)</a>
-</li>
-      <li><a href="tensorfx.data.html#tensorfx.data.DataSet.transform_instances">transform_instances() (tensorfx.data.DataSet method)</a>
 </li>
       <li><a href="tensorfx.data.html#tensorfx.data.Feature.type">type (tensorfx.data.Feature attribute)</a>
 
