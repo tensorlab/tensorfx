@@ -3,7 +3,7 @@
 ln -s src tensorfx
 
 export REPO=$(git rev-parse --show-toplevel)
-export PYTHONPATH=$PYTHONPATH:$REPO/src:$REPO/samples
+export PYTHONPATH=$REPO:$REPO/samples:$PYTHONPATH
 export PYTHONDONTWRITEBYTECODE=1
 
 # Optionally install python packages
