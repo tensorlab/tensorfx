@@ -1,0 +1,33 @@
+features:
+- name: X
+  type: concat
+  features:
+  - name: capital_gain
+    type: log
+  - name: capital_loss
+    type: log
+  - name: hours_per_week
+    type: log
+  - name: native_country
+    type: one-hot
+  - name: race
+    type: one-hot
+  - name: gender
+    type: one-hot
+  - name: relationship
+    type: one-hot
+  - name: marital_status
+    type: one-hot
+  - name: age
+    type: bucketize
+    transform:
+      boundaries: 18,35,55,65
+  - name: education_num
+    type: scale
+  - name: occupation
+    type: one-hot
+  - name: workclass
+    type: one-hot
+- name: Y
+  type: target
+  fields: income_bracket

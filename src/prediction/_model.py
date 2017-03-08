@@ -13,6 +13,7 @@
 # _model.py
 # Implements the Model class.
 
+import numpy as np
 import tensorflow as tf
 
 
@@ -88,6 +89,9 @@ class Model(object):
     Arguments:
       - instances: either an object, or list of objects each containing feature values.
     """
+    if not instances:
+      return []
+
     # TODO: Support for DataFrames and a flag of whether to append prediction outputs to input
     #       DataFrame.
 
@@ -101,6 +105,8 @@ class Model(object):
     for alias in self._outputs.iterkeys():
       values = results[alias]
       for index, value in enumerate(values):
+        if isinstance(value, np.ndarray):
+          value = value.tolist()
         predictions[index][alias] = value
 
     return predictions

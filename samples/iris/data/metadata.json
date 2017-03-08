@@ -1,0 +1,29 @@
+{
+  "species": {
+    "entries": ["setosa", "virginica", "versicolor"]
+  },
+  "petal_length": {
+    "min": 4.3,
+    "max": 7.9,
+    "mean": 5.867500,
+    "std": 0.827385
+  },
+  "petal_width": {
+    "min": 2.0,
+    "max": 4.4,
+    "mean": 3.050833,
+    "std": 0.431335
+  },
+  "sepal_length": {
+    "min": 1.1,
+    "max": 6.9,
+    "mean": 3.830833,
+    "std": 1.747497
+  },
+  "sepal_width": {
+    "min": 0.1,
+    "max": 2.5,
+    "mean": 1.232500,
+    "std": 0.759053
+  }
+}

@@ -1,0 +1,15 @@
+features:
+- name: X
+  type: concat
+  features:
+  - name: petal_width
+    type: scale
+  - name: petal_length
+    type: scale
+  - name: sepal_width
+    type: log
+  - name: sepal_length
+    type: log
+- name: Y
+  type: target
+  fields: species

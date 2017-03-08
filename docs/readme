@@ -1,9 +1,0 @@
-Setup
-
-pip install sphinx sphinx_rtd_theme sphinxcontrib-napoleon
-
-Build
-
-mkdir -p ../../tensorfx-docs
-make html
-

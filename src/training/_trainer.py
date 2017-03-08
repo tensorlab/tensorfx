@@ -13,6 +13,7 @@
 # _trainer.py
 # Implements Trainer.
 
+import argparse
 import tensorflow as tf
 import tensorfx as tfx
 from _config import Configuration
@@ -50,6 +51,10 @@ class ModelTrainer(object):
     Returns:
       The trained Model. The resulting value is only relevant for master nodes.
     """
+    if not isinstance(job_args, argparse.Namespace):
+      # Assume its a dictionary and convert it to a Namespace object (what we get from argparsing).
+      job_args = argparse.Namespace(**job_args)
+
     job = Job(model_builder, job_args.output, self._config)
     job.configure_logging()
 

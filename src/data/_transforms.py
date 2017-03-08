@@ -99,7 +99,7 @@ def _scale(instances, feature, schema, metadata):
 
   if transform:
     target_min = float(transform['min'])
-    target_max = floag(transform['max'])
+    target_max = float(transform['max'])
     if (target_min != 0.0) or (target_max != 1.0):
       value = value * (target_max - target_min) + target_min
 

@@ -13,40 +13,20 @@
 # _ds_df.py
 # Implementation of DataFrameDataSet and DataFrameDataSource.
 
+import numpy as np
 import tensorflow as tf
 from ._dataset import DataSet, DataSource
 from ._schema import Schema, SchemaField, SchemaFieldType
 from ._ds_csv import parse_csv
 
 
-def create_schema(df):
-  fields = []
-
-  for name, dtype in zip(df.columns, df.dtypes):
-    dtype = dtype.name
-    if dtype == 'object':
-      fields.append(SchemaField.text(name))
-    elif dtype == 'category':
-      fields.append(SchemaField.discrete(name))
-    elif dtype in ('int32', 'int64'):
-      fields.append(SchemaField.integer(name))
-    elif dtype in ('float32', 'float64'):
-      fields.append(SchemaField.real(name))
-    else:
-      raise ValueError('Unsupported data type "%s" in column "%s"' % (dtype, name))
-
-  return Schema(fields)
-
-
 class DataFrameDataSet(DataSet):
   """A DataSet representing data loaded as Pandas DataFrame instances.
   """
-  def __init__(self, metadata=None, features=None, **kwargs):
+  def __init__(self, features=None, **kwargs):
     """Initializes a DataFrameDataSet with the specified DataSource instances.
 
     Arguments:
-      schema: the description of the source data.
-      metadata: additional per-field information associated with the data.
       features: the optional description of the transformed data.
       kwargs: the set of CsvDataSource instances or csv paths to populate this DataSet with.
     """
@@ -56,7 +36,37 @@ class DataFrameDataSet(DataSet):
     # loaded, and can be assumed to be installed.
     import pandas as pd
 
+    def create_schema(df):
+      fields = []
+      for name, dtype in zip(df.columns, df.dtypes):
+        if type(dtype) == pd.types.dtypes.CategoricalDtype:
+          fields.append(SchemaField.discrete(name))
+        elif dtype in (np.int32, np.int64, np.float32, np.float64):
+          fields.append(SchemaField.numeric(name))
+        else:
+          raise ValueError('Unsupported data type "%s" in column "%s"' % (str(dtype), name))
+      return Schema(fields)
+
+    def create_metadata(df):
+      metadata = {}
+      for name, dtype in zip(df.columns, df.dtypes):
+        md = {}
+        if type(dtype) == pd.types.dtypes.CategoricalDtype:
+          entries = list(df[name].unique())
+          if np.nan in entries:
+            entries.remove(np.nan)
+          md['entries'] = sorted(entries)
+        elif dtype in (np.int32, np.int64, np.float32, np.float64):
+          for stat, stat_value in df[name].describe().iteritems():
+            if stat == 'min':
+              md['min'] = stat_value
+            if stat == 'max':
+              md['max'] = stat_value
+        metadata[name] = md
+      return metadata
+
     schema = None
+    metadata = None
     datasources = {}
     for name, value in kwargs.iteritems():
       if isinstance(value, pd.DataFrame):
@@ -69,6 +79,8 @@ class DataFrameDataSet(DataSet):
 
       if not schema:
         schema = create_schema(value.dataframe)
+      if not metadata:
+        metadata = create_metadata(value.dataframe)
 
     if not len(datasources):
       raise ValueError('At least one DataSource must be specified.')
