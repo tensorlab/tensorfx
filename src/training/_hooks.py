@@ -43,9 +43,9 @@ class StopTrainingHook(tf.train.SessionRunHook):
 
 
 class LogSessionHook(tf.train.SessionRunHook):
-  """Logs the session loop by outputting steps, and throughput into logs.
+  """Writes training throughput stats into the logs.
   """
-  _MESSAGE_FORMAT = 'Run: %.2f sec; Steps: %d; Duration: %d sec; Throughput: %.1f instances/sec'
+  _MESSAGE_FORMAT = 'Training throughput: Step %d time: %.2f; Duration: %d sec; Lifetime throughput: %.1f instances/sec'
   def __init__(self, job):
     """Initializes an instance of LogSessionHook.
 
@@ -73,13 +73,17 @@ class LogSessionHook(tf.train.SessionRunHook):
       throughput = self._steps_completed * float(self._batch_size) / float(duration)
 
       logging.info(LogSessionHook._MESSAGE_FORMAT,
-                   run_time, self._steps_completed, duration, throughput)
+                   self._steps_completed, run_time, duration, throughput)
 
 
 class LogTrainingHook(tf.train.SessionRunHook):
-  """Logs the training job by logging progress as well as producing summary events.
+  """Writes training loss into the logs, and writes summary events.
+
+  Two summary events are written
+  1) training loss of the current training step
+  2) running training throughput
   """
-  _MESSAGE_FORMAT = 'Global steps: %d; Duration: %d sec; Throughput: %.1f instances/sec; Loss: %.3f'
+  _MESSAGE_FORMAT = 'Global step %d: Training loss: %.3f'
   def __init__(self, job):
     """Initializes an instance of LogTrainingHook.
 
@@ -119,7 +123,7 @@ class LogTrainingHook(tf.train.SessionRunHook):
       throughput = self._global_steps_completed * float(self._batch_size) / float(duration)
 
       logging.info(LogTrainingHook._MESSAGE_FORMAT,
-                   self._global_steps_completed, duration, throughput, loss_value)
+                   self._global_steps_completed, loss_value)
 
       self._summary_writer.add_summary(summary, self._global_steps_completed)
       _log_summary_value(self._summary_writer, 'metrics/throughput', throughput,
@@ -128,11 +132,15 @@ class LogTrainingHook(tf.train.SessionRunHook):
 
 
 class SaveCheckpointHook(tf.train.SessionRunHook):
-  """Saves checkpoints during training, evaluates them, and exports the final checkpoint as a model.
+  """Saves checkpoints during training, evaluates them, and exports the model.
 
   This should only be used in master tasks.
   """
-  _MESSAGE_FORMAT = 'Global steps: %d; Evaluation metric: %.3f'
+
+  #TODO(brandondutra) add evaluation loss, so training and eval print the same
+  # units. Otherwise, it is not clear if we are over-fitting.
+  
+  _MESSAGE_FORMAT = 'Global step %d: Evaluation metric %.3f'  
   def __init__(self, job):
     """Initializes an instance of SaveCheckpointHook.
 
@@ -154,6 +162,12 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
     self._summary_writer = tf.summary.FileWriter(job.summaries_path('eval'))
     self._summary_writer.add_graph(job.evaluation.graph)
 
+    self._model_export_manager = tfx.prediction.ModelExportManager(
+        intermediate_model_folder=os.path.join(self._job.output_path, 
+                                               'intermediate_models'), 
+        final_model_folder=self._job.model_path, 
+        exports_to_keep=3)
+
   def before_run(self, context):
     # Save a checkpoint after the first step (this produces early evaluation results), as well as,
     # every checkpoint interval.
@@ -166,6 +180,7 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
       global_steps_completed, = values.results
       checkpoint = self._saver.save(context.session, self._checkpoint_name, global_steps_completed)
       self._evaluate(checkpoint, global_steps_completed)
+      self._export(checkpoint)
 
       self._last_save_steps = global_steps_completed
       self._last_save_time = time.time()
@@ -216,8 +231,9 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
         self._job.prediction.saver.restore(session, checkpoint)
         self._job.prediction.local_init_op.run()
 
-        tfx.prediction.Model.save(session, self._job.model_path,
-                                  self._job.prediction.inputs, self._job.prediction.outputs)
+        # Export model, keeping last few models as backups.
+        self._model_export_manager.save(session, self._job.prediction.inputs,
+                                        self._job.prediction.outputs)
 
 
 class CheckNaNLossHook(tf.train.SessionRunHook):
