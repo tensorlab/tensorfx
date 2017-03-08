@@ -163,7 +163,7 @@ expected to predict which are defined as follows:
 The python code in the sample can be run directly, or using a `train` tool, as shown:
 
     cd samples
-    python -m tensorfx.tools.train \
+    tfx train \
       --module iris.trainer.main \
       --output /tmp/tensorfx/iris/csv \
       --data-train iris/data/train.csv \

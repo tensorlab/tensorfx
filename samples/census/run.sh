@@ -1,6 +1,6 @@
 #/bin/sh
 
-python -m tensorfx.tools.train $1 \
+tfx train $1 \
   --module census.train \
   --output /tmp/tensorfx/census \
   --data-train census/data/train.csv \

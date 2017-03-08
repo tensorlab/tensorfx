@@ -36,6 +36,12 @@ setuptools.setup(
     'tensorfx.models',
     'tensorfx.models.nn'
   ],
+  entry_points={
+    'console_scripts': [
+      'tfx = tensorfx.tools.tfx:main'
+    ],
+  },
+  data_files=[('.', ['requirements.txt'])],
   install_requires=dependencies,
   author='Nikhil Kothari',
   author_email='nikhilk@twitter',
@@ -61,6 +67,5 @@ setuptools.setup(
     'Topic :: Scientific/Engineering :: Artificial Intelligence',
     'Topic :: Software Development :: Libraries',
     'Topic :: Software Development :: Libraries :: Python Modules'
-  ],
-  data_files=[('.', ['requirements.txt'])]
+  ]
 )

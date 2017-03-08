@@ -1,6 +1,6 @@
 #!/bin/sh
 
-python -m tensorfx.tools.train $1 \
+tfx train $1 \
   --module iris.trainer.main \
   --output /tmp/tensorfx/iris/csv \
   --data-train iris/data/train.csv \
