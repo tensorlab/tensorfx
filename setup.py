@@ -16,7 +16,8 @@
 
 import setuptools
 
-version = '0.1.3'
+with open('tensorfx/_version.py') as vf:
+  exec(vf.read())
 
 with open('requirements.txt') as rf:
   dependencies = rf.readlines()
@@ -25,7 +26,7 @@ with open('requirements.txt') as rf:
 
 setuptools.setup(
   name='tensorfx',
-  version=version,
+  version=__version__,
   packages=[
     'tensorfx',
     'tensorfx.data',
