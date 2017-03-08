@@ -14,10 +14,9 @@
 # To publish to PyPi, use:
 # python setup.py bdist_wheel upload -r pypi
 
-import datetime
 import setuptools
 
-version = '0.1.' + datetime.datetime.now().strftime("%y%m%d%H%M")
+version = '0.1.3'
 
 with open('requirements.txt') as rf:
   dependencies = rf.readlines()
@@ -41,7 +40,7 @@ setuptools.setup(
   author_email='nikhilk@twitter',
   url='https://github.com/TensorLab/tensorfx',
   license="Apache Software License",
-  description='TensorFX Framework',
+  description='TensorFX Framework for training and serving machine learning models with TensorFlow',
   keywords=[
     'TensorLab',
     'TensorFlow',
@@ -50,6 +49,17 @@ setuptools.setup(
     'Google'
   ],
   classifiers=[
+    # https://pypi.python.org/pypi?%3Aaction=list_classifiers
+    'Development Status :: 3 - Alpha',
+    'Environment :: Other Environment',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: Apache Software License'
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 2.7',
+    'Operating System :: OS Independent',
+    'Topic :: Scientific/Engineering :: Artificial Intelligence',
+    'Topic :: Software Development :: Libraries',
+    'Topic :: Software Development :: Libraries :: Python Modules'
   ],
   data_files=[('.', ['requirements.txt'])]
 )

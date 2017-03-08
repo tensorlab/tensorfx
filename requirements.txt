@@ -4,5 +4,6 @@
 
 argparse==1.1
 enum34>=1.1.6,<1.2
+pandas>=0.19,<0.20
 pyyaml>=3.12,<4.0
 ujson>=1.35,<2.0

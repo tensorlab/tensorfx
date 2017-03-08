@@ -162,6 +162,7 @@ expected to predict which are defined as follows:
 #### Running the Model
 The python code in the sample can be run directly, or using a `train` tool, as shown:
 
+    cd samples
     python -m tensorfx.tools.train \
       --module iris.trainer.main \
       --output /tmp/tensorfx/iris/csv \
