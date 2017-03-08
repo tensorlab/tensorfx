@@ -52,9 +52,6 @@ class Model(object):
       metagraph = tf.saved_model.loader.load(session, ['SERVING'], path)
       signature = _parse_signature(metagraph)
 
-      local_init_op = tf.get_collection(tf.GraphKeys.LOCAL_INIT_OP)[0]
-      session.run(local_init_op)
-
       inputs = {}
       for alias in signature.inputs:
         inputs[alias] = signature.inputs[alias].name
@@ -78,9 +75,9 @@ class Model(object):
     signature_map = {'serving_default': _build_signature(inputs, outputs)}
     model_builder = tf.saved_model.builder.SavedModelBuilder(path)
     model_builder.add_meta_graph_and_variables(session,
-                                              tags=['SERVING'],
-                                              signature_def_map=signature_map,
-                                              clear_devices=True)
+                                               tags=['SERVING'],
+                                               signature_def_map=signature_map,
+                                               clear_devices=True)
     model_builder.save()
 
   def predict(self, instances):
@@ -110,6 +107,7 @@ class Model(object):
         predictions[index][alias] = value
 
     return predictions
+
 
 def _build_signature(inputs, outputs):
   def tensor_alias(tensor):
