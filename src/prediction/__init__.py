@@ -14,3 +14,4 @@
 # tensorfx.prediction module declaration.
 
 from _model import Model
+from _model_export_manager import ModelExportManager
