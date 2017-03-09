@@ -118,7 +118,8 @@ class ModelBuilder(object):
     with tf.name_scope('initialization'):
       # Create the saver that will be used to save and restore (in cases of resumed training)
       # trained variables.
-      saver = tf.train.Saver(tf.trainable_variables(), sharded=True)
+      saver = tf.train.Saver(tf.trainable_variables(), sharded=True,
+                             max_to_keep=self.args.checkpoints_to_keep)
 
       init_op, local_init_op = self.build_init()
       ready_op = tf.report_uninitialized_variables(tf.trainable_variables())
@@ -169,7 +170,8 @@ class ModelBuilder(object):
 
     with tf.name_scope('initialization'):
       # Create the saver that will be used to restore trained variables,
-      saver = tf.train.Saver(tf.trainable_variables(), sharded=True)
+      saver = tf.train.Saver(tf.trainable_variables(), sharded=True,
+                             max_to_keep=self.args.checkpoints_to_keep)
 
       init_op, local_init_op = self.build_init()
 
@@ -202,7 +204,8 @@ class ModelBuilder(object):
 
     with tf.name_scope('initialization'):
       # Create the saver that will be used to restore trained variables.
-      saver = tf.train.Saver(tf.trainable_variables(), sharded=True)
+      saver = tf.train.Saver(tf.trainable_variables(), sharded=True,
+                             max_to_keep=self.args.checkpoints_to_keep)
 
       init_op, local_init_op = self.build_init()
 

@@ -13,12 +13,14 @@
 # _hooks.py
 # Implements various session hooks needed for training.
 
+import json
 import logging
 import os
 import tensorflow as tf
 import tensorfx as tfx
 import time
 from tensorflow.core.framework import summary_pb2 as tfsummaries
+from tensorflow.python.lib.io import file_io as tfio
 
 
 class StopTrainingHook(tf.train.SessionRunHook):
@@ -154,6 +156,10 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
     self._summary_writer = tf.summary.FileWriter(job.summaries_path('eval'))
     self._summary_writer.add_graph(job.evaluation.graph)
 
+    # See if there are any 
+    #self._checkpoint_files = collections.deque()
+
+
   def before_run(self, context):
     # Save a checkpoint after the first step (this produces early evaluation results), as well as,
     # every checkpoint interval.
@@ -164,18 +170,46 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
   def after_run(self, context, values):
     if values.results:
       global_steps_completed, = values.results
-      checkpoint = self._saver.save(context.session, self._checkpoint_name, global_steps_completed)
-      self._evaluate(checkpoint, global_steps_completed)
-
+      self._checkpoint_and_eval(context.session, global_steps_completed)
       self._last_save_steps = global_steps_completed
       self._last_save_time = time.time()
 
   def end(self, session):
     global_steps_completed = session.run(self._global_steps)
     if global_steps_completed != self._last_save_steps:
-      checkpoint = self._saver.save(session, self._checkpoint_name, global_steps_completed)
-      self._evaluate(checkpoint, global_steps_completed)
+      checkpoint = self._checkpoint_and_eval(session, global_steps_completed)
       self._export(checkpoint)
+
+  def _checkpoint_and_eval(self, session, global_steps_completed):
+    """Writes a checkpoint, runs eval, and saves eval results.
+
+    Arguments:
+      session: the tf session
+      global_steps_completed: current step number
+    """
+    last_checkpoints = self._saver.last_checkpoints
+    checkpoint = self._saver.save(session, self._checkpoint_name, global_steps_completed)
+    eval_value = self._evaluate(checkpoint, global_steps_completed)
+
+    tfio.write_string_to_file(
+        checkpoint + '.stats.json',
+        json.dumps({'eval_metric_value': eval_value}, indent=2))
+
+    # The first checkpoint in last_checkpoints might have been deleted in 
+    # the last call to the saver. It is not enough to simply check if it's still
+    # in the list after the save call. It could have been removed from
+    # the list because it was a very old model. See 
+    # the parameter keep_checkpoint_every_n_hours in tf.train.saver.
+
+    deleted_checkpoint = last_checkpoints[0] if last_checkpoints else None
+    if deleted_checkpoint:
+      # The '.' in the glob pattern is for the literal '.'
+      old_files = tfio.get_matching_files(deleted_checkpoint + '.*')
+      if (len(old_files) == 1 and 
+          old_files[0] == deleted_checkpoint + '.stats.json'):
+        tfio.delete_file(old_files[0])
+
+    return checkpoint
 
   def _evaluate(self, checkpoint, global_steps_completed):
     with self._job.evaluation.graph.as_default():
@@ -199,11 +233,15 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
 
         metric_value = session.run(self._job.evaluation.metric)
 
+        # Save metric_value to the summary, logger, and checkpoint stats file.
+        # Note that it's an numpy value.
         summary = session.run(self._job.evaluation.summary_op)
         self._summary_writer.add_summary(summary, global_steps_completed)
         self._summary_writer.flush()
 
         logging.info(SaveCheckpointHook._MESSAGE_FORMAT, global_steps_completed, metric_value)
+
+        return float(metric_value)  # convert numpy to python float.
 
   def _export(self, checkpoint):
     summary_writer = tf.summary.FileWriter(self._job.summaries_path('prediction'))
