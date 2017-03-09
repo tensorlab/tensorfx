@@ -156,10 +156,6 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
     self._summary_writer = tf.summary.FileWriter(job.summaries_path('eval'))
     self._summary_writer.add_graph(job.evaluation.graph)
 
-    # See if there are any 
-    #self._checkpoint_files = collections.deque()
-
-
   def before_run(self, context):
     # Save a checkpoint after the first step (this produces early evaluation results), as well as,
     # every checkpoint interval.
@@ -233,8 +229,6 @@ class SaveCheckpointHook(tf.train.SessionRunHook):
 
         metric_value = session.run(self._job.evaluation.metric)
 
-        # Save metric_value to the summary, logger, and checkpoint stats file.
-        # Note that it's an numpy value.
         summary = session.run(self._job.evaluation.summary_op)
         self._summary_writer.add_summary(summary, global_steps_completed)
         self._summary_writer.flush()
