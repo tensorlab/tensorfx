@@ -114,6 +114,10 @@ class ModelArguments(argparse.Namespace):
                          help='The number of passes over the training data to make.')
     session.add_argument('--checkpoint-interval-secs', type=int, default=60 * 5,
                          help='The frequency of checkpoints to create during the training job.')
+    session.add_argument('--checkpoints-to-keep', type=int, default=5,
+                         help=('Max number of checkpoints to keep. A '
+                               'zero value means all checkpoints are kept; '
+                               'otherwise, the older checkpoints are deleted.'))    
 
     log = parser.add_argument_group(title='Logging and Diagnostics',
                                     description='Arguments controlling logging during training.')
