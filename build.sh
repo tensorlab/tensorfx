@@ -18,6 +18,21 @@ curl --silent http://c.docverter.com/convert \
   -F to=rst \
   -F input_files[]=@README.md > build/README.rst
 
+
+# Check for setuptools >30. Otherwise, tar file will not have requirements.txt
+# pip list --format=columns  (list all versions)
+# grep 'setuptools' (gets setuptools x.y.z)
+# awk  '{print $2}' (gets x.y.z)
+# awk -F. '{print $1}' (gets x)
+setuptools_version=`pip list --format=columns | grep 'setuptools' | awk  '{print $2}' | awk -F. '{print $1}'`
+if [[ -z $setuptools_version || $setuptools_version -lt 30 ]]; then
+  echo 'setuptools version 30 or higher is required.'
+  echo "This system has version ${setuptools_version}"
+  echo 'First upgrade: pip install --upgrade setuptools'
+  exit 1
+fi
+
+
 # Finally, build
 pushd build > /dev/null
 python setup.py sdist > setup.log
