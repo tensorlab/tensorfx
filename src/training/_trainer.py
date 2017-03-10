@@ -130,10 +130,12 @@ class ModelTrainer(object):
     """
     hooks = []
 
-    hooks.append(LogSessionHook(job))
     if self._config.master:
-      hooks.append(LogTrainingHook(job))
+      hooks.append(MasterLoggingHook(job))
       hooks.append(SaveCheckpointHook(job))
+    else:
+      hooks.append(WorkerLoggingHook(job))
+
     hooks.append(StopTrainingHook(job))
 
     return hooks

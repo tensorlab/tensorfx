@@ -42,12 +42,12 @@ class StopTrainingHook(tf.train.SessionRunHook):
       context.request_stop()
 
 
-class LogSessionHook(tf.train.SessionRunHook):
+class WorkerLoggingHook(tf.train.SessionRunHook):
   """Logs the session loop by outputting steps, and throughput into logs.
   """
   _MESSAGE_FORMAT = 'Run: %.2f sec; Steps: %d; Duration: %d sec; Throughput: %.1f instances/sec'
   def __init__(self, job):
-    """Initializes an instance of LogSessionHook.
+    """Initializes an instance of WorkerLoggingHook.
 
     Arguments:
       job: The current training job.
@@ -72,16 +72,16 @@ class LogSessionHook(tf.train.SessionRunHook):
       duration = end_time - self._start_time
       throughput = self._steps_completed * float(self._batch_size) / float(duration)
 
-      logging.info(LogSessionHook._MESSAGE_FORMAT,
+      logging.info(WorkerLoggingHook._MESSAGE_FORMAT,
                    run_time, self._steps_completed, duration, throughput)
 
 
-class LogTrainingHook(tf.train.SessionRunHook):
+class MasterLoggingHook(tf.train.SessionRunHook):
   """Logs the training job by logging progress as well as producing summary events.
   """
   _MESSAGE_FORMAT = 'Global steps: %d; Duration: %d sec; Throughput: %.1f instances/sec; Loss: %.3f'
   def __init__(self, job):
-    """Initializes an instance of LogTrainingHook.
+    """Initializes an instance of MasterLoggingHook.
 
     Arguments:
       job: The current training job.
@@ -118,7 +118,7 @@ class LogTrainingHook(tf.train.SessionRunHook):
       duration = end_time - self._start_time
       throughput = self._global_steps_completed * float(self._batch_size) / float(duration)
 
-      logging.info(LogTrainingHook._MESSAGE_FORMAT,
+      logging.info(MasterLoggingHook._MESSAGE_FORMAT,
                    self._global_steps_completed, duration, throughput, loss_value)
 
       self._summary_writer.add_summary(summary, self._global_steps_completed)
