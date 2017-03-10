@@ -129,13 +129,12 @@ class ModelTrainer(object):
     """Creates the TensorFlow session hooks that customize the session loop.
     """
     hooks = []
-    print('_create_session_hooks called')
-    print(self._config.master)
+
     if self._config.master:
       hooks.append(MasterLoggingHook(job))
       hooks.append(SaveCheckpointHook(job))
-    #else:
-    hooks.append(WorkerLoggingHook(job))
+    else:
+      hooks.append(WorkerLoggingHook(job))
 
     hooks.append(StopTrainingHook(job))
 
