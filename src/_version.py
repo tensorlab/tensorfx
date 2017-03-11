@@ -10,11 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# __init__.py
-# tensorfx module declaration.
+# _version.py
+# Declares package version.
 
-import tensorfx.data as data
-import tensorfx.training as training
-import tensorfx.prediction as prediction
-
-from _version import __version__
+__version__ = '0.1.4'

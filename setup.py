@@ -14,10 +14,10 @@
 # To publish to PyPi, use:
 # python setup.py bdist_wheel upload -r pypi
 
-import datetime
 import setuptools
 
-version = '0.1.' + datetime.datetime.now().strftime("%y%m%d%H%M")
+with open('tensorfx/_version.py') as vf:
+  exec(vf.read())
 
 with open('requirements.txt') as rf:
   dependencies = rf.readlines()
@@ -26,7 +26,7 @@ with open('requirements.txt') as rf:
 
 setuptools.setup(
   name='tensorfx',
-  version=version,
+  version=__version__,
   packages=[
     'tensorfx',
     'tensorfx.data',
@@ -41,12 +41,13 @@ setuptools.setup(
       'tfx = tensorfx.tools.tfx:main'
     ],
   },
+  data_files=[('.', ['requirements.txt'])],
   install_requires=dependencies,
   author='Nikhil Kothari',
   author_email='nikhilk@twitter',
   url='https://github.com/TensorLab/tensorfx',
   license="Apache Software License",
-  description='TensorFX Framework',
+  description='TensorFX Framework for training and serving machine learning models with TensorFlow',
   keywords=[
     'TensorLab',
     'TensorFlow',
@@ -55,6 +56,16 @@ setuptools.setup(
     'Google'
   ],
   classifiers=[
-  ],
-  data_files=[('.', ['requirements.txt'])]
+    # https://pypi.python.org/pypi?%3Aaction=list_classifiers
+    'Development Status :: 3 - Alpha',
+    'Environment :: Other Environment',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: Apache Software License'
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 2.7',
+    'Operating System :: OS Independent',
+    'Topic :: Scientific/Engineering :: Artificial Intelligence',
+    'Topic :: Software Development :: Libraries',
+    'Topic :: Software Development :: Libraries :: Python Modules'
+  ]
 )
