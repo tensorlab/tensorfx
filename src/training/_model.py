@@ -251,7 +251,10 @@ class ModelBuilder(object):
                              tf.variables_initializer(tf.local_variables()),
                              tf.tables_initializer(),
                              name='local_init_op')
-    tf.add_to_collection(tf.GraphKeys.LOCAL_INIT_OP, local_init_op)
+
+    # Add the local initialization op to the main op collection, which is looked up at model loading
+    # time, and is automatically invoked after it has been loaded.
+    tf.add_to_collection('saved_model_main_op', local_init_op)
 
     return init_op, local_init_op
 

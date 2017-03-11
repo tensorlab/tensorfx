@@ -67,7 +67,6 @@ class ModelArguments(argparse.Namespace):
       # and have that be applied to the subsequent model arg parser.
       # As such, we also have to make job-dir be not required
       standard_argparser = argparse.ArgumentParser(add_help=False)
-      standard_argparser.add_argument('--job_dir', type=str, dest='output', required=False)
       standard_argparser.add_argument('--job-dir', type=str, dest='output', required=False)
       job_args, model_args_list = standard_argparser.parse_known_args(args)
     else:
