@@ -17,7 +17,7 @@ using TensorFX.
   Which invokes the train tool from TensorFX to launch a python module as a
   trainer process, as follows:
 
-      python -m tensorfx.tools.train \
+      tfx train \
         --module iris.trainer.main --output [output path] \
         ... trainer specific argumenrts
 
