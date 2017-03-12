@@ -14,18 +14,9 @@
 # Defines ModelArguments and related classes.
 
 import argparse
-import enum
+import logging
 import sys
 import tensorfx as tfx
-
-class LogLevel(enum.Enum):
-  """Defines the logging level options for the job.
-  """
-  FATAL = 50
-  ERROR = 40
-  WARN = 30
-  INFO = 20
-  DEBUG = 10
 
 
 class ModelArguments(argparse.Namespace):
@@ -33,9 +24,9 @@ class ModelArguments(argparse.Namespace):
   def process(self):
     """Processes the parsed arguments to produce any additional objects.
     """
-    # Convert strings to enum values
-    self.log_level = LogLevel[self.log_level]
-    self.log_level_tensorflow = LogLevel[self.log_level_tensorflow]
+    # Convert strings to logging values
+    self.log_level = getattr(logging, self.log_level)
+    self.log_level_tensorflow = getattr(logging, self.log_level_tensorflow)
 
   @classmethod
   def default(cls):
@@ -86,15 +77,16 @@ class ModelArguments(argparse.Namespace):
     session.add_argument('--checkpoint-interval-secs', type=int, default=60 * 5,
                          help='The frequency of checkpoints to create during the training job.')
 
+    log_levels = ['FATAL', 'ERROR', 'WARN', 'INFO', 'DEBUG']
+
     log = parser.add_argument_group(title='Logging and Diagnostics',
                                     description='Arguments controlling logging during training.')
     log.add_argument('--log-level-tensorflow', metavar='level', type=str, default='ERROR',
-                     choices=map(lambda i: i.name, LogLevel),
+                     choices=log_levels,
                      help='The logging level for TensorFlow generated log messages.')
     log.add_argument('--log-device-placement', default=False, action='store_true',
                      help='Whether to log placement of ops and tensors on devices.')
-    log.add_argument('--log-level', metavar='level', type=str, default='INFO',
-                     choices=map(lambda i: i.name, LogLevel),
+    log.add_argument('--log-level', metavar='level', type=str, default='INFO', choices=log_levels,
                      help='The logging level for training.')
     log.add_argument('--log-interval-steps', metavar='steps', type=int, default=100,
                      help='The frequency of training logs and summary events to generate.')

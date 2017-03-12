@@ -13,7 +13,6 @@
 # _ff.py
 # Implements FeedForwardClassification.
 
-import enum
 import math
 import tensorflow as tf
 import tensorfx as tfx

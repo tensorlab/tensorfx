@@ -104,8 +104,8 @@ class Job(object):
     """
     args = self._model_builder.args
 
-    tf.logging.set_verbosity(getattr(tf.logging, args.log_level_tensorflow.name))
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = str(args.log_level_tensorflow.value)
+    tf.logging.set_verbosity(args.log_level_tensorflow)
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = str(args.log_level_tensorflow)
 
     logger = logging.getLogger()
     if hasattr(self._config.job, 'local') and not logger.handlers:
@@ -122,7 +122,7 @@ class Job(object):
       handler.setFormatter(logging.Formatter(fmt=format))
 
       logger.addHandler(handler)
-      logger.setLevel(getattr(logging, args.log_level.name))
+      logger.setLevel(args.log_level)
 
   def start(self):
     """Performs startup logic, including building graphs.
