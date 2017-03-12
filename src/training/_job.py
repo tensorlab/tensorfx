@@ -99,9 +99,11 @@ class Job(object):
     tf.logging.set_verbosity(getattr(tf.logging, args.log_level_tensorflow.name))
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = str(args.log_level_tensorflow.value)
 
-    if hasattr(self._config.job, 'local'):
-      # Additional setup to output logs to console for local runs. On cloud, this should
-      # be handled by the environment.
+    logger = logging.getLogger()
+    if hasattr(self._config.job, 'local') and not logger.handlers:
+      # Additional setup to output logs to console for local runs. On cloud, this is handled by the
+      # environment. The additional check for existing logging handler ensures that existing logging
+      # setup is used; for example, when training is invoked in context of another application.
       if self._config.distributed:
         format = '%%(levelname)s %s:%d: %%(message)s'
         format = format % (self._config.task.type, self._config.task.index)
@@ -111,7 +113,6 @@ class Job(object):
       handler = logging.StreamHandler(stream=sys.stderr)
       handler.setFormatter(logging.Formatter(fmt=format))
 
-      logger = logging.getLogger()
       logger.addHandler(handler)
       logger.setLevel(getattr(logging, args.log_level.name))
 

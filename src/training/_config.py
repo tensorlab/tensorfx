@@ -63,7 +63,7 @@ class Configuration(object):
 
     return cls(env.get('task', None) or {'type': 'master', 'index': 0},
                env.get('cluster', None),
-               env.get('job', {}),
+               env.get('job', {'local': True}),
                env)
   
   @classmethod
@@ -73,7 +73,7 @@ class Configuration(object):
     Returns:
       A default Configuration instance with simple configuration.
     """
-    return cls(task={'type': 'master', 'index': 0}, cluster=None, job={}, env={})
+    return cls(task={'type': 'master', 'index': 0}, cluster=None, job={'local': True}, env={})
 
   @property
   def distributed(self):
