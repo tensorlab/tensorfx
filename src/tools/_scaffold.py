@@ -104,17 +104,17 @@ import tenosrflow as tf
 import tensorfx as tfx
 import tensorfx.models.{model_set} as {model_set}
 
-args, job = {model}Arguments.parse(parse_job=True)
+args = {model}Arguments.parse(parse_job=True)
 dataset = tfx.data.CsvDataSet(args.data_schema,
                               train=args.data_train,
                               eval=args.data_eval,
                               metadata=args.data_metadata,
                               features=args.data_features)
 
-builder = {model}(args, dataset)
+builder = {model}(args)
 
 trainer = tfx.training.ModelTrainer()
-model = trainer.train(builder, job)
+model = trainer.train(builder, dataset, args.output)
 """
 
 _scaffold_trainer_main_py_custom = """# main.py
@@ -124,17 +124,17 @@ import tensorflow as tf
 import tensorfx as tfx
 import _model as model
 
-args, job = model.{model_class}Arguments.parse(parse_job=True)
+args = model.{model_class}Arguments.parse(parse_job=True)
 dataset = tfx.data.CsvDataSet(args.data_schema,
                               train=args.data_train,
                               eval=args.data_eval,
                               metadata=args.data_metadata,
                               features=args.data_features)
 
-builder = model.{model_class}(args, dataset)
+builder = model.{model_class}(args)
 
 trainer = tfx.training.ModelTrainer()
-model = trainer.train(builder, job)
+model = trainer.train(builder, dataset, args.outupt)
 """
 
 _scaffold_trainer_model_py = """# model.py
@@ -147,12 +147,10 @@ class {model_class}Arguments(tfx.training.ModelArguments):
   \"""Declares arguments supported by the model.
   \"""
   @classmethod
-  def build_parser(cls):
-    parser = super({model_class}Arguments, cls).build_parser()
+  def init_parser(cls, parser):
+    super({model_class}Arguments, cls).init_parser(parser)
 
     # TODO: Add additional model-specific arguments.
-
-    return parser
 
 
 class {model_class}(tfx.training.ModelBuilder):

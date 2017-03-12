@@ -52,58 +52,29 @@ class ModelArguments(argparse.Namespace):
 
     Arguments:
       args: the arguments to parse. If unspecified, the process arguments are used.
-      parse_job: whether to parse the job related standard arguments.
+      parse_job: whether to parse the job related standard (input and output) arguments.
     Returns:
-      The model arguments, and optionally the training output path as well.
+      The parsed arguments.
     """
     if args is None:
       args = sys.argv[1:]
 
-    job_args = None
-    if parse_job:
-      # Parse out the standard arguments. Currently, the only standard argument is the output
-      # location for the job.
-      # The standard arg parser is setup with add_help=False, so as to not eat up a --help option,
-      # and have that be applied to the subsequent model arg parser.
-      # As such, we also have to make job-dir be not required
-      standard_argparser = argparse.ArgumentParser(add_help=False)
-      standard_argparser.add_argument('--job-dir', type=str, dest='output', required=False)
-      job_args, model_args_list = standard_argparser.parse_known_args(args)
-    else:
-      model_args_list = args
+    argparser = ModelArgumentsParser(add_job_arguments=parse_job)
+    cls.init_parser(argparser)
 
-    model_argparser = cls.build_parser()
-    model_args = model_argparser.parse_args(model_args_list, namespace=cls())
-    model_args._args = model_args_list
-    model_args.process()
+    args_object = argparser.parse_args(args, namespace=cls())
+    args_object._args = args
+    args_object.process()
 
-    if parse_job:
-      return model_args, job_args
-    else:
-      return model_args
+    return args_object
 
   @classmethod
-  def build_parser(cls):
-    """Builds the argument parser.
+  def init_parser(cls, parser):
+    """Initializes the argument parser.
 
-    Returns:
-      An argument parser with arguments added.
+    Args:
+      parser: An argument parser instance to be initialized with arguments.
     """
-    parser = ModelArgumentsParser()
-
-    data = parser.add_argument_group(title='Data',
-                                     description='Arguments describing the DataSet to use.')
-    data.add_argument('--data-schema', metavar='path', type=str, required=False,
-                      help='The schema (columns, types) of the data being referenced (YAML).')
-    data.add_argument('--data-metadata', metavar='path', type=str, required=False,
-                      help='The statistics and vocabularies of the data being referenced (JSON).')
-    data.add_argument('--data-features', metavar='path', type=str, required=False,
-                      help='The set of features to transform the raw data into (YAML).')
-    data.add_argument('--data-train', metavar='path', type=str, required=False,
-                      help='The data to use for training. This can include wildcards.')
-    data.add_argument('--data-eval', metavar='path', type=str, required=False,
-                      help='The data to use for evaluation. This can include wildcards.')
-
     session = parser.add_argument_group(title='Session',
                                         description='Arguments controlling the session loop.')
     session.add_argument('--max-steps', type=int, default=1000,
@@ -128,15 +99,32 @@ class ModelArguments(argparse.Namespace):
     log.add_argument('--log-interval-steps', metavar='steps', type=int, default=100,
                      help='The frequency of training logs and summary events to generate.')
 
-    return parser
-
 
 class ModelArgumentsParser(argparse.ArgumentParser):
 
-  def __init__(self):
+  def __init__(self, add_job_arguments):
     # TODO: Add description, epilogue, etc.
     super(ModelArgumentsParser, self).__init__(prog='trainer', usage='%(prog)s [--help] [options]')
     self.var_args_action = AddVarArgAction
+
+    job = self.add_argument_group(title='Job',
+                                  description='Arguments defining job inputs and outputs.')
+    job.add_argument('--data-schema', metavar='path', type=str, required=False,
+                     help='The schema (columns, types) of the data being referenced (YAML).')
+    job.add_argument('--data-metadata', metavar='path', type=str, required=False,
+                     help='The statistics and vocabularies of the data being referenced (JSON).')
+    job.add_argument('--data-features', metavar='path', type=str, required=False,
+                     help='The set of features to transform the raw data into (YAML).')
+    job.add_argument('--data-train', metavar='path', type=str, required=False,
+                     help='The data to use for training. This can include wildcards.')
+    job.add_argument('--data-eval', metavar='path', type=str, required=False,
+                     help='The data to use for evaluation. This can include wildcards.')
+
+    # The framework uses output, but Cloud ML Engine uses job-dir. Only one should be provided.
+    job.add_argument('--output', type=str, dest='output', required=False,
+                     help='The output path to use for training outputs,')
+    job.add_argument('--job-dir', type=str, dest='output', required=False,
+                     help='For Cloud ML Engine compatibility only. Use --output instead.')
 
   def _parse_optional(self, arg_string):
     suffix_index = arg_string.find(':')

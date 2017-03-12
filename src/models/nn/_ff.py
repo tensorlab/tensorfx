@@ -24,8 +24,13 @@ class FeedForwardModelArguments(tfx.training.ModelArguments):
   """Arguments for feed-forward neural networks.
   """
   @classmethod
-  def build_parser(cls):
-    parser = super(FeedForwardModelArguments, cls).build_parser()
+  def init_parser(cls, parser):
+    """Initializes the argument parser.
+
+    Args:
+      parser: An argument parser instance to be initialized with arguments.
+    """
+    super(FeedForwardModelArguments, cls).init_parser(parser)
 
     optimization = parser.add_argument_group(title='Optimization',
       description='Arguments determining the optimizer behavior.')
@@ -37,8 +42,6 @@ class FeedForwardModelArguments(tfx.training.ModelArguments):
     nn.add_argument('--hidden-layers', metavar='units', type=int, required=False,
                     action=parser.var_args_action,
                     help='The size of each hidden layer to add.')
-
-    return parser
 
   def process(self):
     super(FeedForwardModelArguments, self).process()
@@ -65,13 +68,17 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
 
   These models are also known as multi-layer perceptrons.
   """
-  def __init__(self, args, dataset):
-    super(FeedForwardClassification, self).__init__(args, dataset)
+  def __init__(self, args):
+    super(FeedForwardClassification, self).__init__(args)
 
+  def build_input(self, dataset, source, batch, epochs, shuffle):
     target_feature = filter(lambda f: f.type == tfx.data.FeatureType.target, dataset.features)[0]
     target_metadata = dataset.metadata[target_feature.field]
 
     self._classification = models.ClassificationScenario(target_metadata['entries'])
+
+    return super(FeedForwardClassification, self).build_input(dataset, source,
+                                                              batch, epochs, shuffle)
 
   def build_inference(self, inputs, training):
     histograms = {}

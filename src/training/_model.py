@@ -36,18 +36,16 @@ class ModelBuilder(object):
   A ModelBuilder serves as a base class for various models. Each specific model adds its specific
   logic to build the required TensorFlow graph.
   """
-  def __init__(self, args, dataset):
+  def __init__(self, args):
     """Initializes an instance of a ModelBuilder.
 
     Arguments:
       args: the arguments specified for training.
-      dataset: the DataSet providing training and evaluation data.
     """
     if args is None or not isinstance(args, ModelArguments):
       raise ValueError('args must be an instance of ModelArguments')
 
     self._args = args
-    self._dataset = dataset
 
   @property
   def args(self):
@@ -55,50 +53,47 @@ class ModelBuilder(object):
     """
     return self._args
 
-  @property
-  def dataset(self):
-    """Retrieves the DataSet being used for training and evaluation data.
-    """
-    return self._dataset
-
-  def build_graph_interfaces(self, config):
+  def build_graph_interfaces(self, dataset, config):
     """Builds graph interfaces for training and evaluating a model, and for predicting using it.
 
     A graph interface is an object containing a TensorFlow graph member, as well as members
     corresponding to various tensors and ops within the graph.
 
     Arguments:
+      dataset: The dataset to use during training.
       config: The training Configuration object.
     Returns:
       A tuple consisting of the training, evaluation and prediction interfaces.
     """
     with tf.Graph().as_default() as graph:
       with tf.device(config.create_device_setter(self._args)):
-        references = self.build_training_graph()
+        references = self.build_training_graph(dataset)
         training = _create_interface('Training', graph, references)
 
     with tf.Graph().as_default() as graph:
-      references = self.build_evaluation_graph()
+      references = self.build_evaluation_graph(dataset)
       evaluation = _create_interface('Evaluation', graph, references)
 
     with tf.Graph().as_default() as graph:
-      references = self.build_prediction_graph()
+      references = self.build_prediction_graph(dataset)
       prediction = _create_interface('Prediction', graph, references)
 
     return training, evaluation, prediction
 
-  def build_training_graph(self):
+  def build_training_graph(self, dataset):
     """Builds the graph to use for training a model.
 
     This operates on the current default graph.
 
+    Args:
+      dataset: The dataset to use during training.
     Returns:
       The set of tensors and ops references required for training.
     """
     with tf.name_scope('input'):
       # For training, ensure the data is shuffled, and don't limit to any fixed number of epochs.
       # The datasource to use is the one named as 'train' within the dataset.
-      inputs = self.build_input('train',
+      inputs = self.build_input(dataset, 'train',
                                 batch=self.args.batch_size,
                                 epochs=self.args.epochs,
                                 shuffle=True)
@@ -146,9 +141,11 @@ class ModelBuilder(object):
       'scaffold': scaffold
     }
 
-  def build_evaluation_graph(self):
+  def build_evaluation_graph(self, dataset):
     """Builds the graph to use for evaluating a model during training.
 
+    Args:
+      dataset: The dataset to use during training.
     Returns:
       The set of tensors and ops references required for evaluation.
     """
@@ -156,7 +153,7 @@ class ModelBuilder(object):
       # For evaluation, compute the eval metric over a single pass over the evaluation data,
       # and avoid any overhead from shuffling.
       # The datasource to use is the one named as 'eval' within the dataset.
-      inputs = self.build_input('eval', batch=1, epochs=1, shuffle=False)
+      inputs = self.build_input(dataset, 'eval', batch=1, epochs=1, shuffle=False)
 
     with tf.name_scope('inference'):
       inferences = self.build_inference(inputs, training=False)
@@ -185,14 +182,16 @@ class ModelBuilder(object):
       'saver': saver
     }
 
-  def build_prediction_graph(self):
+  def build_prediction_graph(self, dataset):
     """Builds the graph to use for predictions with the trained model.
 
+    Args:
+      dataset: The dataset to use during training.
     Returns:
       The set of tensors and ops references required for prediction.
     """
     with tf.name_scope('input'):
-      inputs = self.build_input(source=None, batch=0, epochs=0, shuffle=False)
+      inputs = self.build_input(dataset, source=None, batch=0, epochs=0, shuffle=False)
 
     with tf.name_scope('inference'):
       inferences = self.build_inference(inputs, training=False)
@@ -258,10 +257,11 @@ class ModelBuilder(object):
 
     return init_op, local_init_op
 
-  def build_input(self, source, batch, epochs, shuffle):
+  def build_input(self, dataset, source, batch, epochs, shuffle):
     """Builds the input sub-graph.
 
     Arguments:
+      dataset: the dataset representing the inputs to the training.
       source: the name of data source to use for input (for training and evaluation).
       batch: the number of instances to read per batch.
       epochs: the number of passes over the data.
@@ -272,18 +272,18 @@ class ModelBuilder(object):
     prediction = False
     if source:
       with tf.name_scope('read'):
-        instances = self._dataset[source].read(batch=batch, shuffle=shuffle, epochs=epochs)
+        instances = dataset[source].read(batch=batch, shuffle=shuffle, epochs=epochs)
     else:
       prediction = True
       instances = tf.placeholder(dtype=tf.string, shape=(None,), name='instances')
       tf.add_to_collection('inputs', instances)
 
     with tf.name_scope('parse'):
-      parsed_instances = self._dataset.parse_instances(instances, prediction)
+      parsed_instances = dataset.parse_instances(instances, prediction)
 
-    if self._dataset.features:
+    if dataset.features:
       with tf.name_scope('transform'):
-        transformer = tfx.data.Transformer(self._dataset)
+        transformer = tfx.data.Transformer(dataset)
         return transformer.transform(parsed_instances)
     else:
       return parsed_instances

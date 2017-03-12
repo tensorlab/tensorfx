@@ -58,26 +58,22 @@ def create_args():
   args.checkpoint_interval_secs = 1
   args.hidden_layers = [('l1', 20, 'relu'), ('l2', 10, 'relu')]
 
-  job = {
-    'output': '/tmp/tensorfx/iris/df'
-  }
-
-  return args, job
+  return args
 
 
 def main():
-  args, job = create_args()
+  args = create_args()
   dataset = create_dataset()
 
   # Define the model and the trainer to train the model
-  classification = nn.FeedForwardClassification(args, dataset)
+  classification = nn.FeedForwardClassification(args)
   trainer = tfx.training.ModelTrainer()
 
   # Train; since this is training in-process (i.e. by default single node training), the training
   # process is run as the 'master' node, which happens to load and return the exported model that
   # can conveniently be used to produce predictions.
   print 'Training...'
-  model = trainer.train(classification, job)
+  model = trainer.train(classification, dataset, output='/tmp/tensorfx/iris/df')
 
   # Predict; predictions are returned as a set of dictionaries, in the same order as the input
   # instances.

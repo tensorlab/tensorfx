@@ -13,7 +13,6 @@
 # _trainer.py
 # Implements Trainer.
 
-import argparse
 import tensorflow as tf
 import tensorfx as tfx
 from _config import Configuration
@@ -42,20 +41,17 @@ class ModelTrainer(object):
     """
     return self._config
 
-  def train(self, model_builder, job_args):
+  def train(self, model_builder, inputs, output):
     """Runs the training process to train a model.
 
     Arguments:
       model_builder: the ModelBuilder to use to build graphs during training.
-      job_args: the arguments for the training job.
+      inputs: the input dataset for the job.
+      output: the output path for the job.
     Returns:
       The trained Model. The resulting value is only relevant for master nodes.
     """
-    if not isinstance(job_args, argparse.Namespace):
-      # Assume its a dictionary and convert it to a Namespace object (what we get from argparsing).
-      job_args = argparse.Namespace(**job_args)
-
-    job = Job(model_builder, job_args.output, self._config)
+    job = Job(model_builder, inputs, output, self._config)
     job.configure_logging()
 
     server = self._config.create_server()

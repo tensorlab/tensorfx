@@ -16,14 +16,14 @@
 import tensorfx as tfx
 import tensorfx.models.nn as nn
 
-args, job = nn.FeedForwardClassificationArguments.parse(parse_job=True)
+args = nn.FeedForwardClassificationArguments.parse(parse_job=True)
 dataset = tfx.data.CsvDataSet(args.data_schema,
                               train=args.data_train,
                               eval=args.data_eval,
                               metadata=args.data_metadata,
                               features=args.data_features)
 
-classification = nn.FeedForwardClassification(args, dataset)
+classification = nn.FeedForwardClassification(args)
 
 trainer = tfx.training.ModelTrainer()
-trainer.train(classification, job)
+trainer.train(classification, dataset, args.output)

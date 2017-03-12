@@ -23,17 +23,25 @@ from tensorflow.python.lib.io import file_io as tfio
 class Job(object):
   """Represents a training job.
   """
-  def __init__(self, model_builder, output, config):
+  def __init__(self, model_builder, inputs, output, config):
     """Initializes a Job instance.
 
     Arguments:
       model_builder: the ModelBuilder associated with the job.
+      inputs: the input dataset for the job.
       output: the output path of the job.
       config: the Training configuration.
     """
     self._model_builder = model_builder
+    self._inputs = inputs
     self._output = output
     self._config = config
+
+  @property
+  def model_builder(self):
+    """Retrieves the ModelBuilder being used to build model graphs.
+    """
+    return self._model_builder
 
   @property
   def args(self):
@@ -42,10 +50,10 @@ class Job(object):
     return self._model_builder.args
 
   @property
-  def model_builder(self):
-    """Retrieves the ModelBuilder being used to build model graphs.
+  def inputs(self):
+    """Retrieves the input dataset of the job.
     """
-    return self._model_builder
+    return self._inputs
 
   @property
   def output_path(self):
@@ -65,6 +73,14 @@ class Job(object):
     """
     return os.path.join(self._output, 'model')
 
+  def summaries_path(self, summary):
+    """Retrieves the summaries path within the output path.
+
+    Arguments:
+      summary: the type of summary.
+    """
+    return os.path.join(self._output, 'summaries', summary)
+
   @property
   def training(self):
     """Retrieves the training graph interface for the job.
@@ -82,14 +98,6 @@ class Job(object):
     """Retrieves the prediction graph interface for the job.
     """
     return self._prediction
-
-  def summaries_path(self, summary):
-    """Retrieves the summaries path within the output path.
-
-    Arguments:
-      summary: the type of summary.
-    """
-    return os.path.join(self._output, 'summaries', summary)
 
   def configure_logging(self):
     """Initializes the loggers for the job.
@@ -138,4 +146,4 @@ class Job(object):
 
     # Build the graphs that will be used during the course of the job.
     self._training, self._evaluation, self._prediction = \
-      self._model_builder.build_graph_interfaces(self._config)
+      self._model_builder.build_graph_interfaces(self._inputs, self._config)
