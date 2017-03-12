@@ -129,22 +129,27 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
     return logits
 
   def build_training(self, global_steps, inputs, inferences):
-    target_labels = inputs['Y']
-    label_indices = self._classification.labels_to_indices(target_labels, one_hot=True)
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=inferences, labels=label_indices)
+    with tf.name_scope('target'):
+      target_labels = inputs['Y']
+      label_indices = self._classification.labels_to_indices(target_labels, one_hot=True)
 
-    loss = tf.reduce_mean(cross_entropy, name='loss')
+    with tf.name_scope('error'):
+      cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=inferences,
+                                                              labels=label_indices,
+                                                              name='softmax_cross_entropy')
+      loss = tf.reduce_mean(cross_entropy, name='loss')
 
-    averager = tf.train.ExponentialMovingAverage(0.99)
-    averaging = averager.apply([loss])
+      averager = tf.train.ExponentialMovingAverage(0.99, name='loss_averager')
+      averaging = averager.apply([loss])
 
     with tf.name_scope(''):
       tf.summary.scalar('metrics/loss', loss)
       tf.summary.scalar('metrics/loss.average', averager.average(loss))
 
     with tf.control_dependencies([averaging]):
-      gradients = self.args.optimizer.compute_gradients(loss, var_list=tf.trainable_variables())
-      train = self.args.optimizer.apply_gradients(gradients, global_steps, name='optimize')
+      with tf.name_scope(self.args.optimizer.get_name()):
+        gradients = self.args.optimizer.compute_gradients(loss, var_list=tf.trainable_variables())
+        train = self.args.optimizer.apply_gradients(gradients, global_steps, name='optimize')
 
       with tf.name_scope(''):
         for gradient, t in gradients:
@@ -157,9 +162,10 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
     scores = tf.nn.softmax(inferences, name='scores')
     tf.add_to_collection('outputs', scores)
 
-    label_indices = tf.arg_max(inferences, 1)
-    labels = self._classification.indices_to_labels(label_indices)
-    tf.add_to_collection('outputs', labels)
+    with tf.name_scope('labels'):
+      label_indices = tf.arg_max(inferences, 1, name='arg_max')
+      labels = self._classification.indices_to_labels(label_indices)
+      tf.add_to_collection('outputs', labels)
 
     return {
       'label': labels,
@@ -168,7 +174,9 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
 
   def build_evaluation(self, inputs, outputs):
     target_labels = inputs['Y']
-    accuracy, eval = tf.contrib.metrics.streaming_accuracy(outputs['label'], target_labels)
+
+    with tf.name_scope('accuracy'):
+      accuracy, eval = tf.contrib.metrics.streaming_accuracy(outputs['label'], target_labels)
 
     with tf.name_scope(''):
       tf.summary.scalar('metrics/accuracy', accuracy)
