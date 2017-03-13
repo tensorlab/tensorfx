@@ -10,8 +10,8 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# train.py
-# tensorfx.tools.train module to provide a local training single-node and distributed launcher.
+# _train.py
+# Implements TrainCommand.
 
 import json
 import os
@@ -21,7 +21,7 @@ import sys
 _PORT = 14000
 
 class TrainCommand(object):
-  """Implements the tfx train command.
+  """Implements the tfx train command to launch single node and distributed training.
   """
   name = 'train'
   help = 'Launches local training jobs for development.'

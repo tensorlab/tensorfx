@@ -17,6 +17,7 @@ import argparse
 import sys
 from _scaffold import ScaffoldCommand
 from _train import TrainCommand
+from _predict import PredictCommand
 
 
 def _build_cli():
@@ -24,7 +25,8 @@ def _build_cli():
   """
   commands = [
     ScaffoldCommand,
-    TrainCommand
+    TrainCommand,
+    PredictCommand
   ]
 
   cli = argparse.ArgumentParser(prog='tfx')

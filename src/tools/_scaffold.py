@@ -17,7 +17,7 @@ import os
 import tensorfx as tfx
 
 class ScaffoldCommand(object):
-  """Implements the tfx scaffold command.
+  """Implements the tfx scaffold command to create a new TensorFX project from a template.
   """
   name = 'scaffold'
   help = 'Createa a new project from a template.'
