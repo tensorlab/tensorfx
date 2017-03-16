@@ -22,31 +22,34 @@ class SchemaFieldType(enum.Enum):
   """
   numeric = 'numeric'
   discrete = 'discrete'
-  text = 'text'
-  binary = 'binary'
 
 
 class SchemaField(object):
   """Defines a named and typed field within a Schema.
   """
-  def __init__(self, name, type):
+  def __init__(self, name, type, length):
     """Initializes a SchemaField with its name and type.
 
     Arguments:
       name: the name of the field.
       type: the type of the field.
+      length: the valence of the field (0 implies variable length)
     """
     self._name = name
     self._type = type
+    self._length = length
+
+    # TODO: Add support for default values
 
   @classmethod
-  def numeric(cls, name):
+  def numeric(cls, name, length=1):
     """Creates a field representing a number.
 
     Arguments:
       name: the name of the field.
+      length: the valence of the field (0 implies variable length)
     """
-    return cls(name, SchemaFieldType.numeric)
+    return cls(name, SchemaFieldType.numeric, length)
 
   @classmethod
   def discrete(cls, name):
@@ -54,38 +57,27 @@ class SchemaField(object):
 
     Arguments:
       name: the name of the field.
+      length: the valence of the field (0 implies variable length)
     """
-    return cls(name, SchemaFieldType.discrete)
-
-  @classmethod
-  def text(cls, name):
-    """Creates a field representing a text string.
-
-    Arguments:
-      name: the name of the field.
-    """
-    return cls(name, SchemaFieldType.text)
-
-  @classmethod
-  def binary(cls, name):
-    """Creates a field representing a binary byte buffer.
-
-    Arguments:
-      name: the name of the field.
-    """
-    return cls(name, SchemaFieldType.binary)
+    return cls(name, SchemaFieldType.discrete, length)
 
   @property
   def name(self):
     """Retrieves the name of the field.
     """
     return self._name
-  
+
   @property
   def type(self):
     """Retrieves the type of the field.
     """
     return self._type
+
+  @property
+  def length(self):
+    """Retrieves the length of the field.
+    """
+    return self._length
 
 
 class Schema(object):
@@ -128,7 +120,8 @@ class Schema(object):
     Returns:
       A string containing the YAML specification.
     """
-    fields = map(lambda f: {'name': f.name, 'type': f.type.name}, self._fields)
+    fields = map(lambda f: {'name': f.name, 'type': f.type.name, 'length': f.length},
+                 self._fields)
     spec = {'fields': fields}
 
     return yaml.safe_dump(spec, default_flow_style=False)
@@ -146,7 +139,8 @@ class Schema(object):
       return spec
 
     spec = yaml.safe_load(spec)
-    fields = map(lambda f: SchemaField(f['name'], SchemaFieldType[f['type']]), spec['fields'])
+    fields = map(lambda f: SchemaField(f['name'], SchemaFieldType[f['type']], f.get('length', 1)),
+                 spec['fields'])
     return Schema(fields)
 
   @property

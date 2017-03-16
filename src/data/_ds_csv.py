@@ -119,6 +119,9 @@ def parse_csv(schema, instances, prediction):
   # Convert the schema into a set of tensor defaults, to be used for parsing csv data.
   defaults = []
   for field in schema:
+    if field.length != 1:
+      # TODO: Support variable length, and list columns in csv.
+      raise ValueError('Unsupported schema field "%s". Length must be 1.' % field.name)
     if field.type == SchemaFieldType.numeric:
       field_default = tf.constant(0.0, dtype=tf.float32)
     else:
