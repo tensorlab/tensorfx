@@ -25,8 +25,8 @@ def create_dataset():
   """
   # Load data into DataFrame objects.
   columns = ['species', 'petal_length', 'petal_width', 'sepal_length', 'sepal_width']
-  df_train = pd.read_csv('iris/data/train.csv', names=columns)
-  df_eval = pd.read_csv('iris/data/eval.csv', names=columns)
+  df_train = pd.read_csv('data/train.csv', names=columns)
+  df_eval = pd.read_csv('data/eval.csv', names=columns)
 
   df_train['species'] = df_train['species'].astype('category')
   df_eval['species'] = df_eval['species'].astype('category')

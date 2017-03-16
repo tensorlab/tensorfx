@@ -10,18 +10,18 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# main.py
-# Implements the iris classification training job.
+# examples.py
+# Implements the iris classification training job using examples data.
 
 import tensorfx as tfx
 import tensorfx.models.nn as nn
 
 args = nn.FeedForwardClassificationArguments.parse(parse_job=True)
-dataset = tfx.data.CsvDataSet(args.data_schema,
-                              train=args.data_train,
-                              eval=args.data_eval,
-                              metadata=args.data_metadata,
-                              features=args.data_features)
+dataset = tfx.data.ExamplesDataSet(args.data_schema,
+                                   train=args.data_train,
+                                   eval=args.data_eval,
+                                   metadata=args.data_metadata,
+                                   features=args.data_features)
 
 classification = nn.FeedForwardClassification(args)
 

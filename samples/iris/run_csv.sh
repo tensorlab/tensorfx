@@ -1,13 +1,13 @@
 #!/bin/sh
 
 python -m tensorfx.tools.tfx train $1 \
-  --module iris.trainer.main \
+  --module trainer.csv \
   --output /tmp/tensorfx/iris/csv \
-  --data-train iris/data/train.csv \
-  --data-eval iris/data/eval.csv \
-  --data-schema iris/data/schema.yaml \
-  --data-metadata iris/data/metadata.json \
-  --data-features iris/features.yaml \
+  --data-train data/train.csv \
+  --data-eval data/eval.csv \
+  --data-schema data/schema.yaml \
+  --data-metadata data/metadata.json \
+  --data-features trainer/features.yaml \
   --log-level-tensorflow ERROR \
   --log-level INFO \
   --batch-size 5 \
