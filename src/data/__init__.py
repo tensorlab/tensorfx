@@ -21,3 +21,4 @@ from _transforms import Transformer
 from _dataset import DataSet, DataSource
 from _ds_csv import CsvDataSet, CsvDataSource
 from _ds_df import DataFrameDataSet, DataFrameDataSource
+from _ds_examples import ExamplesDataSet, ExamplesDataSource
