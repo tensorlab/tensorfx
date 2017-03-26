@@ -57,15 +57,18 @@ class Feature(object):
     self._transform = transform
 
   @classmethod
-  def identity(cls, name, field):
+  def identity(cls, name, field=None):
     """Creates a feature representing an un-transformed schema field.
 
     Arguments:
       name: the name of the feature.
-      field: the name of the field.
+      field: the name of the field. If absenst, this uses the name as the field name as well.
     Returns:
       An instance of a Feature.
     """
+    if not field:
+      # Optimize for an identity feature named the same as the field it represents.
+      field = name
     return cls(name, FeatureType.identity, fields=[field])
 
   @classmethod

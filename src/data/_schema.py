@@ -52,7 +52,7 @@ class SchemaField(object):
     return cls(name, SchemaFieldType.numeric, length)
 
   @classmethod
-  def discrete(cls, name):
+  def discrete(cls, name, length=1):
     """Creates a field representing a discrete value.
 
     Arguments:
