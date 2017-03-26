@@ -60,15 +60,17 @@ class ExamplesDataSet(DataSet):
     for field in self.schema:
       if field.type == SchemaFieldType.numeric:
         dtype = tf.float32
-        default_value = 0.0
+        default_value = [0.0]
       else:
         # discrete
         dtype = tf.string
-        default_value = ''
+        default_value = ['']
 
       if field.length == 0:
         feature = tf.VarLenFeature(dtype=dtype)
       else:
+        if field.length != 1:
+          default_value = default_value * field.length
         feature = tf.FixedLenFeature(shape=[field.length], dtype=dtype, default_value=default_value)
 
       features[field.name] = feature
