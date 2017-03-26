@@ -41,8 +41,10 @@ class DataFrameDataSet(DataSet):
       for name, dtype in zip(df.columns, df.dtypes):
         if type(dtype) == pd.types.dtypes.CategoricalDtype:
           fields.append(SchemaField.discrete(name))
-        elif dtype in (np.int32, np.int64, np.float32, np.float64):
-          fields.append(SchemaField.numeric(name))
+        elif dtype in (np.int32, np.int64):
+          fields.append(SchemaField.integer(name))
+        elif dtype in (np.float32, np.float64):
+          fields.append(SchemaField.real(name))
         else:
           raise ValueError('Unsupported data type "%s" in column "%s"' % (str(dtype), name))
       return Schema(fields)

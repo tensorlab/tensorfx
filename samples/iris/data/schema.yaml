@@ -2,11 +2,11 @@ fields:
 - name: species
   type: discrete
 - name: petal_length
-  type: numeric
+  type: real
 - name: petal_width
-  type: numeric
+  type: real
 - name: sepal_length
-  type: numeric
+  type: real
 - name: sepal_width
-  type: numeric
+  type: real
 

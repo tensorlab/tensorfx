@@ -122,7 +122,10 @@ def parse_csv(schema, instances, prediction):
     if field.length != 1:
       # TODO: Support variable length, and list columns in csv.
       raise ValueError('Unsupported schema field "%s". Length must be 1.' % field.name)
-    if field.type == SchemaFieldType.numeric:
+
+    if field.type == SchemaFieldType.integer:
+      field_default = tf.constant(0, dtype=tf.int64)
+    elif field.type == SchemaFieldType.real:
       field_default = tf.constant(0.0, dtype=tf.float32)
     else:
       # discrete, text, binary

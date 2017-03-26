@@ -72,7 +72,7 @@ def _log(instances, feature, schema, metadata):
   """Applies the log transform to a numeric field.
   """
   field = schema[feature.field]
-  if field.type != SchemaFieldType.numeric:
+  if not field.numeric:
     raise ValueError('A log transform cannot be applied to non-numerical field "%s".' %
                      feature.field)
 
@@ -84,7 +84,7 @@ def _scale(instances, feature, schema, metadata):
   """Applies the scale transform to a numeric field.
   """
   field = schema[feature.field]
-  if field.type != SchemaFieldType.numeric:
+  if not field.numeric:
     raise ValueError('A scale transform cannot be applied to non-numerical field "%s".' %
                      feature.field)
 
@@ -110,7 +110,7 @@ def _bucketize(instances, feature, schema, metadata):
   """Applies the bucketize transform to a numeric field.
   """
   field = schema[feature.field]
-  if field.type != SchemaFieldType.numeric:
+  if not field.numeric:
     raise ValueError('A scale transform cannot be applied to non-numerical field "%s".' %
                      feature.field)
 

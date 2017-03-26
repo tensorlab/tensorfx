@@ -58,7 +58,10 @@ class ExamplesDataSet(DataSet):
     # terminology).
     features = {}
     for field in self.schema:
-      if field.type == SchemaFieldType.numeric:
+      if field.type == SchemaFieldType.integer:
+        dtype = tf.int64
+        default_value = [0]
+      elif field.type == SchemaFieldType.real:
         dtype = tf.float32
         default_value = [0.0]
       else:

@@ -20,7 +20,7 @@ import tensorfx as tfx
 class TestCases(unittest.TestCase):
 
   def test_create_single_field_schema(self):
-    f = tfx.data.SchemaField.numeric('n')
+    f = tfx.data.SchemaField.integer('n')
     schema = tfx.data.Schema.create(f)
 
     self.assertEqual(len(schema), 1)
@@ -28,8 +28,8 @@ class TestCases(unittest.TestCase):
     self.assertEqual(schema[0], f)
 
   def test_create_multi_field_schema(self):
-    f1 = tfx.data.SchemaField.numeric('n')
-    f2 = tfx.data.SchemaField.text('t')
+    f1 = tfx.data.SchemaField.integer('n')
+    f2 = tfx.data.SchemaField.discrete('t')
     schema = tfx.data.Schema.create(f1, f2)
 
     self.assertEqual(len(schema), 2)
@@ -40,9 +40,9 @@ class TestCases(unittest.TestCase):
     spec = """
     fields:
     - name: f1
-      type: numeric
+      type: integer
     - name: f2
-      type: text
+      type: real
     - name: f3
       type: discrete
     """
@@ -50,6 +50,8 @@ class TestCases(unittest.TestCase):
 
     self.assertEqual(len(schema), 3)
     self.assertEqual(schema[0].name, 'f1')
-    self.assertEqual(schema['f1'].type, tfx.data.SchemaFieldType.numeric)
+    self.assertEqual(schema['f1'].type, tfx.data.SchemaFieldType.integer)
+    self.assertEqual(schema['f2'].type, tfx.data.SchemaFieldType.real)
+    self.assertEqual(schema['f3'].type, tfx.data.SchemaFieldType.discrete)
     self.assertEqual(schema.fields, ['f1', 'f2', 'f3'])
   

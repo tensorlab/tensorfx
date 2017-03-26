@@ -20,7 +20,8 @@ import yaml
 class SchemaFieldType(enum.Enum):
   """Defines the types of SchemaField instances.
   """
-  numeric = 'numeric'
+  integer = 'integer'
+  real = 'real'
   discrete = 'discrete'
 
 
@@ -42,16 +43,6 @@ class SchemaField(object):
     # TODO: Add support for default values
 
   @classmethod
-  def numeric(cls, name, length=1):
-    """Creates a field representing a number.
-
-    Arguments:
-      name: the name of the field.
-      length: the valence of the field (0 implies variable length)
-    """
-    return cls(name, SchemaFieldType.numeric, length)
-
-  @classmethod
   def discrete(cls, name, length=1):
     """Creates a field representing a discrete value.
 
@@ -60,6 +51,26 @@ class SchemaField(object):
       length: the valence of the field (0 implies variable length)
     """
     return cls(name, SchemaFieldType.discrete, length)
+
+  @classmethod
+  def integer(cls, name, length=1):
+    """Creates a field representing an integer.
+
+    Arguments:
+      name: the name of the field.
+      length: the valence of the field (0 implies variable length)
+    """
+    return cls(name, SchemaFieldType.integer, length)
+
+  @classmethod
+  def real(cls, name, length=1):
+    """Creates a field representing a real number.
+
+    Arguments:
+      name: the name of the field.
+      length: the valence of the field (0 implies variable length)
+    """
+    return cls(name, SchemaFieldType.real, length)
 
   @property
   def name(self):
@@ -78,6 +89,12 @@ class SchemaField(object):
     """Retrieves the length of the field.
     """
     return self._length
+
+  @property
+  def numeric(self):
+    """Returns whether the field is a numeric type, i.e. integer or real.
+    """
+    return self._type in [SchemaFieldType.integer, SchemaFieldType.real]
 
 
 class Schema(object):

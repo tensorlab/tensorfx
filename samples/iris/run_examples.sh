@@ -15,3 +15,4 @@ python -m tensorfx.tools.tfx train $1 \
   --checkpoint-interval-secs 1 \
   --hidden-layers:1 20 \
   --hidden-layers:2 10 \
+

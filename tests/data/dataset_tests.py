@@ -20,21 +20,21 @@ import tensorfx as tfx
 class TestCases(unittest.TestCase):
 
   def test_empty_dataset(self):
-    schema = tfx.data.Schema.create(tfx.data.SchemaField.numeric('x'))
+    schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
     ds = tfx.data.DataSet({}, schema, None, None)
 
     self.assertEqual(len(ds), 0)
 
   def test_create_dataset(self):
-    schema = tfx.data.Schema.create(tfx.data.SchemaField.numeric('x'))
+    schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'))
     source = tfx.data.DataSource()
     ds = tfx.data.DataSet({'foo': source}, schema, None, None)
 
     self.assertEqual(ds['foo'], source)
 
   def test_create_multi_source_dataset(self):
-    schema = tfx.data.Schema.create(tfx.data.SchemaField.numeric('x'),
-                                    tfx.data.SchemaField.numeric('y'))
+    schema = tfx.data.Schema.create(tfx.data.SchemaField.integer('x'),
+                                    tfx.data.SchemaField.integer('y'))
     train = tfx.data.CsvDataSource('...')
     eval = tfx.data.CsvDataSource('...')
 
