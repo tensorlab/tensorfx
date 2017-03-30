@@ -159,7 +159,7 @@ class ModelBuilder(object):
       inferences = self.build_inference(inputs, training=False)
 
     with tf.name_scope('output'):
-      outputs = self.build_output(inferences)
+      outputs = self.build_output(inputs, inferences)
 
     with tf.name_scope('evaluation'):
       metric, eval_op = self.build_evaluation(inputs, outputs)
@@ -197,7 +197,7 @@ class ModelBuilder(object):
       inferences = self.build_inference(inputs, training=False)
 
     with tf.name_scope('output'):
-      outputs = self.build_output(inferences)
+      outputs = self.build_output(inputs, inferences)
 
     with tf.name_scope('initialization'):
       # Create the saver that will be used to restore trained variables.
@@ -311,10 +311,11 @@ class ModelBuilder(object):
     """
     raise NotImplementedError('build_training must be implemented in a derived class.')
 
-  def build_output(self, inferences):
+  def build_output(self, inputs, inferences):
     """Builds the output sub-graph
 
     Arguments:
+      inputs: the dictionary of tensors corresponding to the input.
       inferences: the inference values.
     Returns:
       A dictionary consisting of the output prediction tensors.

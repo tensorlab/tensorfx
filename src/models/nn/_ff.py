@@ -158,7 +158,7 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
 
     return loss, train
 
-  def build_output(self, inferences):
+  def build_output(self, inputs, inferences):
     scores = tf.nn.softmax(inferences, name='scores')
     tf.add_to_collection('outputs', scores)
 
@@ -166,6 +166,13 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
       label_indices = tf.arg_max(inferences, 1, name='arg_max')
       labels = self._classification.indices_to_labels(label_indices)
       tf.add_to_collection('outputs', labels)
+
+    keys = inputs.get('key', None)
+    if keys:
+      # Key feature, if it exists, is a passthrough to the output.
+      # The use of identity is to name the tensor and correspondingly the output field.
+      keys = tf.identity(keys, name='key')
+      tf.add_to_collection('outputs', keys)
 
     return {
       'label': labels,
