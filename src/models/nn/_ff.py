@@ -19,8 +19,34 @@ import tensorfx as tfx
 import tensorfx.models as models
 
 
-class FeedForwardModelArguments(tfx.training.ModelArguments):
-  """Arguments for feed-forward neural networks.
+def _init_parser(parser):
+  """Initializes the parser for feed-forward models.
+  """
+  optimization = parser.add_argument_group(title='Optimization',
+    description='Arguments determining the optimizer behavior.')
+  optimization.add_argument('--learning-rate', metavar='rate', type=float, default=0.01,
+                            help='The magnitude of learning to perform at each step.')
+
+  nn = parser.add_argument_group(title='Neural Network',
+    description='Arguments controlling the structure of the neural network.')
+  nn.add_argument('--hidden-layers', metavar='units', type=int, required=False,
+                  action=parser.var_args_action,
+                  help='The size of each hidden layer to add.')
+
+def _process_args(args):
+  """Processes arguments for feed-forward models.
+  """
+  if args.hidden_layers:
+    args.hidden_layers = map(lambda (i, s): ('layer_%d' % i, s, 'relu'),
+                            enumerate(args.hidden_layers))
+  else:
+    args.hidden_layers = []
+
+  args.optimizer = tf.train.GradientDescentOptimizer(args.learning_rate)
+
+
+class FeedForwardClassificationArguments(models.ClassificationModelArguments):
+  """Arguments for feed-forward classification neural networks.
   """
   @classmethod
   def init_parser(cls, parser):
@@ -29,40 +55,17 @@ class FeedForwardModelArguments(tfx.training.ModelArguments):
     Args:
       parser: An argument parser instance to be initialized with arguments.
     """
-    super(FeedForwardModelArguments, cls).init_parser(parser)
-
-    optimization = parser.add_argument_group(title='Optimization',
-      description='Arguments determining the optimizer behavior.')
-    optimization.add_argument('--learning-rate', metavar='rate', type=float, default=0.01,
-                              help='The magnitude of learning to perform at each step.')
-
-    nn = parser.add_argument_group(title='Neural Network',
-      description='Arguments controlling the structure of the neural network.')
-    nn.add_argument('--hidden-layers', metavar='units', type=int, required=False,
-                    action=parser.var_args_action,
-                    help='The size of each hidden layer to add.')
+    super(FeedForwardClassificationArguments, cls).init_parser(parser)
+    _init_parser(parser)
 
   def process(self):
-    super(FeedForwardModelArguments, self).process()
-
-    if self.hidden_layers:
-      self.hidden_layers = map(lambda (i, s): ('layer_%d' % i, s, 'relu'),
-                              enumerate(self.hidden_layers))
-    else:
-      self.hidden_layers = []
-
-    self.optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
-
-    # TODO: Add a similar customization point for evaluation - an Evaluator object
+    """Processes the parsed arguments to produce any additional objects.
+    """
+    super(FeedForwardClassificationArguments, self).process()
+    _process_args(self)
 
 
-class FeedForwardClassificationArguments(FeedForwardModelArguments):
-  """Arguments for feed-forward classification neural networks.
-  """
-  pass
-
-
-class FeedForwardClassification(tfx.training.ModelBuilder):
+class FeedForwardClassification(models.ClassificationModelBuilder):
   """A ModelBuilder for building feed-forward fully connected neural network models.
 
   These models are also known as multi-layer perceptrons.
@@ -70,22 +73,13 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
   def __init__(self, args):
     super(FeedForwardClassification, self).__init__(args)
 
-  def build_input(self, dataset, source, batch, epochs, shuffle):
-    target_feature = filter(lambda f: f.type == tfx.data.FeatureType.target, dataset.features)[0]
-    target_metadata = dataset.metadata[target_feature.field]
-
-    self._classification = models.ClassificationScenario(target_metadata['entries'])
-
-    return super(FeedForwardClassification, self).build_input(dataset, source,
-                                                              batch, epochs, shuffle)
-
   def build_inference(self, inputs, training):
     histograms = {}
     scalars = {}
 
     # Build a set of hidden layers. The input to the first hidden layer is
     # the features tensor, whose shape is (batch, size).
-    x = inputs['X']
+    x = self.classification.features(inputs)
     x_size = x.get_shape()[1].value
 
     for name, size, activation in self.args.hidden_layers:
@@ -130,8 +124,7 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
 
   def build_training(self, global_steps, inputs, inferences):
     with tf.name_scope('target'):
-      target_labels = inputs['Y']
-      label_indices = self._classification.labels_to_indices(target_labels, one_hot=True)
+      label_indices = self.classification.target_label_indices(inputs)
 
     with tf.name_scope('error'):
       cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=inferences,
@@ -164,10 +157,10 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
 
     with tf.name_scope('labels'):
       label_indices = tf.arg_max(inferences, 1, name='arg_max')
-      labels = self._classification.indices_to_labels(label_indices)
+      labels = self.classification.output_labels(label_indices)
       tf.add_to_collection('outputs', labels)
 
-    keys = inputs.get('key', None)
+    keys = self.classification.keys(inputs)
     if keys:
       # Key feature, if it exists, is a passthrough to the output.
       # The use of identity is to name the tensor and correspondingly the output field.
@@ -180,7 +173,7 @@ class FeedForwardClassification(tfx.training.ModelBuilder):
     }
 
   def build_evaluation(self, inputs, outputs):
-    target_labels = inputs['Y']
+    target_labels = self.classification.target_labels(inputs)
 
     with tf.name_scope('accuracy'):
       accuracy, eval = tf.contrib.metrics.streaming_accuracy(outputs['label'], target_labels)

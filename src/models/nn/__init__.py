@@ -13,5 +13,4 @@
 # __init__.py
 # tensorfx.models.nn module declaration.
 
-from ._ff import FeedForwardModelArguments
 from ._ff import FeedForwardClassificationArguments, FeedForwardClassification

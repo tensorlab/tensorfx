@@ -57,7 +57,7 @@ class DataFrameDataSet(DataSet):
           entries = list(df[name].unique())
           if np.nan in entries:
             entries.remove(np.nan)
-          md['entries'] = sorted(entries)
+          md['vocab'] = {'entries': sorted(entries)}
         elif dtype in (np.int32, np.int64, np.float32, np.float64):
           for stat, stat_value in df[name].describe().iteritems():
             if stat == 'min':

@@ -11,71 +11,165 @@
 # the License.
 
 # _classification.py
-# Implements ClassificationScenario.
+# Implements ClassificationModelBuilder and ClassificationModelArguments.
 
 import tensorflow as tf
+import tensorfx as tfx
 
-class ClassificationScenario(object):
-  """Represents a classification machine learning scenario.
+class ClassificationModelArguments(tfx.training.ModelArguments):
+  """Arguments for classification models.
   """
-  def __init__(self, labels):
-    """Initializes an instance of a Classification object.
+  @classmethod
+  def init_parser(cls, parser):
+    """Initializes the argument parser.
 
-    Arguments:
-      labels: the ordered list of strings representing the labels being predicted.
+    Args:
+      parser: An argument parser instance to be initialized with arguments.
     """
-    self._labels = labels
+    super(ClassificationModelArguments, cls).init_parser(parser)
+
+  def process(self):
+    """Processes the parsed arguments to produce any additional objects.
+    """
+    pass
+
+
+class ClassificationModelBuilder(tfx.training.ModelBuilder):
+  """A ModelBuilder for building classification models.
+
+  A classification model treats the target value as a label. The label might be a discrete
+  value (which is converted to integer indices), or may be pre-indexed.
+  """
+  def __init__(self, args):
+    super(ClassificationModelBuilder, self).__init__(args)
+    self._classification = None
 
   @property
-  def labels(self):
-    """Retrieves the labels being predicted.
+  def classification(self):
+    """Returns the classification helper object.
     """
-    return self._labels
+    return self._classification
+
+  def build_graph_interfaces(self, dataset, config):
+    """Builds graph interfaces for training and evaluating a model, and for predicting using it.
+
+    A graph interface is an object containing a TensorFlow graph member, as well as members
+    corresponding to various tensors and ops within the graph.
+
+    ClassificationModelBuilder also builds a classification helper object for use during graph
+    building.
+
+    Arguments:
+      dataset: The dataset to use during training.
+      config: The training Configuration object.
+    Returns:
+      A tuple consisting of the training, evaluation and prediction interfaces.
+    """
+    target_feature = filter(lambda f: f.type == tfx.data.FeatureType.target, dataset.features)[0]
+    target_field = dataset.schema[target_feature.field]
+    target_metadata = dataset.metadata[target_feature.field]
+
+    if target_field.type == tfx.data.SchemaFieldType.discrete:
+      self._classification = StringLabelClassification(target_metadata['vocab']['entries'])
+    else:
+      self._classification = None
+
+    return super(ClassificationModelBuilder, self).build_graph_interfaces(dataset, config)
+
+
+class StringLabelClassification(object):
+  """A classification scenario involving string label names.
+
+  Labels will be converted to indices when using the input, and indices back to labels to produce
+  output.
+  """
+  def __init__(self, labels):
+    """Initializes an instance of StringLabelClassification with specified label names.
+    """
+    self._labels = labels
+    self._num_labels = len(labels)
 
   @property
   def num_labels(self):
-    """Retrieves the number of labels being predicted.
+    """Returns the number of labels in the model.
     """
-    return len(self._labels)
+    return self._num_labels
 
-  def labels_to_indices(self, strings, one_hot, name='indices'):
-    """Converts the specified string label names into equivalent indices.
-
-    The implementation builds a HashTable, to perform a lookup operation.
+  def keys(self, inputs):
+    """Retrieves the keys, if present from the inputs.
 
     Arguments:
-      strings: the string labels to convert into equivalent indices.
+      inputs: the dictionary of tensors corresponding to the input.
+    Returns:
+      A tensor containing the keys if a keys feature exists, None otherwise.
+    """
+    return inputs.get('key', None)
+
+  def features(self, inputs):
+    """Retrieves the features to use to build a model.
+
+    For classification models, the default behavior is to use a feature named 'X' to represent the
+    input features for the model.
+
+    Arguments:
+      inputs: the dictionary of tensors corresponding to the input.
+    Returns:
+      A tensor containing model input features.
+    """
+    return inputs['X']
+
+  def target_labels(self, inputs):
+    """Retrieves the target labels to use to build a model.
+
+    For classification models, the default behavior is to use a feature named 'Y' to represent the
+    target features for the model.
+
+    Arguments:
+      inputs: the dictionary of tensors corresponding to the input.
+    Returns:
+      A tensor containing the target labels.
+    """
+    return inputs['Y']
+
+  def target_label_indices(self, inputs, one_hot=True):
+    """Retrieves the target labels to use to build a model, as a set of indices.
+
+    For classification models, the default behavior is to use a feature named 'Y' to represent the
+    target features for the model. The labels are used to perform a lookup to produce indices.
+
+    Arguments:
+      inputs: the dictionary of tensors corresponding to the input.
       one_hot: whether to convert the indices into their one-hot representation.
     Returns:
-      A set of tensors representing the labels by indices.
+      A tensor containing the target labels as indices..
     """
-    num_labels = len(self._labels)
+    labels = inputs['Y']
+
     with tf.name_scope('label_table'):
-      table = tf.contrib.lookup.HashTable(
-        tf.contrib.lookup.KeyValueTensorInitializer(self._labels,
-                                                    tf.range(0, num_labels, dtype=tf.int64),
-                                                    tf.string, tf.int64), -1)
+      string_int_mapping =  tf.contrib.lookup.KeyValueTensorInitializer(
+        self._labels, tf.range(0, self._num_labels, dtype=tf.int64), tf.string, tf.int64)
+      table = tf.contrib.lookup.HashTable(string_int_mapping, default_value=-1)
+
     if one_hot:
-      indices = tf.squeeze(tf.one_hot(table.lookup(strings), num_labels), name=name)
+      indices = tf.squeeze(tf.one_hot(table.lookup(labels), self._num_labels), name='indices')
     else:
-      indices = table.lookup(strings, name=name)
-    
+      indices = table.lookup(labels, name='indices')
+
     return indices
 
-  def indices_to_labels(self, indices, name='label'):
-    """Converts the specified integer indices into equivalent string label names.
+  def output_labels(self, indices):
+    """Produces the output labels to represent a model's output.
 
-    The implementation builds a HashTable, to perform a lookup operation.
+    The indices are used to lookup corresponding label names.
 
     Arguments:
-      indices: the int64 indices to convert into equivalent strings.
+      indices: The predicted label indices.
     Returns:
-      A set of tensors representing the labels by name.
+      A tensor containing output predicted label names.
     """
-    num_labels = len(self._labels)
     with tf.name_scope('label_table'):
-      table = tf.contrib.lookup.HashTable(
-        tf.contrib.lookup.KeyValueTensorInitializer(tf.range(0, num_labels, dtype=tf.int64),
-                                                    self._labels,
-                                                    tf.int64, tf.string), '')
-    return table.lookup(indices, name=name)
+      int_string_mapping = tf.contrib.lookup.KeyValueTensorInitializer(
+        tf.range(0, self._num_labels, dtype=tf.int64), self._labels, tf.int64, tf.string)
+      table = tf.contrib.lookup.HashTable(int_string_mapping, default_value='')
+
+    return table.lookup(indices, name='label')

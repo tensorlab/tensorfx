@@ -13,4 +13,5 @@
 # __init__.py
 # tensorfx.models module declaration.
 
-from ._classification import ClassificationScenario
+from ._classification import ClassificationModelArguments, ClassificationModelBuilder
+from ._classification import StringLabelClassification
